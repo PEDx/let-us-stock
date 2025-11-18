@@ -4,8 +4,8 @@ import FearGreedIndex from "./fear-greed-index";
 export function Header() {
   return (
     <header className='page-area flex items-center justify-between py-1'>
-      <h1 className='text-base font-semibold flex items-center gap-2'>
-        <svg viewBox='0 0 1373 1024' width='32' height='32'>
+      <h1 className='text-base font-semibold max-md:text-sm flex items-center gap-2'>
+        <svg viewBox='0 0 1373 1024' className='size-6 max-md:size-4'>
           <path
             d='M845.670779 978.686255C595.402968 978.686255 392.533333 775.816621 392.533333 525.54881S595.402968 72.411364 845.670779 72.411364s453.137446 202.869634 453.137446 453.137446-202.869634 453.137446-453.137446 453.137445z'
             fill='#E5E5E5'
