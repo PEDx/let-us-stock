@@ -1,13 +1,43 @@
-import type { Route } from "./+types/home";
-import { Welcome } from "../welcome/welcome";
+import { useLoaderData } from "react-router";
+import YahooFinance from "yahoo-finance2";
+import { QuoteTable } from "~/components/quote-table";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Let Us Stock" },
+    { name: "description", content: "Let Us Stock" },
   ];
 }
 
+export async function loader() {
+  const yahooFinance = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
+  return {
+    quotes: await yahooFinance.quote([
+      "AAPL",
+      "TSLA",
+      "GOOG",
+      "MSFT",
+      "NVDA",
+      "META",
+      "AMZN",
+      "NFLX",
+      "GOOGL",
+      "INTC",
+      "CSCO",
+      "IBM",
+      "ORCL",
+      "SAP",
+      "QQQ",
+    ]),
+  };
+}
+
 export default function Home() {
-  return <Welcome />;
+  const { quotes } = useLoaderData<typeof loader>();
+
+  return (
+    <main className='page-area my-2'>
+      <QuoteTable quotes={quotes} />
+    </main>
+  );
 }
