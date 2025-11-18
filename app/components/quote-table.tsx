@@ -44,7 +44,7 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
         {quotes.map((quote) => (
           <TableRow key={quote.symbol}>
             <TableCell className=''>
-              <span className='text-blue-600 rounded-sm border border-blue-500 px-[4px]'>
+              <span className='text-blue-600 rounded-xs border border-blue-500 px-1'>
                 {quote.symbol}
               </span>
             </TableCell>

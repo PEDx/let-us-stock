@@ -1,4 +1,5 @@
 import { ThemeToggle } from "./theme-toggle";
+import FearGreedIndex from "./fear-greed-index";
 
 export function Header() {
   return (
@@ -24,6 +25,7 @@ export function Header() {
         </svg>
         <p>Let US Stock</p>
       </h1>
+      <FearGreedIndex />
       <ThemeToggle />
     </header>
   );

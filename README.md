@@ -1,87 +1,113 @@
-# Welcome to React Router!
+# Let US Stock 📈
 
-A modern, production-ready template for building full-stack React applications using React Router.
+一个现代化的美股行情查看工具，提供实时股票报价和市场情绪指标。
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+## ✨ 功能特性
 
-## Features
+- 📊 **股票报价表格** - 显示多只热门美股的关键指标
+  - 实时价格和涨跌幅
+  - 市盈率（PE Ratio）
+  - 市净率（Price to Book）
+  - 市值（Market Cap）
+- 📉 **恐惧贪婪指数** - 实时显示市场情绪指标
+- 🌓 **主题切换** - 支持深色/浅色模式
+- 🎨 **现代化 UI** - 基于 Tailwind CSS 和 Radix UI 组件
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+## 🛠️ 技术栈
 
-## Getting Started
+- **框架**: React Router v7 (SSR)
+- **UI 库**: React 19
+- **样式**: Tailwind CSS v4
+- **类型**: TypeScript
+- **数据源**: Yahoo Finance API
+- **构建工具**: Vite
+- **包管理**: pnpm
 
-### Installation
+## 📦 安装
 
-Install the dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
-
-```bash
-npm run dev
-```
-
-Your application will be available at `http://localhost:5173`.
-
-## Building for Production
-
-Create a production build:
+确保已安装 Node.js 和 pnpm：
 
 ```bash
-npm run build
+# 安装依赖
+pnpm install
 ```
 
-## Deployment
-
-### Docker Deployment
-
-To build and run using Docker:
+## 🚀 开发
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+# 启动开发服务器
+pnpm dev
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+应用将在 `http://localhost:5173` 运行。
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+## 🏗️ 构建
 
-### DIY Deployment
+```bash
+# 构建生产版本
+pnpm build
 
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+# 启动生产服务器
+pnpm start
 ```
 
-## Styling
+## 🐳 Docker 部署
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+项目包含 Dockerfile，可以使用 Docker 进行部署：
 
----
+```bash
+# 构建镜像
+docker build -t let-us-stock .
 
-Built with ❤️ using React Router.
+# 运行容器
+docker run -p 3000:3000 let-us-stock
+```
+
+## 📁 项目结构
+
+```
+let-us-stock/
+├── app/
+│   ├── components/          # React 组件
+│   │   ├── fear-greed-index.tsx  # 恐惧贪婪指数组件
+│   │   ├── quote-table.tsx       # 股票报价表格
+│   │   ├── header.tsx            # 页面头部
+│   │   ├── footer.tsx            # 页面底部
+│   │   └── ui/                   # UI 基础组件
+│   ├── routes/              # 路由页面
+│   │   └── home.tsx         # 首页
+│   ├── lib/                 # 工具函数
+│   └── root.tsx             # 根组件
+├── public/                  # 静态资源
+└── package.json            # 项目配置
+```
+
+## 📊 当前跟踪的股票
+
+- AAPL (Apple)
+- TSLA (Tesla)
+- GOOG (Google)
+- MSFT (Microsoft)
+- NVDA (NVIDIA)
+- META (Meta)
+- AMZN (Amazon)
+- NFLX (Netflix)
+- GOOGL (Google Class A)
+- INTC (Intel)
+- CSCO (Cisco)
+- IBM (IBM)
+- ORCL (Oracle)
+- SAP (SAP)
+- QQQ (Invesco QQQ Trust)
+
+## 🔧 可用脚本
+
+- `pnpm dev` - 启动开发服务器
+- `pnpm build` - 构建生产版本
+- `pnpm start` - 启动生产服务器
+- `pnpm typecheck` - 类型检查
+
+## 📝 许可证
+
+私有项目
+
