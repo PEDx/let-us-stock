@@ -9,19 +9,42 @@ import {
 } from "./ui/table";
 import { cn } from "~/lib/utils";
 
-const safeToFixed = (value: number) => {
-  return Number(value.toString().match(/^\d+(?:\.\d{0,2})?/));
-};
+function truncateToTwoDecimals(value: number | string, decimalPlaces: number = 2): string {
+    const num = Number(value);
+
+    if (isNaN(num)) {
+        return '-';
+    }
+
+    const str = String(num);
+
+    const decimalIndex = str.indexOf('.');
+
+    if (decimalIndex === -1) {
+        return str + '.'.padEnd(decimalPlaces + 1, '0');
+    }
+
+    let integerPart = str.substring(0, decimalIndex);
+    let decimalPart = str.substring(decimalIndex + 1);
+
+    let truncatedDecimal = decimalPart.substring(0, decimalPlaces);
+
+    if (truncatedDecimal.length < decimalPlaces) {
+        truncatedDecimal = truncatedDecimal.padEnd(decimalPlaces, '0');
+    }
+
+    return `${integerPart}.${truncatedDecimal}`;
+}
 
 const formatMarketCap = (marketCap: number) => {
   if (marketCap >= 1000000000) {
-    return safeToFixed(marketCap / 1000000000) + "B";
+    return truncateToTwoDecimals(marketCap / 1000000000) + "B";
   } else if (marketCap >= 1000000) {
-    return safeToFixed(marketCap / 1000000) + "M";
+    return truncateToTwoDecimals(marketCap / 1000000) + "M";
   } else if (marketCap >= 1000) {
-    return safeToFixed(marketCap / 1000) + "K";
+    return truncateToTwoDecimals(marketCap / 1000) + "K";
   }
-  return safeToFixed(marketCap);
+  return truncateToTwoDecimals(marketCap);
 };
 
 export function QuoteTable({ quotes }: { quotes: Quote[] }) {
@@ -56,19 +79,12 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
                   ? "text-green-600"
                   : "text-red-600",
               )}>
-              {quote.regularMarketChange}
+              {truncateToTwoDecimals(quote.regularMarketChange)}
             </TableCell>
-            <TableCell
-              className={cn(
-                quote.regularMarketChangePercent > 0
-                  ? "text-green-600"
-                  : "text-red-600",
-              )}>
-              {quote.regularMarketChangePercent}
-            </TableCell>
-            <TableCell>{quote.trailingPE}</TableCell>
-            <TableCell>{quote.forwardPE}</TableCell>
-            <TableCell>{quote.priceToBook}</TableCell>
+            <TableCell>{truncateToTwoDecimals(quote.regularMarketChangePercent, 3)}</TableCell>
+            <TableCell>{truncateToTwoDecimals(quote.trailingPE)}</TableCell>
+            <TableCell>{truncateToTwoDecimals(quote.forwardPE)}</TableCell>
+            <TableCell>{truncateToTwoDecimals(quote.priceToBook)}</TableCell>
             <TableCell>{formatMarketCap(quote.marketCap)}</TableCell>
           </TableRow>
         ))}

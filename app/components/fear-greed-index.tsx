@@ -54,7 +54,7 @@ export default function FearGreedIndex() {
     <div
       className={cn(
         "text-xs text-muted-foreground rounded-xs border px-1",
-        loaded ? "text-inherit" : "animate-pulse text-transparent bg-gray-500/50",
+        loaded ? "text-inherit" : "animate-pulse text-transparent bg-gray-500/15",
       )}>
       market sentiment:{" "}
       <strong className={cn(loaded ? color : "text-transparent")}>
