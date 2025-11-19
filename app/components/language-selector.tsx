@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Languages } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -8,10 +8,6 @@ export type Language = "zh" | "en" | "fr" | "de" | "es" | "ja";
 const languages: { code: Language; name: string; nativeName: string }[] = [
   { code: "zh", name: "Chinese", nativeName: "中文" },
   { code: "en", name: "English", nativeName: "English" },
-  { code: "fr", name: "French", nativeName: "Français" },
-  { code: "de", name: "German", nativeName: "Deutsch" },
-  { code: "es", name: "Spanish", nativeName: "Español" },
-  { code: "ja", name: "Japanese", nativeName: "日本語" },
 ];
 
 export function LanguageSelector() {
@@ -41,7 +37,6 @@ export function LanguageSelector() {
     applyLanguage(newLanguage);
   };
 
-
   return (
     <div className='flex items-center gap-1.5 text-xs text-muted-foreground border rounded-xs px-2'>
       <Languages className='size-3.5' />
@@ -59,4 +54,3 @@ export function LanguageSelector() {
     </div>
   );
 }
-
