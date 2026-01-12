@@ -3,7 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { QuoteTable } from "~/components/quote-table";
 import { StockSearch } from "~/components/stock-search";
-import { getSymbols, addSymbol, removeSymbol } from "~/lib/stock-store";
+import {
+  getSymbols,
+  addSymbol,
+  removeSymbol,
+  reorderSymbols,
+} from "~/lib/stock-store";
 import type { Quote } from "yahoo-finance2/modules/quote";
 import { Loader2 } from "lucide-react";
 
@@ -28,9 +33,18 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch(`/api/quote?symbols=${symbolList.join(",")}`);
+      const response = await fetch(
+        `/api/quote?symbols=${symbolList.join(",")}`,
+      );
       const data = await response.json();
-      setQuotes(data.quotes || []);
+      // 按照 symbolList 的顺序排序 quotes
+      const quotesMap = new Map(
+        (data.quotes || []).map((q: Quote) => [q.symbol, q]),
+      );
+      const sortedQuotes = symbolList
+        .map((s) => quotesMap.get(s))
+        .filter(Boolean) as Quote[];
+      setQuotes(sortedQuotes);
     } catch (error) {
       console.error("Failed to fetch quotes:", error);
     } finally {
@@ -63,6 +77,19 @@ export default function Home() {
     setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
   };
 
+  // 重新排序
+  const handleReorder = async (newOrder: string[]) => {
+    setSymbols(newOrder);
+    // 根据新顺序排列 quotes
+    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]));
+    const sortedQuotes = newOrder
+      .map((s) => quotesMap.get(s))
+      .filter(Boolean) as Quote[];
+    setQuotes(sortedQuotes);
+    // 保存新顺序
+    await reorderSymbols(newOrder);
+  };
+
   return (
     <main className="page-area my-2">
       <div className="mb-4">
@@ -74,7 +101,11 @@ export default function Home() {
           <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <QuoteTable quotes={quotes} onRemoveSymbol={handleRemoveSymbol} />
+        <QuoteTable
+          quotes={quotes}
+          onRemoveSymbol={handleRemoveSymbol}
+          onReorder={handleReorder}
+        />
       )}
     </main>
   );

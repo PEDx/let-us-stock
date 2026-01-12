@@ -86,3 +86,7 @@ export async function removeSymbol(symbol: string): Promise<string[]> {
   await saveSymbols(newSymbols);
   return newSymbols;
 }
+
+export async function reorderSymbols(newOrder: string[]): Promise<void> {
+  await saveSymbols(newOrder);
+}
