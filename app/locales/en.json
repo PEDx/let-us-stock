@@ -1,0 +1,34 @@
+{
+  "common": {
+    "appName": "Let US Stock",
+    "copyright": "Let Us Stock. All rights reserved.",
+    "goToTop": "Go to top",
+    "changeLanguage": "Change language"
+  },
+  "error": {
+    "oops": "Oops!",
+    "404": "404",
+    "error": "Error",
+    "unexpectedError": "An unexpected error occurred.",
+    "pageNotFound": "The requested page could not be found."
+  },
+  "table": {
+    "symbol": "Symbol",
+    "name": "Name",
+    "price": "$ Price",
+    "change": "$ Change",
+    "percentChange": "% Change",
+    "trailingPE": "Trailing PE",
+    "forwardPE": "Forward PE",
+    "priceToBook": "Price to Book",
+    "marketCap": "$ Market Cap"
+  },
+  "sentiment": {
+    "marketSentiment": "market sentiment",
+    "extremelyBullish": "extremely bullish 🤩",
+    "bullish": "bullish 😊",
+    "neutral": "neutral 😐",
+    "bearish": "bearish 😟",
+    "extremelyBearish": "extremely bearish 😱"
+  }
+}

@@ -1,10 +1,13 @@
 import { ThemeToggle } from "./theme-toggle";
 import FearGreedIndex from "./fear-greed-index";
+import { useI18n } from "~/lib/i18n";
 
 export function Header() {
+  const { t } = useI18n();
+
   return (
     <header className='page-area flex items-center justify-between py-1'>
-      <h1 className='text-base font-semibold max-md:text-sm flex items-center gap-2'>
+      <h1 className='flex items-center gap-2 text-base font-semibold max-md:text-sm'>
         <svg viewBox='0 0 1373 1024' className='size-6 max-md:size-4'>
           <path
             d='M845.670779 978.686255C595.402968 978.686255 392.533333 775.816621 392.533333 525.54881S595.402968 72.411364 845.670779 72.411364s453.137446 202.869634 453.137446 453.137446-202.869634 453.137446-453.137446 453.137445z'
@@ -23,7 +26,7 @@ export function Header() {
             fill='#FFFFFF'
             p-id='1703'></path>
         </svg>
-        <p>Let US Stock</p>
+        <p>{t.common.appName}</p>
       </h1>
       <FearGreedIndex />
       <ThemeToggle />

@@ -8,32 +8,36 @@ import {
   TableBody,
 } from "./ui/table";
 import { cn } from "~/lib/utils";
+import { useI18n } from "~/lib/i18n";
 
-function truncateToTwoDecimals(value: number | string, decimalPlaces: number = 2): string {
-    const num = Number(value);
+function truncateToTwoDecimals(
+  value: number | string,
+  decimalPlaces: number = 2,
+): string {
+  const num = Number(value);
 
-    if (isNaN(num)) {
-        return '-';
-    }
+  if (isNaN(num)) {
+    return "-";
+  }
 
-    const str = String(num);
+  const str = String(num);
 
-    const decimalIndex = str.indexOf('.');
+  const decimalIndex = str.indexOf(".");
 
-    if (decimalIndex === -1) {
-        return str + '.'.padEnd(decimalPlaces + 1, '0');
-    }
+  if (decimalIndex === -1) {
+    return str + ".".padEnd(decimalPlaces + 1, "0");
+  }
 
-    let integerPart = str.substring(0, decimalIndex);
-    let decimalPart = str.substring(decimalIndex + 1);
+  let integerPart = str.substring(0, decimalIndex);
+  let decimalPart = str.substring(decimalIndex + 1);
 
-    let truncatedDecimal = decimalPart.substring(0, decimalPlaces);
+  let truncatedDecimal = decimalPart.substring(0, decimalPlaces);
 
-    if (truncatedDecimal.length < decimalPlaces) {
-        truncatedDecimal = truncatedDecimal.padEnd(decimalPlaces, '0');
-    }
+  if (truncatedDecimal.length < decimalPlaces) {
+    truncatedDecimal = truncatedDecimal.padEnd(decimalPlaces, "0");
+  }
 
-    return `${integerPart}.${truncatedDecimal}`;
+  return `${integerPart}.${truncatedDecimal}`;
 }
 
 const formatMarketCap = (marketCap: number) => {
@@ -48,26 +52,28 @@ const formatMarketCap = (marketCap: number) => {
 };
 
 export function QuoteTable({ quotes }: { quotes: Quote[] }) {
+  const { t } = useI18n();
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className=''>Symbol</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>$ Price</TableHead>
-          <TableHead>$ Change</TableHead>
-          <TableHead className=''>% Change</TableHead>
-          <TableHead>Trailing PE</TableHead>
-          <TableHead>Forward PE</TableHead>
-          <TableHead>Price to Book</TableHead>
-          <TableHead>$ Market Cap</TableHead>
+          <TableHead className=''>{t.table.symbol}</TableHead>
+          <TableHead>{t.table.name}</TableHead>
+          <TableHead>{t.table.price}</TableHead>
+          <TableHead>{t.table.change}</TableHead>
+          <TableHead className=''>{t.table.percentChange}</TableHead>
+          <TableHead>{t.table.trailingPE}</TableHead>
+          <TableHead>{t.table.forwardPE}</TableHead>
+          <TableHead>{t.table.priceToBook}</TableHead>
+          <TableHead>{t.table.marketCap}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {quotes.map((quote) => (
           <TableRow key={quote.symbol}>
             <TableCell className=''>
-              <span className='text-blue-600 rounded-xs border border-blue-500 px-1'>
+              <span className='rounded-xs border border-blue-500 px-1 text-blue-600'>
                 {quote.symbol}
               </span>
             </TableCell>
@@ -81,7 +87,9 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
               )}>
               {truncateToTwoDecimals(quote.regularMarketChange)}
             </TableCell>
-            <TableCell>{truncateToTwoDecimals(quote.regularMarketChangePercent, 3)}</TableCell>
+            <TableCell>
+              {truncateToTwoDecimals(quote.regularMarketChangePercent, 3)}
+            </TableCell>
             <TableCell>{truncateToTwoDecimals(quote.trailingPE)}</TableCell>
             <TableCell>{truncateToTwoDecimals(quote.forwardPE)}</TableCell>
             <TableCell>{truncateToTwoDecimals(quote.priceToBook)}</TableCell>

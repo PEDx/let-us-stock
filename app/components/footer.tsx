@@ -1,20 +1,23 @@
 import { ArrowUp } from "lucide-react";
 import { LanguageSelector } from "./language-selector";
+import { useI18n } from "~/lib/i18n";
 
 export function Footer() {
+  const { t } = useI18n();
+
   return (
     <footer className='page-area'>
       <div className='flex items-center justify-between py-1'>
-        <p className='text-xs text-muted-foreground '>
-          &copy; {new Date().getFullYear()} Let Us Stock. All rights reserved.
+        <p className='text-muted-foreground text-xs'>
+          &copy; {new Date().getFullYear()} {t.common.copyright}
         </p>
 
         <LanguageSelector />
         <a
           href='#'
-          className='got-to-top text-xs text-muted-foreground flex items-center gap-2'>
+          className='got-to-top text-muted-foreground flex items-center gap-2 text-xs'>
           <ArrowUp className='size-4' />
-          Go to top
+          {t.common.goToTop}
         </a>
       </div>
     </footer>

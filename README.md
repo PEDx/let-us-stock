@@ -3,9 +3,11 @@
 一个现代化的美股行情查看工具，提供实时股票报价和市场情绪指标。
 
 ## yahoo-finance2 doc
+
 https://jsr.io/@gadicc/yahoo-finance2
 
 ## shadcn-ui doc
+
 https://ui.shadcn.com/docs/components/badge
 
 ## 📦 安装
@@ -35,5 +37,3 @@ pnpm build
 # 启动生产服务器
 pnpm start
 ```
-
-

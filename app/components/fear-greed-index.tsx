@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
+import { useI18n } from "~/lib/i18n";
 
 async function fetchFearGreendIndex() {
   const url = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi";
@@ -20,8 +21,10 @@ async function fetchFearGreendIndex() {
 }
 
 export default function FearGreedIndex() {
+  const { t } = useI18n();
   const [data, setData] = useState(50);
   const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
     fetchFearGreendIndex().then((data) => {
       setData(data.fgi.now.value);
@@ -39,24 +42,27 @@ export default function FearGreedIndex() {
           : data > 20
             ? "text-red-400"
             : "text-red-500";
+
   const text =
     data > 80
-      ? "extremely bullish 🤩"
+      ? t.sentiment.extremelyBullish
       : data > 60
-        ? "bullish 😊"
+        ? t.sentiment.bullish
         : data > 40
-          ? "neutral 😐"
+          ? t.sentiment.neutral
           : data > 20
-            ? "bearish 😟"
-            : "extremely bearish 😱";
+            ? t.sentiment.bearish
+            : t.sentiment.extremelyBearish;
 
   return (
     <div
       className={cn(
-        "text-xs text-muted-foreground rounded-xs border px-1",
-        loaded ? "text-inherit" : "animate-pulse text-transparent bg-gray-500/15",
+        "text-muted-foreground rounded-xs border px-1 text-xs",
+        loaded
+          ? "text-inherit"
+          : "animate-pulse bg-gray-500/15 text-transparent",
       )}>
-      market sentiment:{" "}
+      {t.sentiment.marketSentiment}:{" "}
       <strong className={cn(loaded ? color : "text-transparent")}>
         {text}
       </strong>

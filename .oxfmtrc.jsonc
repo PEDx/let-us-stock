@@ -9,6 +9,6 @@
   "tabWidth": 2,
   "trailingComma": "all",
   "useTabs": false,
-  "experimentalOperatorPosition": "start",
-  "objectWrap": "collapse"
+  "objectWrap": "collapse",
+  "experimentalTailwindcss": { "functions": ["clsx", "cn"] },
 }

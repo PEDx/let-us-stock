@@ -30,7 +30,7 @@ export async function loader() {
       "QQQ",
       "BTC-USD",
       "SGOV",
-      "BOXX"
+      "BOXX",
     ]),
   };
 }

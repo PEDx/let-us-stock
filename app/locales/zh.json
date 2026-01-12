@@ -1,0 +1,34 @@
+{
+  "common": {
+    "appName": "Let US Stock",
+    "copyright": "Let US Stock 版权所有",
+    "goToTop": "回到顶部",
+    "changeLanguage": "切换语言"
+  },
+  "error": {
+    "oops": "哎呀！",
+    "404": "404",
+    "error": "错误",
+    "unexpectedError": "发生了意外错误。",
+    "pageNotFound": "未找到请求的页面。"
+  },
+  "table": {
+    "symbol": "股票代码",
+    "name": "名称",
+    "price": "价格 ($)",
+    "change": "涨跌额 ($)",
+    "percentChange": "涨跌幅 (%)",
+    "trailingPE": "静态市盈率",
+    "forwardPE": "动态市盈率",
+    "priceToBook": "市净率",
+    "marketCap": "市值 ($)"
+  },
+  "sentiment": {
+    "marketSentiment": "市场情绪",
+    "extremelyBullish": "极度贪婪 🤩",
+    "bullish": "贪婪 😊",
+    "neutral": "中性 😐",
+    "bearish": "恐惧 😟",
+    "extremelyBearish": "极度恐惧 😱"
+  }
+}

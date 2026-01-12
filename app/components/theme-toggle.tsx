@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -12,7 +12,8 @@ export function ThemeToggle() {
     setMounted(true);
     // 从 localStorage 读取主题，如果没有则使用系统偏好
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+      .matches
       ? "dark"
       : "light";
     const initialTheme = savedTheme || systemTheme;
@@ -39,25 +40,23 @@ export function ThemeToggle() {
   // 防止 hydration 不匹配
   if (!mounted) {
     return (
-      <Button variant="ghost" size="sm" aria-label="toggle dark mode">
-        <Sun className="size-4" />
+      <Button variant='ghost' size='sm' aria-label='toggle dark mode'>
+        <Sun className='size-4' />
       </Button>
     );
   }
 
   return (
     <Button
-      variant="ghost"
-      size="sm"
+      variant='ghost'
+      size='sm'
       onClick={toggleTheme}
-      aria-label="切换主题"
-    >
+      aria-label='切换主题'>
       {theme === "dark" ? (
-        <Sun className="size-4" />
+        <Sun className='size-4' />
       ) : (
-        <Moon className="size-4" />
+        <Moon className='size-4' />
       )}
     </Button>
   );
 }
-
