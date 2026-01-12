@@ -40,7 +40,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <Button variant="ghost" size="sm" aria-label="toggle dark mode">
-        <Sun className="size-5" />
+        <Sun className="size-4" />
       </Button>
     );
   }
@@ -48,14 +48,14 @@ export function ThemeToggle() {
   return (
     <Button
       variant="ghost"
-      size="icon"
+      size="sm"
       onClick={toggleTheme}
       aria-label="切换主题"
     >
       {theme === "dark" ? (
-        <Sun className="size-5" />
+        <Sun className="size-4" />
       ) : (
-        <Moon className="size-5" />
+        <Moon className="size-4" />
       )}
     </Button>
   );

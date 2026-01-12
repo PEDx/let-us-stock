@@ -54,13 +54,13 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
         <TableRow>
           <TableHead className=''>Symbol</TableHead>
           <TableHead>Name</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead>Change</TableHead>
+          <TableHead>$ Price</TableHead>
+          <TableHead>$ Change</TableHead>
           <TableHead className=''>% Change</TableHead>
           <TableHead>Trailing PE</TableHead>
           <TableHead>Forward PE</TableHead>
           <TableHead>Price to Book</TableHead>
-          <TableHead>Market Cap</TableHead>
+          <TableHead>$ Market Cap</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

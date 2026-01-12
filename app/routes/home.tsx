@@ -28,6 +28,9 @@ export async function loader() {
       "ORCL",
       "SAP",
       "QQQ",
+      "BTC-USD",
+      "SGOV",
+      "BOXX"
     ]),
   };
 }

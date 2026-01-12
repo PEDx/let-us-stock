@@ -44,7 +44,7 @@ export function LanguageSelector() {
         className='bg-transparent border-none outline-none cursor-pointer appearance-none focus:outline-none hover:text-foreground transition-colors'
         value={language}
         onChange={handleLanguageChange}
-        aria-label='选择语言'>
+        aria-label='change language'>
         {languages.map((lang) => (
           <option key={lang.code} value={lang.code}>
             {lang.nativeName}
