@@ -11,7 +11,7 @@ import {
 } from "./ui/table";
 import { cn } from "~/lib/utils";
 import { useI18n } from "~/lib/i18n";
-import { X, GripVertical } from "lucide-react";
+import { X, GripVertical, Inbox } from "lucide-react";
 import { ConfirmPopover } from "./confirm-popover";
 import {
   DndContext,
@@ -198,13 +198,22 @@ export function QuoteTable({
     }
   };
 
+  if (quotes.length === 0) {
+    return (
+      <div className="flex flex-col border border-dashed items-center justify-center h-40 text-muted-foreground">
+        <Inbox className="size-6 mb-2 opacity-50" />
+        <p className="text-sm">{t.table.empty}</p>
+      </div>
+    );
+  }
+
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
       modifiers={[restrictToVerticalAxisAndParent]}
       onDragEnd={handleDragEnd}>
-      <Table>
+      <Table className="border">
         <TableHeader>
           <TableRow>
             <TableHead className="w-6"></TableHead>

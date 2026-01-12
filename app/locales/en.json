@@ -21,7 +21,8 @@
     "trailingPE": "Trailing PE",
     "forwardPE": "Forward PE",
     "priceToBook": "Price to Book",
-    "marketCap": "$ Market Cap"
+    "marketCap": "$ Market Cap",
+    "empty": "No stocks yet. Use search above to add."
   },
   "sentiment": {
     "marketSentiment": "market sentiment",
@@ -56,5 +57,12 @@
     "eps": "EPS",
     "beta": "Beta",
     "about": "About"
+  },
+  "groups": {
+    "addGroup": "Add Group",
+    "manageGroups": "Manage Groups",
+    "doneManaging": "Done",
+    "newGroupPlaceholder": "Group name",
+    "deleteConfirm": "Delete this group?"
   }
 }

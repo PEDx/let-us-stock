@@ -21,7 +21,8 @@
     "trailingPE": "静态市盈率",
     "forwardPE": "动态市盈率",
     "priceToBook": "市净率",
-    "marketCap": "市值 ($)"
+    "marketCap": "市值 ($)",
+    "empty": "暂无股票，使用上方搜索添加"
   },
   "sentiment": {
     "marketSentiment": "市场情绪",
@@ -56,5 +57,12 @@
     "eps": "每股收益",
     "beta": "Beta系数",
     "about": "公司简介"
+  },
+  "groups": {
+    "addGroup": "添加分组",
+    "manageGroups": "管理分组",
+    "doneManaging": "完成",
+    "newGroupPlaceholder": "分组名称",
+    "deleteConfirm": "确定删除此分组？"
   }
 }
