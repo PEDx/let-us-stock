@@ -124,7 +124,7 @@ function SortableTab({
             onChange={(e) => setEditName(e.target.value)}
             onBlur={handleSubmitRename}
             onKeyDown={handleKeyDown}
-            className="w-16 px-1 py-0 text-xs bg-transparent border-b border-current outline-none"
+            className="w-16 px-1 py-0 text-xs leading-none bg-transparent border-b border-current h-3 outline-none"
           />
           <button
             onClick={handleSubmitRename}

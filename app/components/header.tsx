@@ -1,5 +1,6 @@
 import { ThemeToggle } from "./theme-toggle";
 import FearGreedIndex from "./fear-greed-index";
+import { LanguageSelector } from "./language-selector";
 import { useI18n } from "~/lib/i18n";
 
 export function Header() {
@@ -29,7 +30,10 @@ export function Header() {
         <p>{t.common.appName}</p>
       </h1>
       <FearGreedIndex />
-      <ThemeToggle />
+      <div className='flex items-center gap-2'>
+        <LanguageSelector />
+        <ThemeToggle />
+      </div>
     </header>
   );
 }

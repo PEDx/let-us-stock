@@ -53,9 +53,9 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       aria-label='切换主题'>
       {theme === "dark" ? (
-        <Sun className='size-4' />
+        <Sun className='size-3' />
       ) : (
-        <Moon className='size-4' />
+        <Moon className='size-3' />
       )}
     </Button>
   );

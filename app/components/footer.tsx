@@ -1,5 +1,4 @@
 import { ArrowUp } from "lucide-react";
-import { LanguageSelector } from "./language-selector";
 import { useI18n } from "~/lib/i18n";
 
 export function Footer() {
@@ -12,7 +11,6 @@ export function Footer() {
           &copy; {new Date().getFullYear()} {t.common.copyright}
         </p>
 
-        <LanguageSelector />
         <a
           href='#'
           className='got-to-top text-muted-foreground flex items-center gap-2 text-xs'>
