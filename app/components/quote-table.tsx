@@ -9,6 +9,8 @@ import {
 } from "./ui/table";
 import { cn } from "~/lib/utils";
 import { useI18n } from "~/lib/i18n";
+import { X } from "lucide-react";
+import { ConfirmPopover } from "./confirm-popover";
 
 function truncateToTwoDecimals(
   value: number | string,
@@ -51,29 +53,35 @@ const formatMarketCap = (marketCap: number) => {
   return truncateToTwoDecimals(marketCap);
 };
 
-export function QuoteTable({ quotes }: { quotes: Quote[] }) {
+interface QuoteTableProps {
+  quotes: Quote[];
+  onRemoveSymbol?: (symbol: string) => void;
+}
+
+export function QuoteTable({ quotes, onRemoveSymbol }: QuoteTableProps) {
   const { t } = useI18n();
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className=''>{t.table.symbol}</TableHead>
+          <TableHead className="">{t.table.symbol}</TableHead>
           <TableHead>{t.table.name}</TableHead>
           <TableHead>{t.table.price}</TableHead>
           <TableHead>{t.table.change}</TableHead>
-          <TableHead className=''>{t.table.percentChange}</TableHead>
+          <TableHead className="">{t.table.percentChange}</TableHead>
           <TableHead>{t.table.trailingPE}</TableHead>
           <TableHead>{t.table.forwardPE}</TableHead>
           <TableHead>{t.table.priceToBook}</TableHead>
           <TableHead>{t.table.marketCap}</TableHead>
+          {onRemoveSymbol && <TableHead className="w-10"></TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {quotes.map((quote) => (
-          <TableRow key={quote.symbol}>
-            <TableCell className=''>
-              <span className='rounded-xs border border-blue-500 px-1 text-blue-600'>
+          <TableRow key={quote.symbol} className="group">
+            <TableCell className="">
+              <span className="rounded-xs border border-blue-500 px-1 text-blue-600">
                 {quote.symbol}
               </span>
             </TableCell>
@@ -94,6 +102,15 @@ export function QuoteTable({ quotes }: { quotes: Quote[] }) {
             <TableCell>{truncateToTwoDecimals(quote.forwardPE)}</TableCell>
             <TableCell>{truncateToTwoDecimals(quote.priceToBook)}</TableCell>
             <TableCell>{formatMarketCap(quote.marketCap)}</TableCell>
+            {onRemoveSymbol && (
+              <TableCell>
+                <ConfirmPopover onConfirm={() => onRemoveSymbol(quote.symbol)}>
+                  <span className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500">
+                    <X className="size-3" />
+                  </span>
+                </ConfirmPopover>
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>

@@ -30,5 +30,17 @@
     "neutral": "neutral 😐",
     "bearish": "bearish 😟",
     "extremelyBearish": "extremely bearish 😱"
+  },
+  "stockSearch": {
+    "placeholder": "Search stocks by symbol or name...",
+    "add": "Add",
+    "added": "Added",
+    "remove": "Remove",
+    "noResults": "No results found"
+  },
+  "confirm": {
+    "deleteMessage": "Remove this stock?",
+    "delete": "Remove",
+    "cancel": "Cancel"
   }
 }

@@ -30,5 +30,17 @@
     "neutral": "中性 😐",
     "bearish": "恐惧 😟",
     "extremelyBearish": "极度恐惧 😱"
+  },
+  "stockSearch": {
+    "placeholder": "搜索股票代码或名称...",
+    "add": "添加",
+    "added": "已添加",
+    "remove": "移除",
+    "noResults": "未找到结果"
+  },
+  "confirm": {
+    "deleteMessage": "确定移除此股票？",
+    "delete": "移除",
+    "cancel": "取消"
   }
 }
