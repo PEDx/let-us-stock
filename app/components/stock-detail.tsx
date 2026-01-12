@@ -121,7 +121,6 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
 
           {/* 迷你图 */}
           <div className="rounded border p-2">
-            <div className="mb-1 text-muted-foreground">{t.stockDetail.chart90d}</div>
             <MiniChart symbol={symbol} initialData={chart} />
           </div>
 

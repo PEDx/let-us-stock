@@ -45,7 +45,6 @@
   },
   "stockDetail": {
     "loading": "加载中...",
-    "chart90d": "90天走势",
     "open": "开盘",
     "prevClose": "昨收",
     "dayRange": "日内区间",
