@@ -94,10 +94,11 @@ const formatMarketCap = (marketCap: number) => {
 interface SortableRowProps {
   quote: Quote;
   onRemoveSymbol?: (symbol: string) => void;
+  onSymbolClick?: (symbol: string, event: React.MouseEvent) => void;
   t: ReturnType<typeof useI18n>["t"];
 }
 
-function SortableRow({ quote, onRemoveSymbol, t }: SortableRowProps) {
+function SortableRow({ quote, onRemoveSymbol, onSymbolClick, t }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -126,9 +127,11 @@ function SortableRow({ quote, onRemoveSymbol, t }: SortableRowProps) {
         </span>
       </TableCell>
       <TableCell>
-        <span className="rounded-xs border border-blue-500 px-1 text-blue-600">
+        <button
+          onClick={(e) => onSymbolClick?.(quote.symbol, e)}
+          className="rounded-xs border border-blue-500 px-1 text-blue-600 hover:bg-blue-500/10 cursor-pointer">
           {quote.symbol}
-        </span>
+        </button>
       </TableCell>
       <TableCell>{quote.longName}</TableCell>
       <TableCell>{quote.regularMarketPrice}</TableCell>
@@ -162,12 +165,14 @@ interface QuoteTableProps {
   quotes: Quote[];
   onRemoveSymbol?: (symbol: string) => void;
   onReorder?: (newOrder: string[]) => void;
+  onSymbolClick?: (symbol: string, event: React.MouseEvent) => void;
 }
 
 export function QuoteTable({
   quotes,
   onRemoveSymbol,
   onReorder,
+  onSymbolClick,
 }: QuoteTableProps) {
   const { t } = useI18n();
 
@@ -224,6 +229,7 @@ export function QuoteTable({
                 key={quote.symbol}
                 quote={quote}
                 onRemoveSymbol={onRemoveSymbol}
+                onSymbolClick={onSymbolClick}
                 t={t}
               />
             ))}

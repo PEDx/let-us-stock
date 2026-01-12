@@ -42,5 +42,20 @@
     "deleteMessage": "Remove this stock?",
     "delete": "Remove",
     "cancel": "Cancel"
+  },
+  "stockDetail": {
+    "loading": "Loading...",
+    "chart90d": "90 Day Chart",
+    "open": "Open",
+    "prevClose": "Prev Close",
+    "dayRange": "Day Range",
+    "weekRange52": "52W Range",
+    "volume": "Volume",
+    "avgVolume": "Avg Volume",
+    "marketCap": "Market Cap",
+    "pe": "P/E Ratio",
+    "eps": "EPS",
+    "beta": "Beta",
+    "about": "About"
   }
 }

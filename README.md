@@ -6,9 +6,6 @@
 
 https://jsr.io/@gadicc/yahoo-finance2
 
-## shadcn-ui doc
-
-https://ui.shadcn.com/docs/components/badge
 
 ## 📦 安装
 

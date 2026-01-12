@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { QuoteTable } from "~/components/quote-table";
 import { StockSearch } from "~/components/stock-search";
+import { StockDetail } from "~/components/stock-detail";
 import {
   getSymbols,
   addSymbol,
@@ -19,10 +20,16 @@ export function meta() {
   ];
 }
 
+interface OpenWindow {
+  symbol: string;
+  position: { x: number; y: number };
+}
+
 export default function Home() {
   const [symbols, setSymbols] = useState<string[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
 
   // 获取行情数据
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
@@ -90,6 +97,28 @@ export default function Home() {
     await reorderSymbols(newOrder);
   };
 
+  // 点击股票代码打开详情窗口
+  const handleSymbolClick = (symbol: string, event: React.MouseEvent) => {
+    // 检查是否已经打开
+    if (openWindows.some((w) => w.symbol === symbol)) {
+      return;
+    }
+
+    // 计算新窗口位置（基于点击位置，稍微偏移）
+    const offset = openWindows.length * 30;
+    const position = {
+      x: Math.min(event.clientX + 20 + offset, window.innerWidth - 400),
+      y: Math.min(event.clientY - 50 + offset, window.innerHeight - 450),
+    };
+
+    setOpenWindows((prev) => [...prev, { symbol, position }]);
+  };
+
+  // 关闭详情窗口
+  const handleCloseWindow = (symbol: string) => {
+    setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol));
+  };
+
   return (
     <main className="page-area my-2">
       <div className="mb-4">
@@ -105,8 +134,19 @@ export default function Home() {
           quotes={quotes}
           onRemoveSymbol={handleRemoveSymbol}
           onReorder={handleReorder}
+          onSymbolClick={handleSymbolClick}
         />
       )}
+
+      {/* 股票详情弹窗 */}
+      {openWindows.map((window) => (
+        <StockDetail
+          key={window.symbol}
+          symbol={window.symbol}
+          position={window.position}
+          onClose={() => handleCloseWindow(window.symbol)}
+        />
+      ))}
     </main>
   );
 }

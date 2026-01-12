@@ -42,5 +42,20 @@
     "deleteMessage": "确定移除此股票？",
     "delete": "移除",
     "cancel": "取消"
+  },
+  "stockDetail": {
+    "loading": "加载中...",
+    "chart90d": "90天走势",
+    "open": "开盘",
+    "prevClose": "昨收",
+    "dayRange": "日内区间",
+    "weekRange52": "52周区间",
+    "volume": "成交量",
+    "avgVolume": "平均成交量",
+    "marketCap": "市值",
+    "pe": "市盈率",
+    "eps": "每股收益",
+    "beta": "Beta系数",
+    "about": "公司简介"
   }
 }
