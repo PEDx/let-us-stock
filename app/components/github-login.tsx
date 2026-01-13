@@ -12,7 +12,9 @@ import {
   Cloud,
   CloudOff,
   CloudUpload,
+  Download,
 } from "lucide-react";
+import { exportData } from "~/lib/export";
 import { cn } from "~/lib/utils";
 
 export function GitHubLogin() {
@@ -77,6 +79,12 @@ export function GitHubLogin() {
                   {user.name || user.login}
                 </div>
                 <hr className='my-1' />
+                <button
+                  onClick={exportData}
+                  className='flex w-full items-center gap-2 rounded-xs px-2 py-1 text-xs hover:bg-muted'>
+                  <Download className='size-3' />
+                  {t.sync.exportData}
+                </button>
                 <Popover.Close
                   onClick={logout}
                   className='flex w-full items-center gap-2 rounded-xs px-2 py-1 text-xs text-red-600 hover:bg-red-500/10'>

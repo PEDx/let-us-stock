@@ -72,7 +72,8 @@
     "disconnected": "Not connected",
     "syncing": "Syncing...",
     "syncSuccess": "Sync successful",
-    "syncError": "Sync failed"
+    "syncError": "Sync failed",
+    "exportData": "Download Backup"
   },
   "timezone": {
     "cn": "China",
