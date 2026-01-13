@@ -1,145 +1,95 @@
 /**
  * GitHub Gist 存储适配器
+ * 通过 /api/sync 端点与 GitHub API 交互，而不是直接调用
  */
 
 import type { StorageAdapter, GroupsData } from "./types";
 import { DEFAULT_GROUPS_DATA } from "./types";
 
-const GIST_FILENAME = "let-us-stock-data.json";
-const GIST_DESCRIPTION = "Let Us Stock - Data Storage (Do not delete)";
-
-interface GistFile {
-  filename: string;
-  content: string;
-}
-
-interface Gist {
-  id: string;
-  description: string;
-  files: Record<string, GistFile>;
-  updated_at: string;
-}
-
-interface StoredData {
-  version: number;
-  updatedAt: string;
-  data: GroupsData;
+interface SyncResponse {
+  data: GroupsData | null;
+  updatedAt?: string;
+  gistId: string | null;
+  success?: boolean;
+  error?: string;
 }
 
 export class GistStorageAdapter implements StorageAdapter {
-  private accessToken: string;
   private gistId: string | null = null;
-  private cachedData: StoredData | null = null;
 
-  constructor(accessToken: string, gistId?: string) {
-    this.accessToken = accessToken;
+  constructor(gistId?: string) {
     this.gistId = gistId || null;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<T> {
-    const response = await fetch(`https://api.github.com${endpoint}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        Accept: "application/vnd.github.v3+json",
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`GitHub API error: ${response.status}`);
-    }
-
-    return response.json();
-  }
-
   /**
-   * 查找或创建数据 Gist
+   * 从 /api/sync 获取数据
    */
-  async findOrCreateGist(): Promise<string> {
-    if (this.gistId) return this.gistId;
-
-    // 查找已存在的 Gist
-    const gists = await this.request<Gist[]>("/gists?per_page=100");
-    const existingGist = gists.find(
-      (g) => g.description === GIST_DESCRIPTION && g.files[GIST_FILENAME],
-    );
-
-    if (existingGist) {
-      this.gistId = existingGist.id;
-      return this.gistId;
-    }
-
-    // 创建新 Gist
-    const initialData: StoredData = {
-      version: 1,
-      updatedAt: new Date().toISOString(),
-      data: DEFAULT_GROUPS_DATA,
-    };
-
-    const newGist = await this.request<Gist>("/gists", {
-      method: "POST",
-      body: JSON.stringify({
-        description: GIST_DESCRIPTION,
-        public: false,
-        files: {
-          [GIST_FILENAME]: {
-            content: JSON.stringify(initialData, null, 2),
-          },
-        },
-      }),
-    });
-
-    this.gistId = newGist.id;
-    return this.gistId;
-  }
-
   async getGroupsData(): Promise<GroupsData> {
     try {
-      const gistId = await this.findOrCreateGist();
-      const gist = await this.request<Gist>(`/gists/${gistId}`);
+      const response = await fetch("/api/sync");
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Not authenticated");
+        }
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
 
-      const file = gist.files[GIST_FILENAME];
-      if (!file) {
+      const result: SyncResponse = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // 保存 gistId
+      if (result.gistId) {
+        this.gistId = result.gistId;
+      }
+
+      // 如果没有数据，返回默认数据
+      if (!result.data) {
         return DEFAULT_GROUPS_DATA;
       }
 
-      const storedData: StoredData = JSON.parse(file.content);
-      this.cachedData = storedData;
-
-      return storedData.data;
+      return result.data;
     } catch (error) {
       console.error("Failed to get data from Gist:", error);
       return DEFAULT_GROUPS_DATA;
     }
   }
 
+  /**
+   * 保存数据到 /api/sync
+   */
   async saveGroupsData(data: GroupsData): Promise<void> {
     try {
-      const gistId = await this.findOrCreateGist();
-
-      const storedData: StoredData = {
-        version: 1,
-        updatedAt: new Date().toISOString(),
-        data,
-      };
-
-      await this.request(`/gists/${gistId}`, {
-        method: "PATCH",
+      const response = await fetch("/api/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          files: {
-            [GIST_FILENAME]: {
-              content: JSON.stringify(storedData, null, 2),
-            },
-          },
+          data,
+          gistId: this.gistId,
         }),
       });
 
-      this.cachedData = storedData;
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error("Not authenticated");
+        }
+        throw new Error(`Failed to save: ${response.status}`);
+      }
+
+      const result: SyncResponse = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // 更新 gistId（如果是新创建的）
+      if (result.gistId) {
+        this.gistId = result.gistId;
+      }
     } catch (error) {
       console.error("Failed to save data to Gist:", error);
       throw error;
@@ -151,17 +101,54 @@ export class GistStorageAdapter implements StorageAdapter {
    */
   async getRemoteUpdatedAt(): Promise<string | null> {
     try {
-      const gistId = await this.findOrCreateGist();
-      const gist = await this.request<Gist>(`/gists/${gistId}`);
-      const file = gist.files[GIST_FILENAME];
+      const response = await fetch("/api/sync");
+      if (!response.ok) {
+        return null;
+      }
 
-      if (!file) return null;
+      const result: SyncResponse = await response.json();
+      
+      if (result.error || !result.data) {
+        return null;
+      }
 
-      const storedData: StoredData = JSON.parse(file.content);
-      return storedData.updatedAt;
+      // 保存 gistId
+      if (result.gistId) {
+        this.gistId = result.gistId;
+      }
+
+      return result.updatedAt || null;
     } catch {
       return null;
     }
+  }
+
+  /**
+   * 查找或创建 Gist（通过保存数据自动完成）
+   * 注意：GET 请求不会创建 Gist，只有 POST 请求才会创建
+   */
+  async findOrCreateGist(): Promise<string> {
+    if (this.gistId) return this.gistId;
+
+    // 先尝试获取数据，看是否已有 Gist
+    try {
+      await this.getGroupsData();
+      if (this.gistId) {
+        return this.gistId;
+      }
+    } catch {
+      // 忽略错误，继续创建
+    }
+
+    // 如果没有 gistId，通过保存数据来创建新的 Gist
+    // 这会触发 POST 请求，服务端会自动创建新的 Gist
+    await this.saveGroupsData(DEFAULT_GROUPS_DATA);
+
+    if (!this.gistId) {
+      throw new Error("Failed to create or find Gist");
+    }
+
+    return this.gistId;
   }
 
   getGistId(): string | null {

@@ -7,6 +7,7 @@ import {
   useEffect,
   useCallback,
 } from "react";
+import { storage } from "./storage";
 
 export interface AuthUser {
   id: number;
@@ -39,9 +40,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch("/api/auth/me");
       const data = await response.json();
-      setUser(data.user);
+      
+      if (data.user) {
+        // 用户已登录，设置远程存储
+        if (!storage.isRemoteConnected()) {
+          storage.setRemote();
+        }
+        setUser(data.user);
+      } else {
+        // 用户未登录，清除远程存储
+        if (storage.isRemoteConnected()) {
+          storage.clearRemote();
+        }
+        setUser(null);
+      }
     } catch (error) {
       console.error("Failed to fetch user:", error);
+      // 出错时也清除远程存储
+      if (storage.isRemoteConnected()) {
+        storage.clearRemote();
+      }
       setUser(null);
     } finally {
       setIsLoading(false);

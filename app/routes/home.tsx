@@ -17,6 +17,7 @@ import {
   reorderSymbolsInGroup,
   type GroupsData,
 } from "~/lib/stock-store";
+import { useAuth } from "~/lib/auth";
 import type { Quote } from "yahoo-finance2/modules/quote";
 import { Loader2 } from "lucide-react";
 
@@ -56,6 +57,7 @@ interface OpenWindow {
 }
 
 export default function Home() {
+  const { user, isLoading: authLoading } = useAuth();
   const [groupsData, setGroupsData] = useState<GroupsData | null>(null);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,20 +97,33 @@ export default function Home() {
     }
   }, []);
 
-  // 初始化加载
+  // 初始化加载 - 等待登录态检查完成
   useEffect(() => {
+    // 等待登录态检查完成
+    if (authLoading) {
+      return;
+    }
+
     async function init() {
-      const data = await getGroupsData();
-      setGroupsData(data);
-      const group = data.groups.find((g) => g.id === data.activeGroupId);
-      if (group) {
-        await fetchQuotes(group.symbols);
-      } else {
+      try {
+        // 加载数据（会根据登录态自动选择本地或远程数据）
+        // auth.tsx 已经处理了远程存储的设置和清除
+        const data = await getGroupsData();
+        setGroupsData(data);
+        const group = data.groups.find((g) => g.id === data.activeGroupId);
+        if (group) {
+          await fetchQuotes(group.symbols);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Failed to initialize:", error);
         setIsLoading(false);
       }
     }
+
     init();
-  }, [fetchQuotes]);
+  }, [authLoading, fetchQuotes]);
 
   // 切换分组时重新获取行情
   const handleSelectGroup = async (groupId: string) => {

@@ -27,8 +27,8 @@ export const storage = {
   getGroupsData: () => syncStorage.getGroupsData(),
   saveGroupsData: (data: Parameters<SyncStorageAdapter["saveGroupsData"]>[0]) =>
     syncStorage.saveGroupsData(data),
-  setRemote: (accessToken: string, gistId?: string) =>
-    syncStorage.setRemote(accessToken, gistId),
+  setRemote: () =>
+    syncStorage.setRemote(),
   clearRemote: () => syncStorage.clearRemote(),
   forcePull: () => syncStorage.forcePull(),
   forcePush: () => syncStorage.forcePush(),

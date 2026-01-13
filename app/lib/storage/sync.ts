@@ -33,8 +33,12 @@ export class SyncStorageAdapter implements StorageAdapter {
   /**
    * 设置远程存储（登录后调用）
    */
-  setRemote(accessToken: string, gistId?: string): void {
-    this.remote = new GistStorageAdapter(accessToken, gistId);
+  setRemote(): void {
+    if (this.remote) {
+      return;
+    }
+    this.remote = new GistStorageAdapter();
+    console.log("setRemote", this.remote);
   }
 
   /**
