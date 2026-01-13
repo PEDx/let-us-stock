@@ -12,6 +12,8 @@ import "./app.css";
 import { Header } from "./components/header";
 import { Footer } from "./components/footer";
 import { I18nProvider, useI18n } from "./lib/i18n";
+import { AuthProvider } from "./lib/auth";
+import FearGreedIndex from "./components/fear-greed-index";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -37,9 +39,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <I18nProvider>
-          <Header />
-          {children}
-          <Footer />
+          <AuthProvider>
+            <Header />
+            {children}
+            <div className='page-area'>
+              <FearGreedIndex />
+            </div>
+            <Footer />
+          </AuthProvider>
         </I18nProvider>
         <ScrollRestoration />
         <Scripts />

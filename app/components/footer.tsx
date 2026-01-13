@@ -10,7 +10,6 @@ export function Footer() {
         <p className='text-muted-foreground text-xs'>
           &copy; {new Date().getFullYear()} {t.common.copyright}
         </p>
-
         <a
           href='#'
           className='got-to-top text-muted-foreground flex items-center gap-2 text-xs'>

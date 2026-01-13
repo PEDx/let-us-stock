@@ -5,43 +5,33 @@
  * import { storage } from "~/lib/storage";
  * const data = await storage.getGroupsData();
  *
- * 切换存储实现：
- * import { setStorage, IndexedDBAdapter } from "~/lib/storage";
- * setStorage(new IndexedDBAdapter());
+ * 登录后启用同步：
+ * import { storage } from "~/lib/storage";
+ * storage.setRemote(accessToken);
  */
 
 export * from "./types";
 export { IndexedDBAdapter } from "./indexeddb";
+export { GistStorageAdapter } from "./gist";
+export { SyncStorageAdapter } from "./sync";
 
-import type { StorageAdapter } from "./types";
-import { IndexedDBAdapter } from "./indexeddb";
+import { SyncStorageAdapter } from "./sync";
 
-// 默认使用 IndexedDB
-let currentStorage: StorageAdapter = new IndexedDBAdapter();
-
-/**
- * 获取当前存储实例
- */
-export function getStorage(): StorageAdapter {
-  return currentStorage;
-}
+// 使用同步存储适配器
+const syncStorage = new SyncStorageAdapter();
 
 /**
- * 设置存储实现
- * @param adapter 新的存储适配器
- */
-export function setStorage(adapter: StorageAdapter): void {
-  currentStorage = adapter;
-}
-
-/**
- * 默认存储实例（便捷导出）
+ * 默认存储实例
  */
 export const storage = {
-  get current() {
-    return currentStorage;
-  },
-  getGroupsData: () => currentStorage.getGroupsData(),
-  saveGroupsData: (data: Parameters<StorageAdapter["saveGroupsData"]>[0]) =>
-    currentStorage.saveGroupsData(data),
+  getGroupsData: () => syncStorage.getGroupsData(),
+  saveGroupsData: (data: Parameters<SyncStorageAdapter["saveGroupsData"]>[0]) =>
+    syncStorage.saveGroupsData(data),
+  setRemote: (accessToken: string, gistId?: string) =>
+    syncStorage.setRemote(accessToken, gistId),
+  clearRemote: () => syncStorage.clearRemote(),
+  forcePull: () => syncStorage.forcePull(),
+  forcePush: () => syncStorage.forcePush(),
+  isRemoteConnected: () => syncStorage.isRemoteConnected(),
+  getGistId: () => syncStorage.getGistId(),
 };

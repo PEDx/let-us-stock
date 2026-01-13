@@ -64,5 +64,14 @@
     "doneManaging": "Done",
     "newGroupPlaceholder": "Group name",
     "deleteConfirm": "Delete this group?"
+  },
+  "sync": {
+    "login": "Login to Sync",
+    "logout": "Logout",
+    "connected": "Cloud connected",
+    "disconnected": "Not connected",
+    "syncing": "Syncing...",
+    "syncSuccess": "Sync successful",
+    "syncError": "Sync failed"
   }
 }
