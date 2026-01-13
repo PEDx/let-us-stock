@@ -83,7 +83,7 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
       minWidth={300}
       minHeight={250}>
       {isLoading && !summary ? (
-        <div className="flex h-full items-center justify-center">
+        <div className="flex h-full items-center justify-center min-h-100">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
