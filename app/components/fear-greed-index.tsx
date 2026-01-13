@@ -56,16 +56,12 @@ export default function FearGreedIndex() {
 
   return (
     <div
+      title={t.sentiment.marketSentiment}
       className={cn(
-        "text-muted-foreground rounded-xs border px-1 py-0.5 text-xs",
-        loaded
-          ? "text-inherit"
-          : "animate-pulse bg-gray-500/15 text-transparent",
+        "cursor-help rounded-xs border px-1.5 py-0.5 text-xs",
+        loaded ? color : "animate-pulse bg-gray-500/15 text-transparent",
       )}>
-      {t.sentiment.marketSentiment}:{" "}
-      <strong className={cn(loaded ? color : "text-transparent")}>
-        {text}
-      </strong>
+      {text}
     </div>
   );
 }

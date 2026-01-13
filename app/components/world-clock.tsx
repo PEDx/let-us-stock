@@ -118,7 +118,7 @@ export function WorldClock({
   }
 
   return (
-    <div className={cn("flex items-center text-xs", className)}>
+    <div className={cn("flex items-center text-xs shrink-0", className)}>
       {/* 时间显示 */}
       <div className='flex items-center gap-1.5 rounded-xs border border-r-0 px-1.5 py-0.5'>
         <span className='font-mono tabular-nums'>{formatTime()}</span>
