@@ -108,7 +108,7 @@ export function StockSearch({
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute left-0 top-full z-50 mt-0.5 min-w-60 rounded-xs border bg-popover text-xs shadow-md">
+        <div className="absolute left-0 top-full z-50 mt-0.5 w-full rounded-xs border bg-popover text-xs shadow-md">
           <ul className="max-h-48 overflow-auto">
             {results.map((result) => {
               const added = isAlreadyAdded(result.symbol);

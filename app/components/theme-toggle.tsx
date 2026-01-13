@@ -47,16 +47,15 @@ export function ThemeToggle() {
   }
 
   return (
-    <Button
-      variant='ghost'
-      size='sm'
+    <button
       onClick={toggleTheme}
-      aria-label='切换主题'>
+      className='flex items-center gap-0.5 px-1.5 py-1 text-xs rounded-xs border transition-colors text-muted-foreground hover:text-foreground shrink-0'
+      aria-label='toggle dark mode'>
       {theme === "dark" ? (
         <Sun className='size-3' />
       ) : (
         <Moon className='size-3' />
       )}
-    </Button>
+    </button>
   );
 }

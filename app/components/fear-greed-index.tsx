@@ -57,7 +57,7 @@ export default function FearGreedIndex() {
   return (
     <div
       className={cn(
-        "text-muted-foreground rounded-xs border px-1 text-xs",
+        "text-muted-foreground rounded-xs border px-1 py-0.5 text-xs",
         loaded
           ? "text-inherit"
           : "animate-pulse bg-gray-500/15 text-transparent",
