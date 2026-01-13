@@ -1,94 +1,22 @@
 /**
- * 使用 IndexedDB 存储用户的股票列表和分组
+ * 股票数据存储业务逻辑层
+ * 底层使用可替换的存储适配器
  */
 
-const DB_NAME = "let-us-stock";
-const DB_VERSION = 2;
-const STORE_NAME = "data";
+import { storage } from "./storage";
+import type { Group, GroupsData } from "./storage";
 
-// 默认股票列表
-const DEFAULT_SYMBOLS = [
-  "AAPL",
-  "TSLA",
-  "GOOG",
-  "MSFT",
-  "NVDA",
-  "META",
-  "AMZN",
-  "NFLX",
-  "QQQ",
-  "BTC-USD",
-];
-
-export interface Group {
-  id: string;
-  name: string;
-  symbols: string[];
-}
-
-export interface GroupsData {
-  groups: Group[];
-  activeGroupId: string;
-}
-
-const DEFAULT_GROUPS_DATA: GroupsData = {
-  groups: [{ id: "default", name: "default", symbols: DEFAULT_SYMBOLS }],
-  activeGroupId: "default",
-};
-
-function openDB(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      // 删除旧的 store
-      if (db.objectStoreNames.contains("symbols")) {
-        db.deleteObjectStore("symbols");
-      }
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "id" });
-      }
-    };
-  });
-}
+// 重新导出类型供外部使用
+export type { Group, GroupsData };
 
 // ============ Groups API ============
 
 export async function getGroupsData(): Promise<GroupsData> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readonly");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get("groups-data");
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const result = request.result;
-      if (result && result.data && result.data.groups?.length > 0) {
-        resolve(result.data);
-      } else {
-        // 返回默认值并保存
-        saveGroupsData(DEFAULT_GROUPS_DATA);
-        resolve(DEFAULT_GROUPS_DATA);
-      }
-    };
-  });
+  return storage.getGroupsData();
 }
 
 export async function saveGroupsData(data: GroupsData): Promise<void> {
-  const db = await openDB();
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(STORE_NAME, "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.put({ id: "groups-data", data });
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve();
-  });
+  return storage.saveGroupsData(data);
 }
 
 export async function addGroup(name: string): Promise<GroupsData> {
