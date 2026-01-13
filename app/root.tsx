@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { WorldClock } from "./components/world-clock";
 import "./app.css";
 import { Header } from "./components/header";
 import { Footer } from "./components/footer";
@@ -42,8 +43,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <AuthProvider>
             <Header />
             {children}
-            <div className='page-area'>
+            <div className='page-area flex items-center justify-between'>
               <FearGreedIndex />
+              <WorldClock />
             </div>
             <Footer />
           </AuthProvider>

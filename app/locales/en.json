@@ -73,5 +73,12 @@
     "syncing": "Syncing...",
     "syncSuccess": "Sync successful",
     "syncError": "Sync failed"
+  },
+  "timezone": {
+    "cn": "China",
+    "usEast": "US East",
+    "usCentral": "US Central",
+    "usMountain": "US Mountain",
+    "usPacific": "US Pacific"
   }
 }

@@ -73,5 +73,12 @@
     "syncing": "同步中...",
     "syncSuccess": "同步成功",
     "syncError": "同步失败"
+  },
+  "timezone": {
+    "cn": "中国",
+    "usEast": "美东",
+    "usCentral": "美中",
+    "usMountain": "美山",
+    "usPacific": "美西"
   }
 }
