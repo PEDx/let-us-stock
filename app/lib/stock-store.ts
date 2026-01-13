@@ -20,7 +20,8 @@ export async function saveGroupsData(data: GroupsData): Promise<void> {
 }
 
 export async function addGroup(name: string): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const newGroup: Group = {
     id: `group-${Date.now()}`,
     name,
@@ -33,7 +34,8 @@ export async function addGroup(name: string): Promise<GroupsData> {
 }
 
 export async function removeGroup(groupId: string): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   // 不能删除最后一个分组
   if (data.groups.length <= 1) {
     return data;
@@ -54,7 +56,8 @@ export async function renameGroup(
   groupId: string,
   newName: string,
 ): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const group = data.groups.find((g) => g.id === groupId);
   if (group) {
     group.name = newName;
@@ -64,7 +67,8 @@ export async function renameGroup(
 }
 
 export async function reorderGroups(newOrder: string[]): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const groupsMap = new Map(data.groups.map((g) => [g.id, g]));
   data.groups = newOrder.map((id) => groupsMap.get(id)!).filter(Boolean);
   await saveGroupsData(data);
@@ -72,10 +76,11 @@ export async function reorderGroups(newOrder: string[]): Promise<GroupsData> {
 }
 
 export async function setActiveGroup(groupId: string): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 切换 tab 是纯本地操作，不需要触发任何远端同步
+  const data = await storage.getLocalOnly();
   if (data.groups.some((g) => g.id === groupId)) {
     data.activeGroupId = groupId;
-    await saveGroupsData(data);
+    await storage.saveLocalOnly(data);
   }
   return data;
 }
@@ -86,7 +91,8 @@ export async function addSymbolToGroup(
   groupId: string,
   symbol: string,
 ): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const group = data.groups.find((g) => g.id === groupId);
   if (group) {
     const upperSymbol = symbol.toUpperCase();
@@ -102,7 +108,8 @@ export async function removeSymbolFromGroup(
   groupId: string,
   symbol: string,
 ): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const group = data.groups.find((g) => g.id === groupId);
   if (group) {
     group.symbols = group.symbols.filter((s) => s !== symbol.toUpperCase());
@@ -115,7 +122,8 @@ export async function reorderSymbolsInGroup(
   groupId: string,
   newOrder: string[],
 ): Promise<GroupsData> {
-  const data = await getGroupsData();
+  // 读本地数据，写同步到远端
+  const data = await storage.getLocalOnly();
   const group = data.groups.find((g) => g.id === groupId);
   if (group) {
     group.symbols = newOrder;
@@ -127,26 +135,26 @@ export async function reorderSymbolsInGroup(
 // ============ Legacy API (for backward compatibility) ============
 
 export async function getSymbols(): Promise<string[]> {
-  const data = await getGroupsData();
+  const data = await storage.getLocalOnly();
   const activeGroup = data.groups.find((g) => g.id === data.activeGroupId);
   return activeGroup?.symbols || [];
 }
 
 export async function addSymbol(symbol: string): Promise<string[]> {
-  const data = await getGroupsData();
+  const data = await storage.getLocalOnly();
   const result = await addSymbolToGroup(data.activeGroupId, symbol);
   const activeGroup = result.groups.find((g) => g.id === result.activeGroupId);
   return activeGroup?.symbols || [];
 }
 
 export async function removeSymbol(symbol: string): Promise<string[]> {
-  const data = await getGroupsData();
+  const data = await storage.getLocalOnly();
   const result = await removeSymbolFromGroup(data.activeGroupId, symbol);
   const activeGroup = result.groups.find((g) => g.id === result.activeGroupId);
   return activeGroup?.symbols || [];
 }
 
 export async function reorderSymbols(newOrder: string[]): Promise<void> {
-  const data = await getGroupsData();
+  const data = await storage.getLocalOnly();
   await reorderSymbolsInGroup(data.activeGroupId, newOrder);
 }

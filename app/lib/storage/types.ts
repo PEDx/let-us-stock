@@ -14,6 +14,13 @@ export interface GroupsData {
 }
 
 /**
+ * 远端同步的数据结构（不包含 activeGroupId）
+ */
+export interface RemoteGroupsData {
+  groups: Group[];
+}
+
+/**
  * 存储适配器接口
  * 所有存储实现都需要实现这个接口
  */

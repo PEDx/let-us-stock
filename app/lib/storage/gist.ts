@@ -1,20 +1,25 @@
 /**
  * GitHub Gist 存储适配器
- * 通过 /api/sync 端点与 GitHub API 交互，而不是直接调用
+ * 通过 /api/sync 端点与 GitHub API 交互
+ * 注意：只同步 groups，不同步 activeGroupId
  */
 
-import type { StorageAdapter, GroupsData } from "./types";
+import type { Group, RemoteGroupsData } from "./types";
 import { DEFAULT_GROUPS_DATA } from "./types";
 
 interface SyncResponse {
-  data: GroupsData | null;
+  data: RemoteGroupsData | null;
   updatedAt?: string;
   gistId: string | null;
   success?: boolean;
   error?: string;
 }
 
-export class GistStorageAdapter implements StorageAdapter {
+/**
+ * 远端存储适配器
+ * 只负责同步 groups 数据，不包含 activeGroupId
+ */
+export class GistStorageAdapter {
   private gistId: string | null = null;
 
   constructor(gistId?: string) {
@@ -22,9 +27,9 @@ export class GistStorageAdapter implements StorageAdapter {
   }
 
   /**
-   * 从 /api/sync 获取数据
+   * 从 /api/sync 获取远端分组数据
    */
-  async getGroupsData(): Promise<GroupsData> {
+  async getGroups(): Promise<Group[]> {
     try {
       const response = await fetch("/api/sync");
       if (!response.ok) {
@@ -35,7 +40,7 @@ export class GistStorageAdapter implements StorageAdapter {
       }
 
       const result: SyncResponse = await response.json();
-      
+
       if (result.error) {
         throw new Error(result.error);
       }
@@ -45,30 +50,33 @@ export class GistStorageAdapter implements StorageAdapter {
         this.gistId = result.gistId;
       }
 
-      // 如果没有数据，返回默认数据
+      // 如果没有数据，返回默认 groups
       if (!result.data) {
-        return DEFAULT_GROUPS_DATA;
+        return DEFAULT_GROUPS_DATA.groups;
       }
 
-      return result.data;
+      return result.data.groups;
     } catch (error) {
       console.error("Failed to get data from Gist:", error);
-      return DEFAULT_GROUPS_DATA;
+      return DEFAULT_GROUPS_DATA.groups;
     }
   }
 
   /**
-   * 保存数据到 /api/sync
+   * 保存分组数据到 /api/sync
+   * 只保存 groups，不保存 activeGroupId
    */
-  async saveGroupsData(data: GroupsData): Promise<void> {
+  async saveGroups(groups: Group[]): Promise<void> {
     try {
+      const remoteData: RemoteGroupsData = { groups };
+
       const response = await fetch("/api/sync", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          data,
+          data: remoteData,
           gistId: this.gistId,
         }),
       });
@@ -81,7 +89,7 @@ export class GistStorageAdapter implements StorageAdapter {
       }
 
       const result: SyncResponse = await response.json();
-      
+
       if (result.error) {
         throw new Error(result.error);
       }
@@ -107,7 +115,7 @@ export class GistStorageAdapter implements StorageAdapter {
       }
 
       const result: SyncResponse = await response.json();
-      
+
       if (result.error || !result.data) {
         return null;
       }
@@ -124,15 +132,14 @@ export class GistStorageAdapter implements StorageAdapter {
   }
 
   /**
-   * 查找或创建 Gist（通过保存数据自动完成）
-   * 注意：GET 请求不会创建 Gist，只有 POST 请求才会创建
+   * 查找或创建 Gist
    */
   async findOrCreateGist(): Promise<string> {
     if (this.gistId) return this.gistId;
 
     // 先尝试获取数据，看是否已有 Gist
     try {
-      await this.getGroupsData();
+      await this.getGroups();
       if (this.gistId) {
         return this.gistId;
       }
@@ -141,8 +148,7 @@ export class GistStorageAdapter implements StorageAdapter {
     }
 
     // 如果没有 gistId，通过保存数据来创建新的 Gist
-    // 这会触发 POST 请求，服务端会自动创建新的 Gist
-    await this.saveGroupsData(DEFAULT_GROUPS_DATA);
+    await this.saveGroups(DEFAULT_GROUPS_DATA.groups);
 
     if (!this.gistId) {
       throw new Error("Failed to create or find Gist");
