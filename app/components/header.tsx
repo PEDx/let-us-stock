@@ -1,6 +1,4 @@
 import { Link, useLocation } from "react-router";
-import { ThemeToggle } from "./theme-toggle";
-import { LanguageSelector } from "./language-selector";
 import { GitHubLogin } from "./github-login";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/utils";
@@ -23,7 +21,7 @@ export function Header() {
             key={item.path}
             to={item.path}
             className={cn(
-              "text-sm transition-colors hover:text-foreground",
+              "text-xs transition-colors hover:text-foreground",
               location.pathname === item.path
                 ? "font-medium text-foreground"
                 : "text-muted-foreground",
@@ -33,8 +31,6 @@ export function Header() {
         ))}
       </nav>
       <div className='flex items-center gap-2'>
-        <ThemeToggle />
-        <LanguageSelector />
         <GitHubLogin />
       </div>
     </header>
