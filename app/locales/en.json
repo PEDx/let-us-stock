@@ -1,9 +1,13 @@
 {
   "common": {
-    "appName": "Let US Stock",
-    "copyright": "Let Us Stock. All rights reserved.",
     "goToTop": "Go to top",
-    "changeLanguage": "Change language"
+    "changeLanguage": "Change language",
+    "copyright": "All rights reserved"
+  },
+  "nav": {
+    "market": "Market",
+    "assets": "Assets",
+    "records": "Records"
   },
   "error": {
     "oops": "Oops!",

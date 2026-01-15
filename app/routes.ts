@@ -1,7 +1,11 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
+  // Pages
   index("routes/home.tsx"),
+  route("assets", "routes/assets.tsx"),
+  route("records", "routes/records.tsx"),
+  // API routes
   route("api/search", "routes/api.search.ts"),
   route("api/quote", "routes/api.quote.ts"),
   route("api/stock-detail", "routes/api.stock-detail.ts"),

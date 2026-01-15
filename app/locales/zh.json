@@ -1,9 +1,13 @@
 {
   "common": {
-    "appName": "Let US Stock",
-    "copyright": "Let US Stock 版权所有",
     "goToTop": "回到顶部",
-    "changeLanguage": "切换语言"
+    "changeLanguage": "切换语言",
+    "copyright": "版权所有"
+  },
+  "nav": {
+    "market": "市场",
+    "assets": "资产",
+    "records": "记录"
   },
   "error": {
     "oops": "哎呀！",

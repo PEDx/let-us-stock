@@ -23,30 +23,11 @@ import { Loader2 } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "Let Us Stock - Simple Stock Tracker" },
+    { title: "Market" },
     {
       name: "description",
       content:
-        "Free stock tracking tool with real-time quotes for US stocks and crypto. Organize watchlists in groups, view charts and company details. Minimal, fast, and local-first.",
-    },
-    {
-      name: "keywords",
-      content:
-        "stock,tracker,watchlist,AAPL,TSLA,NVDA,META,crypto,BTC,real-time quotes,portfolio,investment",
-    },
-    { property: "og:title", content: "Let Us Stock - Simple Stock Tracker" },
-    {
-      property: "og:description",
-      content:
-        "Free stock tracking tool with real-time quotes, watchlist groups, and charts.",
-    },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary" },
-    { name: "twitter:title", content: "Let Us Stock" },
-    {
-      name: "twitter:description",
-      content:
-        "Simple stock tracker with real-time quotes, groups, and charts.",
+        "Free stock tracking tool with real-time quotes for US stocks and crypto.",
     },
   ];
 }
