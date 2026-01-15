@@ -23,6 +23,7 @@
 
 import { storage } from "./storage";
 import type { BookData, LedgerData, JournalEntryData, LedgerType, CurrencyCode } from "./double-entry/types";
+import { AccountType } from "./double-entry/types";
 import {
   createBook,
   addLedger as addLedgerToBook,
@@ -39,7 +40,9 @@ import {
   setExchangeRate as setExchangeRateInBook,
   addCommonTags as addCommonTagsToBook,
   removeCommonTags as removeCommonTagsFromBook,
+  findAccountsByType,
 } from "./double-entry";
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "./accounting/constants";
 
 // ============================================================================
 // 账簿操作
@@ -47,17 +50,80 @@ import {
 
 /**
  * 获取账簿数据，如果不存在则创建默认账簿
+ * @param options 初始化选项（仅在创建新账簿时使用）
  */
-export async function getBook(): Promise<BookData> {
+export async function getBook(options?: {
+  mainLedgerName?: string;
+  defaultCurrency?: CurrencyCode;
+  /** 预设分类的 i18n 翻译 */
+  categoryLabels?: Record<string, string>;
+}): Promise<BookData> {
   let book = await storage.getBookData();
 
   if (!book) {
     // 创建默认账簿
-    book = createBook({ mainLedgerName: "主账本", defaultCurrency: "CNY" });
+    book = createBook({
+      mainLedgerName: options?.mainLedgerName ?? "Main",
+      defaultCurrency: options?.defaultCurrency ?? "CNY",
+    });
+
+    // 添加预设分类
+    book = addPresetCategories(book, options?.categoryLabels);
+
     await storage.saveBookData(book);
   }
 
   return book;
+}
+
+/**
+ * 添加预设分类到主账本
+ */
+function addPresetCategories(
+  book: BookData,
+  categoryLabels?: Record<string, string>,
+): BookData {
+  const mainLedger = getMainLedger(book);
+
+  // 找到支出和收入根账户
+  const expenseRoot = findAccountsByType(mainLedger.accounts, AccountType.EXPENSES).find(
+    (a) => a.parentId === null,
+  );
+  const incomeRoot = findAccountsByType(mainLedger.accounts, AccountType.INCOME).find(
+    (a) => a.parentId === null,
+  );
+
+  if (!expenseRoot || !incomeRoot) {
+    return book;
+  }
+
+  let updatedBook = book;
+
+  // 添加支出分类
+  for (const cat of EXPENSE_CATEGORIES) {
+    const name = categoryLabels?.[cat.labelKey] ?? cat.labelKey;
+    const ledger = getMainLedger(updatedBook);
+    const updatedLedger = addAccountToLedger(ledger, {
+      name,
+      parentId: expenseRoot.id,
+      icon: cat.icon,
+    });
+    updatedBook = updateLedgerInBook(updatedBook, ledger.id, () => updatedLedger);
+  }
+
+  // 添加收入分类
+  for (const cat of INCOME_CATEGORIES) {
+    const name = categoryLabels?.[cat.labelKey] ?? cat.labelKey;
+    const ledger = getMainLedger(updatedBook);
+    const updatedLedger = addAccountToLedger(ledger, {
+      name,
+      parentId: incomeRoot.id,
+      icon: cat.icon,
+    });
+    updatedBook = updateLedgerInBook(updatedBook, ledger.id, () => updatedLedger);
+  }
+
+  return updatedBook;
 }
 
 /**

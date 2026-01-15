@@ -40,6 +40,7 @@ import {
   fromMainUnit,
   toMainUnit,
 } from "../double-entry";
+import { useI18n } from "../i18n";
 import { LAST_LEDGER_KEY } from "./constants";
 
 // ============================================================================
@@ -74,6 +75,27 @@ export interface UseBookResult {
     accountId: string,
     updates: { name?: string; icon?: string; note?: string; archived?: boolean },
   ) => Promise<void>;
+  /** 删除账户（归档） */
+  archiveAccount: (accountId: string) => Promise<void>;
+
+  // 分类操作（支出/收入账户）
+  /** 支出分类列表 */
+  expenseCategories: AccountData[];
+  /** 收入分类列表 */
+  incomeCategories: AccountData[];
+  /** 添加分类 */
+  addCategory: (params: {
+    type: "expense" | "income";
+    name: string;
+    icon?: string;
+  }) => Promise<void>;
+  /** 更新分类 */
+  updateCategory: (
+    categoryId: string,
+    updates: { name?: string; icon?: string },
+  ) => Promise<void>;
+  /** 删除分类（归档） */
+  archiveCategory: (categoryId: string) => Promise<void>;
 
   // 账本操作
   /** 获取所有活跃账本 */
@@ -117,6 +139,7 @@ export interface UseBookResult {
 // ============================================================================
 
 export function useBook(): UseBookResult {
+  const { t } = useI18n();
   const [book, setBook] = useState<BookData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLedgerId, setCurrentLedgerIdState] = useState<string | null>(null);
@@ -125,7 +148,10 @@ export function useBook(): UseBookResult {
   const loadBook = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await getBook();
+      const data = await getBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(data);
 
       // 恢复上次使用的账本
@@ -140,7 +166,7 @@ export function useBook(): UseBookResult {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t.records.defaultLedger, t.records.categories]);
 
   useEffect(() => {
     loadBook();
@@ -241,6 +267,81 @@ export function useBook(): UseBookResult {
       if (!book) return;
       const mainLedgerId = book.mainLedgerId;
       const updatedBook = await updateAccountInfo(mainLedgerId, accountId, updates);
+      setBook(updatedBook);
+    },
+    [book],
+  );
+
+  // 归档账户
+  const archiveAccount = useCallback(
+    async (accountId: string) => {
+      if (!book) return;
+      const mainLedgerId = book.mainLedgerId;
+      const updatedBook = await updateAccountInfo(mainLedgerId, accountId, {
+        archived: true,
+      });
+      setBook(updatedBook);
+    },
+    [book],
+  );
+
+  // 分类列表（支出/收入账户的子账户）
+  const expenseCategories = useMemo(() => {
+    if (!mainLedger) return [];
+    return findAccountsByType(mainLedger.accounts, AccountType.EXPENSES).filter(
+      (a) => a.parentId !== null && !a.archived,
+    );
+  }, [mainLedger]);
+
+  const incomeCategories = useMemo(() => {
+    if (!mainLedger) return [];
+    return findAccountsByType(mainLedger.accounts, AccountType.INCOME).filter(
+      (a) => a.parentId !== null && !a.archived,
+    );
+  }, [mainLedger]);
+
+  // 添加分类
+  const addCategory = useCallback(
+    async (params: { type: "expense" | "income"; name: string; icon?: string }) => {
+      if (!mainLedger) return;
+      // 找到对应的根账户
+      const rootAccount = mainLedger.accounts.find(
+        (a) =>
+          a.type ===
+            (params.type === "expense" ? AccountType.EXPENSES : AccountType.INCOME) &&
+          a.parentId === null,
+      );
+      if (!rootAccount) return;
+
+      const updatedBook = await addAccountToMain({
+        name: params.name,
+        parentId: rootAccount.id,
+        icon: params.icon,
+      });
+      setBook(updatedBook);
+    },
+    [mainLedger],
+  );
+
+  // 更新分类
+  const updateCategory = useCallback(
+    async (categoryId: string, updates: { name?: string; icon?: string }) => {
+      if (!book) return;
+      const mainLedgerId = book.mainLedgerId;
+      const updatedBook = await updateAccountInfo(mainLedgerId, categoryId, updates);
+      setBook(updatedBook);
+    },
+    [book],
+  );
+
+  // 归档分类
+  const archiveCategory = useCallback(
+    async (categoryId: string) => {
+      if (!book) return;
+      const mainLedgerId = book.mainLedgerId;
+      const updatedBook = await updateAccountInfo(mainLedgerId, categoryId, {
+        archived: true,
+      });
       setBook(updatedBook);
     },
     [book],
@@ -367,6 +468,12 @@ export function useBook(): UseBookResult {
     getChildAccounts,
     addAccount,
     updateAccount,
+    archiveAccount,
+    expenseCategories,
+    incomeCategories,
+    addCategory,
+    updateCategory,
+    archiveCategory,
     ledgers,
     createLedger,
     deleteLedger,

@@ -3,15 +3,12 @@
 import { useState, useMemo } from "react";
 import { useI18n } from "~/lib/i18n";
 import { useBook } from "~/lib/accounting";
-import {
-  getCurrencySymbol,
-  EXPENSE_CATEGORIES,
-  INCOME_CATEGORIES,
-} from "~/lib/accounting/constants";
+import { getCurrencySymbol } from "~/lib/accounting/constants";
 import { getMainLedger, findAccountsByType } from "~/lib/double-entry";
 import { AccountType } from "~/lib/double-entry/types";
 import { cn } from "~/lib/utils";
 import { Check } from "lucide-react";
+import { CategorySelector } from "./category-selector";
 
 type EntryType = "expense" | "income" | "transfer";
 
@@ -20,7 +17,15 @@ type EntryType = "expense" | "income" | "transfer";
  */
 export function NewEntry() {
   const { t } = useI18n();
-  const { book, addSimpleEntry } = useBook();
+  const {
+    book,
+    addSimpleEntry,
+    expenseCategories,
+    incomeCategories,
+    addCategory,
+    updateCategory,
+    archiveCategory,
+  } = useBook();
 
   // 表单状态
   const [entryType, setEntryType] = useState<EntryType>("expense");
@@ -57,8 +62,8 @@ export function NewEntry() {
     return [...assets, ...liabilities];
   }, [mainLedger]);
 
-  // 获取预设分类
-  const categories = entryType === "expense" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  // 当前分类列表
+  const categories = entryType === "expense" ? expenseCategories : incomeCategories;
 
   // 处理标签添加
   const handleAddTag = () => {
@@ -119,10 +124,12 @@ export function NewEntry() {
   // 获取分类标签
   const getCategoryLabel = (id: string) => {
     const cat = categories.find((c) => c.id === id);
-    if (cat) {
-      return (t.records.categories as Record<string, string>)[cat.labelKey] || cat.id;
-    }
-    return "";
+    return cat?.name || "";
+  };
+
+  // 添加分类
+  const handleAddCategory = async (params: { name: string; icon?: string }) => {
+    await addCategory({ type: entryType as "expense" | "income", ...params });
   };
 
   return (
@@ -132,7 +139,10 @@ export function NewEntry() {
         {(["expense", "income", "transfer"] as EntryType[]).map((type) => (
           <button
             key={type}
-            onClick={() => setEntryType(type)}
+            onClick={() => {
+              setEntryType(type);
+              setCategoryId(""); // 切换类型时清空分类
+            }}
             className={cn(
               "flex-1 rounded-xs border px-1.5 py-0.5 text-xs transition-colors",
               entryType === type
@@ -174,24 +184,15 @@ export function NewEntry() {
           <label className='mb-1 block text-xs text-muted-foreground'>
             {t.records.category}
           </label>
-          <div className='flex flex-wrap gap-1'>
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setCategoryId(cat.id)}
-                className={cn(
-                  "flex items-center gap-0.5 rounded-xs border px-1.5 py-0.5 text-xs transition-colors",
-                  categoryId === cat.id
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "hover:bg-muted",
-                )}>
-                <span className='text-xs'>{cat.icon}</span>
-                <span>
-                  {(t.records.categories as Record<string, string>)[cat.labelKey]}
-                </span>
-              </button>
-            ))}
-          </div>
+          <CategorySelector
+            categories={categories}
+            selectedId={categoryId}
+            onSelect={setCategoryId}
+            onAdd={handleAddCategory}
+            onUpdate={updateCategory}
+            onArchive={archiveCategory}
+            type={entryType as "expense" | "income"}
+          />
         </div>
       )}
 

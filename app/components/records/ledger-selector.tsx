@@ -87,7 +87,9 @@ export function LedgerSelector({
               <Menu.Separator className='my-1 h-px bg-border' />
 
               {isCreating ? (
-                <div className='flex items-center gap-1 px-1.5 py-0.5'>
+                <div
+                  className='flex items-center gap-1 px-1.5 py-0.5'
+                  onClick={(e) => e.stopPropagation()}>
                   <input
                     ref={inputRef}
                     type='text'
@@ -112,12 +114,15 @@ export function LedgerSelector({
                   </button>
                 </div>
               ) : (
-                <Menu.Item
-                  onClick={() => setIsCreating(true)}
-                  className='flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs text-muted-foreground outline-none hover:bg-muted hover:text-foreground'>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCreating(true);
+                  }}
+                  className='flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground'>
                   <Plus className='size-3' />
                   <span>{t.records.newLedger}</span>
-                </Menu.Item>
+                </div>
               )}
             </Menu.Popup>
           </Menu.Positioner>
