@@ -215,7 +215,7 @@ export function getActiveAccounts(
 export function getAccountTree(
   ledger: LedgerData,
   type: AccountType,
-): AccountData & { children: AccountData[] }[] {
+): (AccountData & { children: AccountData[] })[] {
   const accounts = ledger.accounts.filter((a) => a.type === type);
   const rootAccounts = accounts.filter((a) => a.parentId === null);
 
