@@ -20,19 +20,19 @@ export function formatNumber(
  * 英文单位配置 (K/M/B/T)
  */
 export const UNITS_EN = {
-  thousand: "K",
-  million: "M",
-  billion: "B",
-  trillion: "T",
+  thousand: " K",
+  million: " M",
+  billion: " B",
+  trillion: " T",
 };
 
 /**
  * 中文单位配置 (万/亿/万亿)
  */
 export const UNITS_ZH = {
-  wan: "万",
-  yi: "亿",
-  wanyi: "万亿",
+  wan: " 万",
+  yi: " 亿",
+  wanyi: " 万亿",
 };
 
 export type UnitsEN = typeof UNITS_EN;
