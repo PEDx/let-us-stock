@@ -22,7 +22,10 @@
     "forwardPE": "Forward PE",
     "priceToBook": "Price to Book",
     "marketCap": "$ Market Cap",
-    "empty": "No stocks yet. Use search above to add."
+    "empty": "No stocks yet. Use search above to add.",
+    "columns": "Columns",
+    "showAll": "Show All",
+    "hideAll": "Hide All"
   },
   "sentiment": {
     "marketSentiment": "market sentiment",

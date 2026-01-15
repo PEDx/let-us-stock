@@ -22,7 +22,10 @@
     "forwardPE": "动态市盈率",
     "priceToBook": "市净率",
     "marketCap": "市值 ($)",
-    "empty": "暂无股票，使用上方搜索添加"
+    "empty": "暂无股票，使用上方搜索添加",
+    "columns": "列",
+    "showAll": "显示全部",
+    "hideAll": "隐藏全部"
   },
   "sentiment": {
     "marketSentiment": "市场情绪",
