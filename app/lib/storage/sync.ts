@@ -117,7 +117,7 @@ export class SyncStorageAdapter implements StorageAdapter {
     // 有远程存储时，进行同步（仅同步 groups）
     try {
       const localMeta = this.getLocalMeta(LOCAL_META_KEY);
-      const remoteUpdatedAt = await this.remote.getRemoteUpdatedAt();
+      const remoteUpdatedAt = await this.remote.getGroupsUpdatedAt();
 
       // 比较时间戳，决定使用哪个 groups 数据源
       if (remoteUpdatedAt && localMeta?.groupsUpdatedAt) {
@@ -131,7 +131,7 @@ export class SyncStorageAdapter implements StorageAdapter {
           await this.local.saveGroupsData(mergedData);
           this.saveLocalMeta(LOCAL_META_KEY, {
             groupsUpdatedAt: remoteUpdatedAt,
-            gistId: this.remote.getGistId() || undefined,
+            gistId: this.remote.getGroupsGistId() || undefined,
           });
           return mergedData;
         }
@@ -142,7 +142,7 @@ export class SyncStorageAdapter implements StorageAdapter {
         await this.local.saveGroupsData(mergedData);
         this.saveLocalMeta(LOCAL_META_KEY, {
           groupsUpdatedAt: remoteUpdatedAt,
-          gistId: this.remote.getGistId() || undefined,
+          gistId: this.remote.getGroupsGistId() || undefined,
         });
         return mergedData;
       }
@@ -177,7 +177,7 @@ export class SyncStorageAdapter implements StorageAdapter {
     await this.local.saveGroupsData(data);
     this.saveLocalMeta(LOCAL_META_KEY, {
       groupsUpdatedAt: now,
-      gistId: this.remote?.getGistId() || undefined,
+      gistId: this.remote?.getGroupsGistId() || undefined,
     });
 
     // 如果有远程存储，异步同步 groups 到远程（不包含 activeGroupId）
@@ -222,11 +222,11 @@ export class SyncStorageAdapter implements StorageAdapter {
     const mergedData = this.mergeGroupsData(remoteGroups, localData.activeGroupId);
     await this.local.saveGroupsData(mergedData);
 
-    const remoteUpdatedAt = await this.remote.getRemoteUpdatedAt();
+    const remoteUpdatedAt = await this.remote.getGroupsUpdatedAt();
     if (remoteUpdatedAt) {
       this.saveLocalMeta(LOCAL_META_KEY, {
         groupsUpdatedAt: remoteUpdatedAt,
-        gistId: this.remote.getGistId() || undefined,
+        gistId: this.remote.getGroupsGistId() || undefined,
       });
     }
 
@@ -245,7 +245,7 @@ export class SyncStorageAdapter implements StorageAdapter {
     const now = new Date().toISOString();
     this.saveLocalMeta(LOCAL_META_KEY, {
       groupsUpdatedAt: now,
-      gistId: this.remote.getGistId() || undefined,
+      gistId: this.remote.getGroupsGistId() || undefined,
     });
   }
 
@@ -274,7 +274,7 @@ export class SyncStorageAdapter implements StorageAdapter {
     // 有远程存储时，进行同步
     try {
       const localMeta = this.getLocalMeta(BOOK_META_KEY);
-      const remoteUpdatedAt = await this.remote.getRemoteUpdatedAt();
+      const remoteUpdatedAt = await this.remote.getBookUpdatedAt();
 
       if (remoteUpdatedAt && localMeta?.bookUpdatedAt) {
         const remoteTime = new Date(remoteUpdatedAt).getTime();
@@ -358,7 +358,7 @@ export class SyncStorageAdapter implements StorageAdapter {
     const remoteBook = await this.remote.getBook();
     if (remoteBook) {
       await this.local.saveBookData(remoteBook);
-      const remoteUpdatedAt = await this.remote.getRemoteUpdatedAt();
+      const remoteUpdatedAt = await this.remote.getBookUpdatedAt();
       if (remoteUpdatedAt) {
         this.saveLocalMeta(BOOK_META_KEY, {
           bookUpdatedAt: remoteUpdatedAt,

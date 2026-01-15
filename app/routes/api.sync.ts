@@ -1,18 +1,93 @@
 /**
  * 数据同步 API
  * 处理前端的同步请求
+ *
+ * 支持两种数据类型，分别存储到不同的 Gist：
+ * - groups: 股票分组数据 -> let-us-stock-groups.json
+ * - book: 账簿数据 -> let-us-stock-book.json
  */
 
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { getAuthFromCookie } from "./api.auth.me";
 
-const GIST_FILENAME = "let-us-stock-data.json";
-const GIST_DESCRIPTION = "Let Us Stock - Data Storage (Do not delete)";
+// Gist 配置
+const GIST_CONFIG = {
+  groups: {
+    filename: "let-us-stock-groups.json",
+    description: "Let Us Stock - Groups Data (Do not delete)",
+  },
+  book: {
+    filename: "let-us-stock-book.json",
+    description: "Let Us Stock - Book Data (Do not delete)",
+  },
+} as const;
+
+type DataType = "groups" | "book";
 
 interface StoredData {
   version: number;
   updatedAt: string;
   data: unknown;
+}
+
+interface GistFile {
+  content: string;
+}
+
+interface GistInfo {
+  id: string;
+  description: string;
+  files: Record<string, GistFile | undefined>;
+}
+
+/**
+ * 查找指定类型的 Gist
+ */
+async function findGist(
+  accessToken: string,
+  type: DataType,
+): Promise<GistInfo | null> {
+  const config = GIST_CONFIG[type];
+
+  const response = await fetch("https://api.github.com/gists?per_page=100", {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch gists: ${response.status}`);
+  }
+
+  const gists: GistInfo[] = await response.json();
+
+  return (
+    gists.find(
+      (g) => g.description === config.description && g.files[config.filename],
+    ) || null
+  );
+}
+
+/**
+ * 获取 Gist 详细内容
+ */
+async function getGistContent(
+  accessToken: string,
+  gistId: string,
+): Promise<GistInfo> {
+  const response = await fetch(`https://api.github.com/gists/${gistId}`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/vnd.github.v3+json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch gist: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 // GET: 从 Gist 获取数据
@@ -23,51 +98,36 @@ export async function loader({ request }: LoaderFunctionArgs) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
+  // 获取数据类型
+  const url = new URL(request.url);
+  const type = url.searchParams.get("type") as DataType;
+
+  if (!type || !["groups", "book"].includes(type)) {
+    return Response.json({ error: "Invalid type parameter" }, { status: 400 });
+  }
+
+  const config = GIST_CONFIG[type];
+
   try {
-    // 查找 Gist
-    const gistsResponse = await fetch(
-      "https://api.github.com/gists?per_page=100",
-      {
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      },
-    );
+    const gistInfo = await findGist(auth.accessToken, type);
 
-    const gists = await gistsResponse.json();
-    const existingGist = gists.find(
-      (g: { description: string; files: Record<string, unknown> }) =>
-        g.description === GIST_DESCRIPTION && g.files[GIST_FILENAME],
-    );
-
-    if (!existingGist) {
+    if (!gistInfo) {
       return Response.json({ data: null, gistId: null });
     }
 
-    // 获取 Gist 内容
-    const gistResponse = await fetch(
-      `https://api.github.com/gists/${existingGist.id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${auth.accessToken}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      },
-    );
-
-    const gist = await gistResponse.json();
-    const file = gist.files[GIST_FILENAME];
+    // 获取完整 Gist 内容
+    const gist = await getGistContent(auth.accessToken, gistInfo.id);
+    const file = gist.files[config.filename];
 
     if (!file) {
-      return Response.json({ data: null, gistId: existingGist.id });
+      return Response.json({ data: null, gistId: gistInfo.id });
     }
 
     const storedData: StoredData = JSON.parse(file.content);
     return Response.json({
       data: storedData.data,
       updatedAt: storedData.updatedAt,
-      gistId: existingGist.id,
+      gistId: gistInfo.id,
     });
   } catch (error) {
     console.error("Sync fetch error:", error);
@@ -85,7 +145,17 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const body = await request.json();
-    const { data, gistId } = body;
+    const { type, data, gistId } = body as {
+      type: DataType;
+      data: unknown;
+      gistId?: string;
+    };
+
+    if (!type || !["groups", "book"].includes(type)) {
+      return Response.json({ error: "Invalid type parameter" }, { status: 400 });
+    }
+
+    const config = GIST_CONFIG[type];
 
     const storedData: StoredData = {
       version: 1,
@@ -97,7 +167,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (gistId) {
       // 更新已存在的 Gist
-      await fetch(`https://api.github.com/gists/${gistId}`, {
+      const response = await fetch(`https://api.github.com/gists/${gistId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${auth.accessToken}`,
@@ -106,10 +176,14 @@ export async function action({ request }: ActionFunctionArgs) {
         },
         body: JSON.stringify({
           files: {
-            [GIST_FILENAME]: { content },
+            [config.filename]: { content },
           },
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update gist: ${response.status}`);
+      }
 
       return Response.json({
         success: true,
@@ -126,13 +200,17 @@ export async function action({ request }: ActionFunctionArgs) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          description: GIST_DESCRIPTION,
+          description: config.description,
           public: false,
           files: {
-            [GIST_FILENAME]: { content },
+            [config.filename]: { content },
           },
         }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create gist: ${response.status}`);
+      }
 
       const newGist = await response.json();
       return Response.json({

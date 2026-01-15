@@ -1,5 +1,6 @@
 .DS_Store
 .env
+*.csv
 /node_modules/
 
 # React Router
