@@ -167,7 +167,9 @@ export function QuoteTable({
 
               {/* 数据列 */}
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead
+                  key={header.id}
+                  className={header.id === "marketCap" ? "text-right" : undefined}>
                   <SortableHeader column={header.column}>
                     {flexRender(
                       header.column.columnDef.header,

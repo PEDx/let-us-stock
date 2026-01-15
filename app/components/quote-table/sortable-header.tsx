@@ -23,7 +23,7 @@ export function SortableHeader({ column, children }: SortableHeaderProps) {
   return (
     <button
       onClick={column.getToggleSortingHandler()}
-      className='flex cursor-pointer items-center gap-1 hover:text-foreground'>
+      className='inline-flex cursor-pointer items-center gap-1 hover:text-foreground'>
       {children}
       {sorted === "asc" ? (
         <ArrowUp className='size-3' />

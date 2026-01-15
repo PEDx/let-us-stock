@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
-import { cn, formatNumber, formatLargeNumber } from "~/lib/utils";
+import { cn, formatNumber, formatLargeNumber, formatLargeNumberZh } from "~/lib/utils";
 import { FloatingWindow } from "./floating-window";
 import { MiniChart, type ChartPoint } from "./mini-chart";
 
@@ -40,7 +40,7 @@ interface StockDetailProps {
 }
 
 export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const [summary, setSummary] = useState<StockSummary | null>(null);
   const [chart, setChart] = useState<ChartPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -70,6 +70,8 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
   }, [fetchData]);
 
   const isUp = summary && summary.change >= 0;
+
+  const formatLargeNumberFn = useMemo(() => language === "zh" ? formatLargeNumberZh : formatLargeNumber, [language]);
 
   return (
     <FloatingWindow
@@ -125,7 +127,7 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
           </div>
 
           {/* 关键数据 */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.stockDetail.open}</span>
               <span>{formatNumber(summary.open)}</span>
@@ -149,15 +151,15 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.stockDetail.volume}</span>
-              <span>{formatLargeNumber(summary.volume)}</span>
+              <span>{formatLargeNumberFn(summary.volume)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.stockDetail.avgVolume}</span>
-              <span>{formatLargeNumber(summary.avgVolume)}</span>
+              <span>{formatLargeNumberFn(summary.avgVolume)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.stockDetail.marketCap}</span>
-              <span>{formatLargeNumber(summary.marketCap)}</span>
+              <span>{formatLargeNumberFn(summary.marketCap)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t.stockDetail.pe}</span>

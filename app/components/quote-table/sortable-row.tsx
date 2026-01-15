@@ -79,6 +79,15 @@ export function SortableRow({
           );
         }
 
+        // 市值列 - 右对齐
+        if (cell.column.id === "marketCap") {
+          return (
+            <TableCell key={cell.id} className='text-right'>
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          );
+        }
+
         // 默认列
         return (
           <TableCell key={cell.id}>
