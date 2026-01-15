@@ -1,13 +1,14 @@
 import type { Quote } from "yahoo-finance2/modules/quote";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
-import { formatNumber, formatLargeNumber } from "~/lib/utils";
+import {
+  formatNumber,
+  formatLargeNumber,
+  formatLargeNumberZh,
+} from "~/lib/utils";
 
 const columnHelper = createColumnHelper<Quote>();
 
-/**
- * 创建表格列定义
- */
-export function createColumns(t: {
+interface ColumnLabels {
   symbol: string;
   name: string;
   price: string;
@@ -17,7 +18,22 @@ export function createColumns(t: {
   forwardPE: string;
   priceToBook: string;
   marketCap: string;
-}): ColumnDef<Quote, unknown>[] {
+}
+
+interface CreateColumnsOptions {
+  labels: ColumnLabels;
+  language: string;
+}
+
+/**
+ * 创建表格列定义
+ */
+export function createColumns({
+  labels: t,
+  language,
+}: CreateColumnsOptions): ColumnDef<Quote, unknown>[] {
+  // 根据语言选择格式化函数
+  const formatMarketCap = language === "zh" ? formatLargeNumberZh : formatLargeNumber;
   return [
     columnHelper.accessor("symbol", {
       header: t.symbol,
@@ -90,7 +106,7 @@ export function createColumns(t: {
       enableHiding: true,
       cell: (info) => {
         const value = info.getValue();
-        return value != null ? formatLargeNumber(value as number) : "-";
+        return value != null ? formatMarketCap(value as number) : "-";
       },
     }),
   ];

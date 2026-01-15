@@ -60,7 +60,7 @@ export function QuoteTable({
   onReorder,
   onSymbolClick,
 }: QuoteTableProps) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
 
   // 排序状态
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -97,8 +97,8 @@ export function QuoteTable({
 
   // 列定义
   const columns = useMemo(
-    () => createColumns(t.table),
-    [t.table],
+    () => createColumns({ labels: t.table, language }),
+    [t.table, language],
   );
 
   // 创建表格实例
