@@ -177,7 +177,9 @@
     "syncing": "Syncing...",
     "syncSuccess": "Sync successful",
     "syncError": "Sync failed",
-    "exportData": "Download Backup"
+    "exportData": "Download Backup",
+    "chooseProvider": "Choose login method:",
+    "user": "User"
   },
   "timezone": {
     "cn": "China",

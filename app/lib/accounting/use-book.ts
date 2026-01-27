@@ -2,9 +2,12 @@
  * 账簿 React Hook
  *
  * 提供账簿数据的加载、保存和操作
+ * 使用 Firebase Firestore 作为数据存储
  */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+"use client";
+
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type {
   BookData,
   LedgerData,
@@ -12,27 +15,12 @@ import type {
   JournalEntryData,
   CurrencyCode,
 } from "../double-entry/types";
-import { AccountType, LedgerType, EntryLineType } from "../double-entry/types";
-import {
-  getBook,
-  saveBook,
-  addAccount as addAccountToBook,
-  addAccountToMain,
-  updateAccountInfo,
-  addLedger,
-  removeLedger,
-  updateLedgerInfo,
-  addEntry,
-  addEntryToMain,
-  removeEntry,
-  setExchangeRate,
-} from "../book-store";
+import { AccountType, LedgerType } from "../double-entry/types";
 import {
   getMainLedger,
   getLedger,
   getActiveLedgers,
   findAccountsByType,
-  findAccountById,
   findChildAccounts,
   getNetWorth,
   getTypeBalance,
@@ -41,6 +29,9 @@ import {
   toMainUnit,
 } from "../double-entry";
 import { useI18n } from "../i18n";
+import { useAuth } from "../firebase/auth-context";
+import { FirestoreRepositoryFactory } from "../firebase/repository/firestore-repository";
+import { BookService } from "../firebase/services/book-service";
 import { LAST_LEDGER_KEY } from "./constants";
 
 // ============================================================================
@@ -140,15 +131,44 @@ export interface UseBookResult {
 
 export function useBook(): UseBookResult {
   const { t } = useI18n();
+  const { user, isAuthenticated } = useAuth();
+
   const [book, setBook] = useState<BookData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLedgerId, setCurrentLedgerIdState] = useState<string | null>(null);
 
+  // 使用 ref 缓存 service 实例
+  const serviceRef = useRef<BookService | null>(null);
+
+  // 初始化 service
+  const getService = useCallback(() => {
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    if (!serviceRef.current) {
+      const factory = new FirestoreRepositoryFactory(user.id);
+      serviceRef.current = new BookService(
+        user.id,
+        factory.getBookRepository(),
+        factory.getLedgerRepository(),
+        factory.getAccountRepository(),
+        factory.getEntryRepository(),
+      );
+    }
+    return serviceRef.current;
+  }, [user]);
+
   // 加载账簿
   const loadBook = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const data = await getBook({
+      const service = getService();
+      const data = await service.getOrCreateBook({
         mainLedgerName: t.records.defaultLedger,
         categoryLabels: t.records.categories as Record<string, string>,
       });
@@ -166,11 +186,17 @@ export function useBook(): UseBookResult {
     } finally {
       setIsLoading(false);
     }
-  }, [t.records.defaultLedger, t.records.categories]);
+  }, [t.records.defaultLedger, t.records.categories, isAuthenticated, user, getService]);
 
+  // 用户登录后加载
   useEffect(() => {
-    loadBook();
-  }, [loadBook]);
+    if (isAuthenticated && user) {
+      loadBook();
+    } else {
+      setBook(null);
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user, loadBook]);
 
   // 当前账本
   const currentLedger = useMemo(() => {
@@ -223,39 +249,49 @@ export function useBook(): UseBookResult {
       icon?: string;
       initialBalance?: number;
     }) => {
+      if (!book) return;
+
       const { initialBalance, ...accountParams } = params;
-      const updatedBook = await addAccountToMain(accountParams);
+      const service = getService();
+
+      // 添加账户
+      const newAccount = await service.addAccount(book.mainLedgerId, accountParams);
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
 
       // 如果有初始余额，创建期初分录
-        if (initialBalance && initialBalance > 0) {
-        const newMainLedger = getMainLedger(updatedBook);
-        // 找到刚创建的账户
-        const newAccount = newMainLedger.accounts.find(
-          (a) => a.name === params.name && a.parentId === params.parentId,
+      if (initialBalance && initialBalance > 0) {
+        const updatedMainLedger = getMainLedger(updatedBook);
+        const equityRoot = updatedMainLedger.accounts.find(
+          (a) => a.type === AccountType.EQUITY && a.parentId === null,
         );
-        if (newAccount) {
-          // 找到权益根账户
-          const equityRoot = newMainLedger.accounts.find(
-            (a) => a.type === AccountType.EQUITY && a.parentId === null,
-          );
-          if (equityRoot) {
-            const currency = params.currency ?? newMainLedger.defaultCurrency;
-            const amount = fromMainUnit(initialBalance, currency).amount;
-            const entry = createSimpleEntry({
-              date: new Date(),
-              description: "期初余额",
-              debitAccountId: newAccount.id,
-              creditAccountId: equityRoot.id,
-              amount,
-            });
-            const finalBook = await addEntryToMain(entry);
-            setBook(finalBook);
-          }
+        if (equityRoot) {
+          const currency = params.currency ?? updatedMainLedger.defaultCurrency;
+          const amount = fromMainUnit(initialBalance, currency).amount;
+          const entry = createSimpleEntry({
+            date: new Date(),
+            description: "期初余额",
+            debitAccountId: newAccount.id,
+            creditAccountId: equityRoot.id,
+            amount,
+          });
+          await service.addEntry(book.mainLedgerId, entry);
+
+          // 再次刷新
+          const finalBook = await service.getOrCreateBook({
+            mainLedgerName: t.records.defaultLedger,
+            categoryLabels: t.records.categories as Record<string, string>,
+          });
+          setBook(finalBook);
         }
       }
     },
-    [],
+    [book, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 更新账户
@@ -265,24 +301,25 @@ export function useBook(): UseBookResult {
       updates: { name?: string; icon?: string; note?: string; archived?: boolean },
     ) => {
       if (!book) return;
-      const mainLedgerId = book.mainLedgerId;
-      const updatedBook = await updateAccountInfo(mainLedgerId, accountId, updates);
+      const service = getService();
+      await service.updateAccount(book.mainLedgerId, accountId, updates);
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
     },
-    [book],
+    [book, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 归档账户
   const archiveAccount = useCallback(
     async (accountId: string) => {
-      if (!book) return;
-      const mainLedgerId = book.mainLedgerId;
-      const updatedBook = await updateAccountInfo(mainLedgerId, accountId, {
-        archived: true,
-      });
-      setBook(updatedBook);
+      await updateAccount(accountId, { archived: true });
     },
-    [book],
+    [updateAccount],
   );
 
   // 分类列表（支出/收入账户的子账户）
@@ -304,7 +341,7 @@ export function useBook(): UseBookResult {
   const addCategory = useCallback(
     async (params: { type: "expense" | "income"; name: string; icon?: string }) => {
       if (!mainLedger) return;
-      // 找到对应的根账户
+
       const rootAccount = mainLedger.accounts.find(
         (a) =>
           a.type ===
@@ -313,66 +350,81 @@ export function useBook(): UseBookResult {
       );
       if (!rootAccount) return;
 
-      const updatedBook = await addAccountToMain({
+      const service = getService();
+      await service.addAccount(book!.mainLedgerId, {
         name: params.name,
         parentId: rootAccount.id,
         icon: params.icon,
       });
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
     },
-    [mainLedger],
+    [mainLedger, book, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 更新分类
   const updateCategory = useCallback(
     async (categoryId: string, updates: { name?: string; icon?: string }) => {
-      if (!book) return;
-      const mainLedgerId = book.mainLedgerId;
-      const updatedBook = await updateAccountInfo(mainLedgerId, categoryId, updates);
-      setBook(updatedBook);
+      await updateAccount(categoryId, updates);
     },
-    [book],
+    [updateAccount],
   );
 
   // 归档分类
   const archiveCategory = useCallback(
     async (categoryId: string) => {
-      if (!book) return;
-      const mainLedgerId = book.mainLedgerId;
-      const updatedBook = await updateAccountInfo(mainLedgerId, categoryId, {
-        archived: true,
-      });
-      setBook(updatedBook);
+      await updateAccount(categoryId, { archived: true });
     },
-    [book],
+    [updateAccount],
   );
 
   // 创建专题账本
-  const createLedger = useCallback(async (name: string, description?: string) => {
-    const updatedBook = await addLedger({
-      name,
-      type: LedgerType.TOPIC,
-      description,
-    });
-    setBook(updatedBook);
-    // 切换到新账本
-    const newLedger = updatedBook.ledgers[updatedBook.ledgers.length - 1];
-    if (newLedger) {
+  const createLedger = useCallback(
+    async (name: string, description?: string) => {
+      const service = getService();
+      const newLedger = await service.addLedger({
+        name,
+        type: LedgerType.TOPIC,
+        description,
+      });
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
+      setBook(updatedBook);
+
+      // 切换到新账本
       setCurrentLedgerId(newLedger.id);
-    }
-  }, [setCurrentLedgerId]);
+    },
+    [t.records.defaultLedger, t.records.categories, getService, setCurrentLedgerId],
+  );
 
   // 删除账本
   const deleteLedger = useCallback(
     async (id: string) => {
-      const updatedBook = await removeLedger(id);
+      const service = getService();
+      await service.removeLedger(id);
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
+
       // 如果删除的是当前账本，切换到主账本
       if (currentLedgerId === id) {
         setCurrentLedgerId(updatedBook.mainLedgerId);
       }
     },
-    [currentLedgerId, setCurrentLedgerId],
+    [currentLedgerId, setCurrentLedgerId, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 添加简单分录
@@ -391,60 +443,38 @@ export function useBook(): UseBookResult {
     }) => {
       if (!currentLedger) return;
 
-      const amount = fromMainUnit(params.amount, params.currency).amount;
-      let entry: JournalEntryData;
+      const service = getService();
+      await service.addSimpleEntry({
+        ...params,
+        ledgerId: currentLedger.id,
+      });
 
-      if (params.type === "expense") {
-        // 支出：借方为支出分类，贷方为付款账户
-        entry = createSimpleEntry({
-          date: new Date(params.date),
-          description: params.description,
-          debitAccountId: params.categoryAccountId,
-          creditAccountId: params.paymentAccountId,
-          amount,
-          tags: params.tags,
-          payee: params.payee,
-        });
-      } else if (params.type === "income") {
-        // 收入：借方为收款账户，贷方为收入分类
-        entry = createSimpleEntry({
-          date: new Date(params.date),
-          description: params.description,
-          debitAccountId: params.paymentAccountId,
-          creditAccountId: params.categoryAccountId,
-          amount,
-          tags: params.tags,
-          payee: params.payee,
-        });
-      } else {
-        // 转账：借方为目标账户，贷方为源账户
-        if (!params.toAccountId) {
-          throw new Error("Transfer requires toAccountId");
-        }
-        entry = createSimpleEntry({
-          date: new Date(params.date),
-          description: params.description,
-          debitAccountId: params.toAccountId,
-          creditAccountId: params.paymentAccountId,
-          amount,
-          tags: params.tags,
-        });
-      }
-
-      const updatedBook = await addEntry(currentLedger.id, entry);
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
     },
-    [currentLedger],
+    [currentLedger, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 删除分录
   const deleteEntry = useCallback(
     async (entryId: string) => {
       if (!currentLedger) return;
-      const updatedBook = await removeEntry(currentLedger.id, entryId);
+
+      const service = getService();
+      await service.removeEntry(currentLedger.id, entryId);
+
+      // 刷新账簿
+      const updatedBook = await service.getOrCreateBook({
+        mainLedgerName: t.records.defaultLedger,
+        categoryLabels: t.records.categories as Record<string, string>,
+      });
       setBook(updatedBook);
     },
-    [currentLedger],
+    [currentLedger, t.records.defaultLedger, t.records.categories, getService],
   );
 
   // 统计数据

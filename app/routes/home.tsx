@@ -1,217 +1,192 @@
-"use client";
+'use client'
 
-import { useEffect, useState, useCallback } from "react";
-import { QuoteTable } from "~/components/quote-table";
-import { StockSearch } from "~/components/stock-search";
-import { StockDetail } from "~/components/stock-detail";
-import { GroupTabs } from "~/components/group-tabs";
-import {
-  getGroupsData,
-  addGroup,
-  removeGroup,
-  renameGroup,
-  reorderGroups,
-  setActiveGroup,
-  addSymbolToGroup,
-  removeSymbolFromGroup,
-  reorderSymbolsInGroup,
-  type GroupsData,
-} from "~/lib/stock-store";
-import { useAuth } from "~/lib/auth";
-import type { Quote } from "yahoo-finance2/modules/quote";
-import { Loader2 } from "lucide-react";
+import { useEffect, useState, useCallback } from 'react'
+import { QuoteTable } from '~/components/quote-table'
+import { StockSearch } from '~/components/stock-search'
+import { StockDetail } from '~/components/stock-detail'
+import { GroupTabs } from '~/components/group-tabs'
+import { useGroupsData, type GroupsData } from '~/lib/stock-store'
+import { useAuth } from '~/lib/firebase/auth-context'
+import type { Quote } from 'yahoo-finance2/modules/quote'
+import { Loader2 } from 'lucide-react'
 
 export function meta() {
   return [
-    { title: "Market" },
+    { title: 'Market' },
     {
-      name: "description",
+      name: 'description',
       content:
-        "Free stock tracking tool with real-time quotes for US stocks and crypto.",
+        'Free stock tracking tool with real-time quotes for US stocks and crypto.',
     },
-  ];
+  ]
 }
 
 interface OpenWindow {
-  symbol: string;
-  position: { x: number; y: number };
+  symbol: string
+  position: { x: number; y: number }
 }
 
 export default function Home() {
-  const { user, isLoading: authLoading } = useAuth();
-  const [groupsData, setGroupsData] = useState<GroupsData | null>(null);
-  const [quotes, setQuotes] = useState<Quote[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
+  const { isAuthenticated: authLoading } = useAuth()
+  const {
+    groupsData,
+    isLoading: groupsLoading,
+    addGroup,
+    removeGroup,
+    renameGroup,
+    reorderGroups,
+    setActiveGroup,
+    addSymbolToGroup,
+    removeSymbolFromGroup,
+    reorderSymbolsInGroup,
+  } = useGroupsData()
+  const [quotes, setQuotes] = useState<Quote[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [openWindows, setOpenWindows] = useState<OpenWindow[]>([])
 
   // 获取当前激活的分组
-  const activeGroup = groupsData?.groups.find(
+  const activeGroup = groupsData.groups.find(
     (g) => g.id === groupsData.activeGroupId,
-  );
-  const currentSymbols = activeGroup?.symbols || [];
+  )
+  const currentSymbols = activeGroup?.symbols || []
 
   // 获取行情数据
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
     if (symbolList.length === 0) {
-      setQuotes([]);
-      setIsLoading(false);
-      return;
+      setQuotes([])
+      setIsLoading(false)
+      return
     }
 
     try {
-      const response = await fetch(
-        `/api/quote?symbols=${symbolList.join(",")}`,
-      );
-      const data = await response.json();
+      const response = await fetch(`/api/quote?symbols=${symbolList.join(',')}`)
+      const data = await response.json()
       // 按照 symbolList 的顺序排序 quotes
       const quotesMap = new Map(
         (data.quotes || []).map((q: Quote) => [q.symbol, q]),
-      );
+      )
       const sortedQuotes = symbolList
         .map((s) => quotesMap.get(s))
-        .filter(Boolean) as Quote[];
-      setQuotes(sortedQuotes);
+        .filter(Boolean) as Quote[]
+      setQuotes(sortedQuotes)
     } catch (error) {
-      console.error("Failed to fetch quotes:", error);
+      console.error('Failed to fetch quotes:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   // 初始化加载 - 等待登录态检查完成
   useEffect(() => {
     // 等待登录态检查完成
-    if (authLoading) {
-      return;
+    if (groupsLoading) {
+      return
     }
 
-    async function init() {
-      try {
-        // 加载数据（会根据登录态自动选择本地或远程数据）
-        // auth.tsx 已经处理了远程存储的设置和清除
-        const data = await getGroupsData();
-        setGroupsData(data);
-        const group = data.groups.find((g) => g.id === data.activeGroupId);
-        if (group) {
-          await fetchQuotes(group.symbols);
-        } else {
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Failed to initialize:", error);
-        setIsLoading(false);
+    if (!authLoading) {
+      const group = groupsData.groups.find(
+        (g) => g.id === groupsData.activeGroupId,
+      )
+      if (group) {
+        fetchQuotes(group.symbols)
+      } else {
+        setIsLoading(false)
       }
     }
-
-    init();
-  }, [authLoading, fetchQuotes]);
+  }, [authLoading, groupsLoading, groupsData, fetchQuotes])
 
   // 切换分组时重新获取行情
   const handleSelectGroup = async (groupId: string) => {
-    const data = await setActiveGroup(groupId);
-    setGroupsData(data);
-    const group = data.groups.find((g) => g.id === groupId);
+    await setActiveGroup(groupId)
+    const group = groupsData.groups.find((g) => g.id === groupId)
     if (group) {
-      setIsLoading(true);
-      await fetchQuotes(group.symbols);
+      setIsLoading(true)
+      await fetchQuotes(group.symbols)
     }
-  };
+  }
 
   // 添加分组
   const handleAddGroup = async (name: string) => {
-    const data = await addGroup(name);
-    setGroupsData(data);
-    // 切换到新分组
-    const newGroup = data.groups[data.groups.length - 1];
-    if (newGroup) {
-      setQuotes([]);
-    }
-  };
+    await addGroup(name)
+    setQuotes([])
+  }
 
   // 删除分组
   const handleRemoveGroup = async (groupId: string) => {
-    const data = await removeGroup(groupId);
-    setGroupsData(data);
+    await removeGroup(groupId)
     // 如果删除的是当前分组，需要重新获取行情
-    if (groupId === groupsData?.activeGroupId) {
-      const activeGroup = data.groups.find((g) => g.id === data.activeGroupId);
+    if (groupId === groupsData.activeGroupId) {
+      const activeGroup = groupsData.groups.find(
+        (g) => g.id === groupsData.activeGroupId,
+      )
       if (activeGroup) {
-        setIsLoading(true);
-        await fetchQuotes(activeGroup.symbols);
+        setIsLoading(true)
+        await fetchQuotes(activeGroup.symbols)
       }
     }
-  };
+  }
 
   // 重命名分组
   const handleRenameGroup = async (groupId: string, newName: string) => {
-    const data = await renameGroup(groupId, newName);
-    setGroupsData(data);
-  };
+    await renameGroup(groupId, newName)
+  }
 
   // 重新排序分组
   const handleReorderGroups = async (newOrder: string[]) => {
-    const data = await reorderGroups(newOrder);
-    setGroupsData(data);
-  };
+    await reorderGroups(newOrder)
+  }
 
   // 添加股票
   const handleAddSymbol = async (symbol: string) => {
-    if (!groupsData) return;
-    const data = await addSymbolToGroup(groupsData.activeGroupId, symbol);
-    setGroupsData(data);
-    const group = data.groups.find((g) => g.id === data.activeGroupId);
+    await addSymbolToGroup(groupsData.activeGroupId, symbol)
+    const group = groupsData.groups.find(
+      (g) => g.id === groupsData.activeGroupId,
+    )
     if (group) {
-      setIsLoading(true);
-      await fetchQuotes(group.symbols);
+      setIsLoading(true)
+      await fetchQuotes(group.symbols)
     }
-  };
+  }
 
   // 删除股票
   const handleRemoveSymbol = async (symbol: string) => {
-    if (!groupsData) return;
-    const data = await removeSymbolFromGroup(groupsData.activeGroupId, symbol);
-    setGroupsData(data);
-    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
-  };
+    await removeSymbolFromGroup(groupsData.activeGroupId, symbol)
+    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol))
+  }
 
   // 重新排序股票
   const handleReorder = async (newOrder: string[]) => {
-    if (!groupsData) return;
     // 先更新 UI
-    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]));
+    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]))
     const sortedQuotes = newOrder
       .map((s) => quotesMap.get(s))
-      .filter(Boolean) as Quote[];
-    setQuotes(sortedQuotes);
+      .filter(Boolean) as Quote[]
+    setQuotes(sortedQuotes)
     // 保存到存储
-    const data = await reorderSymbolsInGroup(
-      groupsData.activeGroupId,
-      newOrder,
-    );
-    setGroupsData(data);
-  };
+    await reorderSymbolsInGroup(groupsData.activeGroupId, newOrder)
+  }
 
   // 点击股票代码打开详情窗口
   const handleSymbolClick = (symbol: string, event: React.MouseEvent) => {
     // 检查是否已经打开
     if (openWindows.some((w) => w.symbol === symbol)) {
-      return;
+      return
     }
 
     // 计算新窗口位置（基于点击位置，稍微偏移）
-    const offset = openWindows.length * 30;
+    const offset = openWindows.length * 30
     const position = {
       x: Math.min(event.clientX + 20 + offset, window.innerWidth - 400),
       y: Math.min(event.clientY - 50 + offset, window.innerHeight - 450),
-    };
+    }
 
-    setOpenWindows((prev) => [...prev, { symbol, position }]);
-  };
+    setOpenWindows((prev) => [...prev, { symbol, position }])
+  }
 
   // 关闭详情窗口
   const handleCloseWindow = (symbol: string) => {
-    setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol));
-  };
+    setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol))
+  }
 
   return (
     <main className='page-area my-2'>
@@ -225,17 +200,15 @@ export default function Home() {
             onAddSymbol={handleAddSymbol}
           />
         </div>
-        {groupsData && (
-          <GroupTabs
-            groups={groupsData.groups}
-            activeGroupId={groupsData.activeGroupId}
-            onSelectGroup={handleSelectGroup}
-            onAddGroup={handleAddGroup}
-            onRemoveGroup={handleRemoveGroup}
-            onRenameGroup={handleRenameGroup}
-            onReorderGroups={handleReorderGroups}
-          />
-        )}
+        <GroupTabs
+          groups={groupsData.groups}
+          activeGroupId={groupsData.activeGroupId}
+          onSelectGroup={handleSelectGroup}
+          onAddGroup={handleAddGroup}
+          onRemoveGroup={handleRemoveGroup}
+          onRenameGroup={handleRenameGroup}
+          onReorderGroups={handleReorderGroups}
+        />
       </div>
 
       {isLoading ? (
@@ -261,5 +234,5 @@ export default function Home() {
         />
       ))}
     </main>
-  );
+  )
 }

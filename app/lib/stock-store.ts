@@ -1,160 +1,169 @@
 /**
  * 股票数据存储业务逻辑层
- * 底层使用可替换的存储适配器
+ * 使用 Firebase Firestore 作为数据存储
  */
 
-import { storage } from "./storage";
-import type { Group, GroupsData } from "./storage";
+"use client";
 
-// 重新导出类型供外部使用
-export type { Group, GroupsData };
+import { useCallback, useState, useEffect } from "react";
+import { useAuth } from "./firebase/auth-context";
+import {
+  GroupsRepository,
+  addGroup as addGroupToRepo,
+  removeGroup as removeGroupFromRepo,
+  renameGroup as renameGroupInRepo,
+  reorderGroups as reorderGroupsInRepo,
+  setActiveGroup as setActiveGroupInRepo,
+  addSymbolToGroup as addSymbolToGroupInRepo,
+  removeSymbolFromGroup as removeSymbolFromGroupInRepo,
+  reorderSymbolsInGroup as reorderSymbolsInGroupInRepo,
+} from "./firebase/repository/groups-repository";
+import type { Group, GroupsData } from "./storage/types";
+import { DEFAULT_GROUPS_DATA } from "./storage/types";
 
-// ============ Groups API ============
+// ============================================================================
+// React Hook for Groups Data
+// ============================================================================
 
-export async function getGroupsData(): Promise<GroupsData> {
-  return storage.getGroupsData();
-}
+/**
+ * 股票分组 Hook
+ */
+export function useGroupsData() {
+  const { user, isAuthenticated } = useAuth();
+  const [groupsData, setGroupsData] = useState<GroupsData>(DEFAULT_GROUPS_DATA);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-export async function saveGroupsData(data: GroupsData): Promise<void> {
-  return storage.saveGroupsData(data);
-}
+  // 获取分组数据
+  const loadGroups = useCallback(async () => {
+    if (!isAuthenticated || !user) {
+      setIsLoading(false);
+      return;
+    }
 
-export async function addGroup(name: string): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const newGroup: Group = {
-    id: `group-${Date.now()}`,
-    name,
-    symbols: [],
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const repo = new GroupsRepository(user.id);
+      const data = await repo.getGroupsData();
+      setGroupsData(data);
+    } catch (err) {
+      console.error("Failed to load groups:", err);
+      setError(err instanceof Error ? err : new Error("Failed to load groups"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, user]);
+
+  // 初始加载
+  useEffect(() => {
+    loadGroups();
+  }, [loadGroups]);
+
+  // 添加分组
+  const addGroup = useCallback(
+    async (name: string) => {
+      if (!user) return DEFAULT_GROUPS_DATA;
+      const newData = await addGroupToRepo(user.id, name);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user],
+  );
+
+  // 删除分组
+  const removeGroup = useCallback(
+    async (groupId: string) => {
+      if (!user) return groupsData;
+      const newData = await removeGroupFromRepo(user.id, groupId);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 重命名分组
+  const renameGroup = useCallback(
+    async (groupId: string, newName: string) => {
+      if (!user) return groupsData;
+      const newData = await renameGroupInRepo(user.id, groupId, newName);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 重新排序分组
+  const reorderGroups = useCallback(
+    async (newOrder: string[]) => {
+      if (!user) return groupsData;
+      const newData = await reorderGroupsInRepo(user.id, newOrder);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 切换激活分组
+  const setActiveGroup = useCallback(
+    async (groupId: string) => {
+      if (!user) return groupsData;
+      const newData = await setActiveGroupInRepo(user.id, groupId);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 添加股票到分组
+  const addSymbolToGroup = useCallback(
+    async (groupId: string, symbol: string) => {
+      if (!user) return groupsData;
+      const newData = await addSymbolToGroupInRepo(user.id, groupId, symbol);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 从分组删除股票
+  const removeSymbolFromGroup = useCallback(
+    async (groupId: string, symbol: string) => {
+      if (!user) return groupsData;
+      const newData = await removeSymbolFromGroupInRepo(user.id, groupId, symbol);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  // 重新排序分组内股票
+  const reorderSymbolsInGroup = useCallback(
+    async (groupId: string, newOrder: string[]) => {
+      if (!user) return groupsData;
+      const newData = await reorderSymbolsInGroupInRepo(user.id, groupId, newOrder);
+      setGroupsData(newData);
+      return newData;
+    },
+    [user, groupsData],
+  );
+
+  return {
+    groupsData,
+    isLoading,
+    error,
+    refresh: loadGroups,
+    addGroup,
+    removeGroup,
+    renameGroup,
+    reorderGroups,
+    setActiveGroup,
+    addSymbolToGroup,
+    removeSymbolFromGroup,
+    reorderSymbolsInGroup,
   };
-  data.groups.push(newGroup);
-  data.activeGroupId = newGroup.id;
-  await saveGroupsData(data);
-  return data;
 }
 
-export async function removeGroup(groupId: string): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  // 不能删除最后一个分组
-  if (data.groups.length <= 1) {
-    return data;
-  }
-  const index = data.groups.findIndex((g) => g.id === groupId);
-  if (index !== -1) {
-    data.groups.splice(index, 1);
-    // 如果删除的是当前激活的分组，切换到第一个
-    if (data.activeGroupId === groupId) {
-      data.activeGroupId = data.groups[0].id;
-    }
-  }
-  await saveGroupsData(data);
-  return data;
-}
-
-export async function renameGroup(
-  groupId: string,
-  newName: string,
-): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const group = data.groups.find((g) => g.id === groupId);
-  if (group) {
-    group.name = newName;
-    await saveGroupsData(data);
-  }
-  return data;
-}
-
-export async function reorderGroups(newOrder: string[]): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const groupsMap = new Map(data.groups.map((g) => [g.id, g]));
-  data.groups = newOrder.map((id) => groupsMap.get(id)!).filter(Boolean);
-  await saveGroupsData(data);
-  return data;
-}
-
-export async function setActiveGroup(groupId: string): Promise<GroupsData> {
-  // 切换 tab 是纯本地操作，不需要触发任何远端同步
-  const data = await storage.getLocalOnly();
-  if (data.groups.some((g) => g.id === groupId)) {
-    data.activeGroupId = groupId;
-    await storage.saveLocalOnly(data);
-  }
-  return data;
-}
-
-// ============ Symbols in Group API ============
-
-export async function addSymbolToGroup(
-  groupId: string,
-  symbol: string,
-): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const group = data.groups.find((g) => g.id === groupId);
-  if (group) {
-    const upperSymbol = symbol.toUpperCase();
-    if (!group.symbols.includes(upperSymbol)) {
-      group.symbols.unshift(upperSymbol);
-      await saveGroupsData(data);
-    }
-  }
-  return data;
-}
-
-export async function removeSymbolFromGroup(
-  groupId: string,
-  symbol: string,
-): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const group = data.groups.find((g) => g.id === groupId);
-  if (group) {
-    group.symbols = group.symbols.filter((s) => s !== symbol.toUpperCase());
-    await saveGroupsData(data);
-  }
-  return data;
-}
-
-export async function reorderSymbolsInGroup(
-  groupId: string,
-  newOrder: string[],
-): Promise<GroupsData> {
-  // 读本地数据，写同步到远端
-  const data = await storage.getLocalOnly();
-  const group = data.groups.find((g) => g.id === groupId);
-  if (group) {
-    group.symbols = newOrder;
-    await saveGroupsData(data);
-  }
-  return data;
-}
-
-// ============ Legacy API (for backward compatibility) ============
-
-export async function getSymbols(): Promise<string[]> {
-  const data = await storage.getLocalOnly();
-  const activeGroup = data.groups.find((g) => g.id === data.activeGroupId);
-  return activeGroup?.symbols || [];
-}
-
-export async function addSymbol(symbol: string): Promise<string[]> {
-  const data = await storage.getLocalOnly();
-  const result = await addSymbolToGroup(data.activeGroupId, symbol);
-  const activeGroup = result.groups.find((g) => g.id === result.activeGroupId);
-  return activeGroup?.symbols || [];
-}
-
-export async function removeSymbol(symbol: string): Promise<string[]> {
-  const data = await storage.getLocalOnly();
-  const result = await removeSymbolFromGroup(data.activeGroupId, symbol);
-  const activeGroup = result.groups.find((g) => g.id === result.activeGroupId);
-  return activeGroup?.symbols || [];
-}
-
-export async function reorderSymbols(newOrder: string[]): Promise<void> {
-  const data = await storage.getLocalOnly();
-  await reorderSymbolsInGroup(data.activeGroupId, newOrder);
-}
+// 重新导出类型
+export type { Group, GroupsData };

@@ -13,7 +13,7 @@ import "./app.css";
 import { Header } from "./components/header";
 import { Footer } from "./components/footer";
 import { I18nProvider, useI18n } from "./lib/i18n";
-import { AuthProvider } from "./lib/auth";
+import { AuthProvider } from "./lib/firebase/auth-context";
 import FearGreedIndex from "./components/fear-greed-index";
 
 export const links: Route.LinksFunction = () => [

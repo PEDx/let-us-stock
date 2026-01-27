@@ -1,5 +1,6 @@
 /**
  * 获取当前登录用户信息
+ * 支持 GitHub OAuth 和 Firebase 两种认证方式
  */
 
 import type { LoaderFunctionArgs } from "react-router";
@@ -34,6 +35,30 @@ export function getAuthFromCookie(request: Request): AuthData | null {
 }
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  // 检查 Firebase token
+  const cookies = request.headers.get("Cookie") || "";
+  const firebaseToken = cookies
+    .split(";")
+    .find((c) => c.trim().startsWith("firebase_token="))
+    ?.split("=")[1];
+
+  if (firebaseToken) {
+    // TODO: 验证 Firebase token 并获取用户信息
+    // const { getAuth } = require("firebase-admin/auth");
+    // const auth = getAuth();
+    // const decodedToken = await auth.verifyIdToken(firebaseToken);
+    // 返回 Firebase 用户信息
+    return Response.json({
+      user: {
+        id: "firebase-user",
+        login: "Firebase User",
+        avatar_url: "",
+        name: null,
+      },
+    });
+  }
+
+  // 回退到 GitHub OAuth
   const auth = getAuthFromCookie(request);
 
   if (!auth) {
