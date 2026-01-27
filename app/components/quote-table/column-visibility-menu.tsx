@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { Settings2, Check } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";

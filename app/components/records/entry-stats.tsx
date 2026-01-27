@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";

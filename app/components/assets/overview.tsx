@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Wallet, CreditCard } from "lucide-react";

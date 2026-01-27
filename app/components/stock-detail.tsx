@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";

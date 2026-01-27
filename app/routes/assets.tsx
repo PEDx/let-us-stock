@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { AssetsPage } from "~/components/assets";
 

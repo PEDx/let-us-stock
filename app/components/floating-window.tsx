@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useRef, useState, useCallback, useEffect, useLayoutEffect } from "react";
 import { X, RefreshCw, Minus } from "lucide-react";

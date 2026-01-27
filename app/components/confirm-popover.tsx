@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { Popover } from "@base-ui/react/popover";
 import { useI18n } from "~/lib/i18n";

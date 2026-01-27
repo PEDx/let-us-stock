@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useState, useMemo } from "react";
 import { Dialog } from "@base-ui/react/dialog";

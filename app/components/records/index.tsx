@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";

@@ -562,3 +562,44 @@ export type {
   AccountRepository,
   EntryRepository,
 };
+
+// ============================================================================
+// 用户偏好存储
+// ============================================================================
+
+/**
+ * 获取用户偏好
+ */
+export async function getUserPreferences(userId: string): Promise<Record<string, string>> {
+  const db = getDB();
+  const docRef = doc(db, `users/${userId}/meta`, "preferences");
+
+  try {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as Record<string, string>;
+    }
+    return {};
+  } catch {
+    console.error("Failed to get user preferences");
+    return {};
+  }
+}
+
+/**
+ * 保存用户偏好
+ */
+export async function saveUserPreference(
+  userId: string,
+  key: string,
+  value: string,
+): Promise<void> {
+  const db = getDB();
+  const docRef = doc(db, `users/${userId}/meta`, "preferences");
+
+  try {
+    await setDoc(docRef, { [key]: value }, { merge: true });
+  } catch {
+    console.error("Failed to save user preference");
+  }
+}

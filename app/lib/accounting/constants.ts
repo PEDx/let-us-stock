@@ -99,9 +99,3 @@ export function getCurrencySymbol(code: CurrencyCode): string {
   const currency = SUPPORTED_CURRENCIES.find((c) => c.code === code);
   return currency?.symbol ?? code;
 }
-
-// ============================================================================
-// 本地存储 Key
-// ============================================================================
-
-export const LAST_LEDGER_KEY = "last-used-ledger";

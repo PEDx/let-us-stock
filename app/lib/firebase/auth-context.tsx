@@ -4,7 +4,7 @@
  * 提供用户登录/登出状态管理，支持 GitHub 和 Google 登录
  */
 
-"use client";
+;
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import {

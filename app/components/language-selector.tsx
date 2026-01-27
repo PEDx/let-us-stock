@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { Select } from "@base-ui/react/select";
 import { Languages, ChevronDown, Check } from "lucide-react";

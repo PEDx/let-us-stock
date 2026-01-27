@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { RecordsPage } from "~/components/records";
 

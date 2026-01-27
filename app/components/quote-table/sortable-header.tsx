@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { QuoteColumn } from "./types";

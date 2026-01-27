@@ -1,4 +1,4 @@
-"use client";
+;
 
 import { useMemo } from "react";
 import { Trash2 } from "lucide-react";

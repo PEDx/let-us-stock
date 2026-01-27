@@ -1,6 +1,4 @@
-'use client'
-
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { QuoteTable } from '~/components/quote-table'
 import { StockSearch } from '~/components/stock-search'
 import { StockDetail } from '~/components/stock-detail'
@@ -41,8 +39,12 @@ export default function Home() {
     reorderSymbolsInGroup,
   } = useGroupsData()
   const [quotes, setQuotes] = useState<Quote[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isQuotesLoading, setIsQuotesLoading] = useState(false)
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([])
+
+  // 使用 ref 存储最新的 groupsData，解决闭包中的状态过期问题
+  const groupsDataRef = useRef(groupsData)
+  groupsDataRef.current = groupsData
 
   // 获取当前激活的分组
   const activeGroup = groupsData.groups.find(
@@ -54,10 +56,11 @@ export default function Home() {
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
     if (symbolList.length === 0) {
       setQuotes([])
-      setIsLoading(false)
+      setIsQuotesLoading(false)
       return
     }
 
+    setIsQuotesLoading(true)
     try {
       const response = await fetch(`/api/quote?symbols=${symbolList.join(',')}`)
       const data = await response.json()
@@ -72,35 +75,33 @@ export default function Home() {
     } catch (error) {
       console.error('Failed to fetch quotes:', error)
     } finally {
-      setIsLoading(false)
+      setIsQuotesLoading(false)
     }
   }, [])
 
-  // 初始化加载 - 等待登录态检查完成
+  // 初始化加载 - 等待分组数据加载完成
   useEffect(() => {
-    // 等待登录态检查完成
+    // 等待分组数据加载
     if (groupsLoading) {
       return
     }
 
-    if (!authLoading) {
-      const group = groupsData.groups.find(
-        (g) => g.id === groupsData.activeGroupId,
-      )
-      if (group) {
-        fetchQuotes(group.symbols)
-      } else {
-        setIsLoading(false)
-      }
+    // 加载完成后获取行情数据
+    const group = groupsData.groups.find(
+      (g) => g.id === groupsData.activeGroupId,
+    )
+    console.log('group', group)
+    if (group) {
+      fetchQuotes(group.symbols)
     }
-  }, [authLoading, groupsLoading, groupsData, fetchQuotes])
+  }, [groupsLoading, groupsData, fetchQuotes])
 
   // 切换分组时重新获取行情
   const handleSelectGroup = async (groupId: string) => {
     await setActiveGroup(groupId)
-    const group = groupsData.groups.find((g) => g.id === groupId)
+    const group = groupsDataRef.current.groups.find((g) => g.id === groupId)
     if (group) {
-      setIsLoading(true)
+      setIsQuotesLoading(true)
       await fetchQuotes(group.symbols)
     }
   }
@@ -120,7 +121,7 @@ export default function Home() {
         (g) => g.id === groupsData.activeGroupId,
       )
       if (activeGroup) {
-        setIsLoading(true)
+        setIsQuotesLoading(true)
         await fetchQuotes(activeGroup.symbols)
       }
     }
@@ -139,11 +140,12 @@ export default function Home() {
   // 添加股票
   const handleAddSymbol = async (symbol: string) => {
     await addSymbolToGroup(groupsData.activeGroupId, symbol)
-    const group = groupsData.groups.find(
-      (g) => g.id === groupsData.activeGroupId,
+    // 使用 ref 获取最新的 groupsData，避免闭包中的过期状态
+    const group = groupsDataRef.current.groups.find(
+      (g) => g.id === groupsDataRef.current.activeGroupId,
     )
     if (group) {
-      setIsLoading(true)
+      setIsQuotesLoading(true)
       await fetchQuotes(group.symbols)
     }
   }
@@ -188,10 +190,22 @@ export default function Home() {
     setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol))
   }
 
+  // 整体 loading 状态：分组数据加载中
+  const isLoading = groupsLoading
+
+  // 渲染加载状态
+  if (isLoading) {
+    return (
+      <main className='page-area my-2'>
+        <div className='flex items-center justify-center h-[calc(100vh-200px)]'>
+          <Loader2 className='size-8 animate-spin text-muted-foreground' />
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className='page-area my-2'>
-      {/* 分组标签 */}
-
       {/* 搜索添加 */}
       <div className='mb-2 flex items-center gap-2'>
         <div className='flex-1'>
@@ -211,7 +225,8 @@ export default function Home() {
         />
       </div>
 
-      {isLoading ? (
+      {/* 行情数据加载状态 */}
+      {isQuotesLoading ? (
         <div className='flex items-center justify-center h-40 border border-dashed'>
           <Loader2 className='size-8 animate-spin text-muted-foreground' />
         </div>

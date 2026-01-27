@@ -5,7 +5,7 @@
  * 使用 Firebase Firestore 作为数据存储
  */
 
-"use client";
+;
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type {
@@ -32,7 +32,10 @@ import { useI18n } from "../i18n";
 import { useAuth } from "../firebase/auth-context";
 import { FirestoreRepositoryFactory } from "../firebase/repository/firestore-repository";
 import { BookService } from "../firebase/services/book-service";
-import { LAST_LEDGER_KEY } from "./constants";
+import {
+  getUserPreferences,
+  saveUserPreference,
+} from "../firebase/repository/firestore-repository";
 
 // ============================================================================
 // Types
@@ -174,8 +177,9 @@ export function useBook(): UseBookResult {
       });
       setBook(data);
 
-      // 恢复上次使用的账本
-      const lastLedgerId = localStorage.getItem(LAST_LEDGER_KEY);
+      // 从 Firebase 恢复上次使用的账本
+      const preferences = await getUserPreferences(user.id);
+      const lastLedgerId = preferences["last-ledger-id"];
       if (lastLedgerId && data.ledgers.some((l) => l.id === lastLedgerId)) {
         setCurrentLedgerIdState(lastLedgerId);
       } else {
@@ -205,10 +209,16 @@ export function useBook(): UseBookResult {
   }, [book, currentLedgerId]);
 
   // 设置当前账本
-  const setCurrentLedgerId = useCallback((id: string) => {
-    setCurrentLedgerIdState(id);
-    localStorage.setItem(LAST_LEDGER_KEY, id);
-  }, []);
+  const setCurrentLedgerId = useCallback(
+    async (id: string) => {
+      setCurrentLedgerIdState(id);
+      // 保存到 Firebase
+      if (user) {
+        await saveUserPreference(user.id, "last-ledger-id", id);
+      }
+    },
+    [user],
+  );
 
   // 所有活跃账本
   const ledgers = useMemo(() => {
