@@ -1,5 +1,3 @@
-;
-
 import { useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { useI18n } from "~/lib/i18n";
@@ -16,14 +14,20 @@ import { LedgerSelector } from "./ledger-selector";
  */
 export function RecordsPage() {
   const { t } = useI18n();
-  const { book, isLoading, currentLedger, setCurrentLedgerId, ledgers, createLedger } =
-    useBook();
+  const {
+    book,
+    isLoading,
+    currentLedger,
+    setCurrentLedgerId,
+    ledgers,
+    createLedger,
+  } = useBook();
   const [activeTab, setActiveTab] = useState<string>("entry");
 
   if (isLoading) {
     return (
       <div className='flex h-40 items-center justify-center'>
-        <Loader2 className='size-4 animate-spin text-muted-foreground' />
+        <Loader2 className='text-muted-foreground size-4 animate-spin' />
       </div>
     );
   }
@@ -49,7 +53,7 @@ export function RecordsPage() {
             className={cn(
               "pb-1 text-xs transition-colors",
               activeTab === "entry"
-                ? "border-b-2 border-primary font-medium text-foreground"
+                ? "border-primary text-foreground border-b-2 font-medium"
                 : "text-muted-foreground hover:text-foreground",
             )}>
             {t.records.newEntry}
@@ -59,7 +63,7 @@ export function RecordsPage() {
             className={cn(
               "pb-1 text-xs transition-colors",
               activeTab === "flow"
-                ? "border-b-2 border-primary font-medium text-foreground"
+                ? "border-primary text-foreground border-b-2 font-medium"
                 : "text-muted-foreground hover:text-foreground",
             )}>
             {t.records.flow}
@@ -69,7 +73,7 @@ export function RecordsPage() {
             className={cn(
               "pb-1 text-xs transition-colors",
               activeTab === "stats"
-                ? "border-b-2 border-primary font-medium text-foreground"
+                ? "border-primary text-foreground border-b-2 font-medium"
                 : "text-muted-foreground hover:text-foreground",
             )}>
             {t.records.stats}

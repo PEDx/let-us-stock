@@ -1,5 +1,3 @@
-;
-
 import { useState, useMemo } from "react";
 import { useI18n } from "~/lib/i18n";
 import { useBook } from "~/lib/accounting";
@@ -52,9 +50,10 @@ export function NewEntry() {
   // 获取账户列表（用于支付账户选择）
   const paymentAccounts = useMemo(() => {
     if (!mainLedger) return [];
-    const assets = findAccountsByType(mainLedger.accounts, AccountType.ASSETS).filter(
-      (a) => a.parentId !== null && !a.archived,
-    );
+    const assets = findAccountsByType(
+      mainLedger.accounts,
+      AccountType.ASSETS,
+    ).filter((a) => a.parentId !== null && !a.archived);
     const liabilities = findAccountsByType(
       mainLedger.accounts,
       AccountType.LIABILITIES,
@@ -63,7 +62,8 @@ export function NewEntry() {
   }, [mainLedger]);
 
   // 当前分类列表
-  const categories = entryType === "expense" ? expenseCategories : incomeCategories;
+  const categories =
+    entryType === "expense" ? expenseCategories : incomeCategories;
 
   // 处理标签添加
   const handleAddTag = () => {
@@ -160,18 +160,18 @@ export function NewEntry() {
 
       {/* 金额输入 */}
       <div>
-        <label className='mb-1 block text-xs text-muted-foreground'>
+        <label className='text-muted-foreground mb-1 block text-xs'>
           {t.records.amount}
         </label>
         <div className='flex items-center gap-1'>
-          <span className='text-sm text-muted-foreground'>
+          <span className='text-muted-foreground text-sm'>
             {getCurrencySymbol(defaultCurrency)}
           </span>
           <input
             type='number'
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className='flex-1 border-b bg-transparent py-1 text-lg font-bold outline-none focus:border-primary'
+            className='focus:border-primary flex-1 border-b bg-transparent py-1 text-lg font-bold outline-none'
             placeholder='0.00'
             step='0.01'
           />
@@ -181,7 +181,7 @@ export function NewEntry() {
       {/* 分类选择（支出/收入时显示） */}
       {entryType !== "transfer" && (
         <div>
-          <label className='mb-1 block text-xs text-muted-foreground'>
+          <label className='text-muted-foreground mb-1 block text-xs'>
             {t.records.category}
           </label>
           <CategorySelector
@@ -199,13 +199,15 @@ export function NewEntry() {
       {/* 账户选择 */}
       <div className='grid gap-2 sm:grid-cols-2'>
         <div>
-          <label className='mb-1 block text-xs text-muted-foreground'>
-            {entryType === "transfer" ? t.records.fromAccount : t.records.account}
+          <label className='text-muted-foreground mb-1 block text-xs'>
+            {entryType === "transfer"
+              ? t.records.fromAccount
+              : t.records.account}
           </label>
           <select
             value={paymentAccountId}
             onChange={(e) => setPaymentAccountId(e.target.value)}
-            className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'>
+            className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'>
             <option value=''>{t.records.account}</option>
             {paymentAccounts.map((acc) => (
               <option key={acc.id} value={acc.id}>
@@ -217,13 +219,13 @@ export function NewEntry() {
 
         {entryType === "transfer" && (
           <div>
-            <label className='mb-1 block text-xs text-muted-foreground'>
+            <label className='text-muted-foreground mb-1 block text-xs'>
               {t.records.toAccount}
             </label>
             <select
               value={toAccountId}
               onChange={(e) => setToAccountId(e.target.value)}
-              className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'>
+              className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'>
               <option value=''>{t.records.toAccount}</option>
               {paymentAccounts
                 .filter((acc) => acc.id !== paymentAccountId)
@@ -239,14 +241,14 @@ export function NewEntry() {
 
       {/* 描述 */}
       <div>
-        <label className='mb-1 block text-xs text-muted-foreground'>
+        <label className='text-muted-foreground mb-1 block text-xs'>
           {t.records.description}
         </label>
         <input
           type='text'
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'
+          className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'
           placeholder={t.records.description}
         />
       </div>
@@ -254,25 +256,25 @@ export function NewEntry() {
       {/* 日期和商家 */}
       <div className='grid gap-2 sm:grid-cols-2'>
         <div>
-          <label className='mb-1 block text-xs text-muted-foreground'>
+          <label className='text-muted-foreground mb-1 block text-xs'>
             {t.records.date}
           </label>
           <input
             type='date'
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'
+            className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'
           />
         </div>
         <div>
-          <label className='mb-1 block text-xs text-muted-foreground'>
+          <label className='text-muted-foreground mb-1 block text-xs'>
             {t.records.payee}
           </label>
           <input
             type='text'
             value={payee}
             onChange={(e) => setPayee(e.target.value)}
-            className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'
+            className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'
             placeholder={t.records.payee}
           />
         </div>
@@ -280,14 +282,14 @@ export function NewEntry() {
 
       {/* 标签 */}
       <div>
-        <label className='mb-1 block text-xs text-muted-foreground'>
+        <label className='text-muted-foreground mb-1 block text-xs'>
           {t.records.tags}
         </label>
         <div className='flex flex-wrap items-center gap-1'>
           {tags.map((tag) => (
             <span
               key={tag}
-              className='flex items-center gap-0.5 rounded-full bg-muted px-1.5 py-0.5 text-xs'>
+              className='bg-muted flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs'>
               {tag}
               <button
                 onClick={() => handleRemoveTag(tag)}
@@ -313,7 +315,7 @@ export function NewEntry() {
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !amount || parseFloat(amount) <= 0}
-          className='flex-1 rounded-xs border border-primary bg-primary/10 px-1.5 py-1 text-xs text-primary hover:bg-primary/20 disabled:opacity-50'>
+          className='border-primary bg-primary/10 text-primary hover:bg-primary/20 flex-1 rounded-xs border px-1.5 py-1 text-xs disabled:opacity-50'>
           {isSubmitting ? t.common.loading : t.common.save}
         </button>
         {showSuccess && (

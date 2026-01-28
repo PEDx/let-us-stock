@@ -29,11 +29,7 @@ export const UNITS_EN = {
 /**
  * 中文单位配置 (万/亿/万亿)
  */
-export const UNITS_ZH = {
-  wan: " 万",
-  yi: " 亿",
-  wanyi: " 万亿",
-};
+export const UNITS_ZH = { wan: " 万", yi: " 亿", wanyi: " 万亿" };
 
 export type UnitsEN = typeof UNITS_EN;
 export type UnitsZH = typeof UNITS_ZH;

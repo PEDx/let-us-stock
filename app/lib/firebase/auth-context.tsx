@@ -4,9 +4,13 @@
  * 提供用户登录/登出状态管理，支持 GitHub 和 Google 登录
  */
 
-;
-
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   signInWithGithub,
   signInWithGoogle,

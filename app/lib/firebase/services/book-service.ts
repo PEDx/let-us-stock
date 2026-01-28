@@ -12,10 +12,7 @@ import type {
   ExchangeRate,
   CurrencyCode,
 } from "~/lib/double-entry/types";
-import {
-  LedgerType,
-  AccountType
-} from "~/lib/double-entry/types";
+import { LedgerType, AccountType } from "~/lib/double-entry/types";
 import type {
   IBookRepository,
   ILedgerRepository,
@@ -24,11 +21,11 @@ import type {
   PaginatedResult,
   EntryStats,
 } from "../repository/types";
+import { createSimpleEntry, fromMainUnit } from "~/lib/double-entry";
 import {
-  createSimpleEntry,
-  fromMainUnit,
-} from "~/lib/double-entry";
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "~/lib/accounting/constants";
+  EXPENSE_CATEGORIES,
+  INCOME_CATEGORIES,
+} from "~/lib/accounting/constants";
 
 // ============================================================================
 // 工具函数
@@ -114,7 +111,11 @@ export class BookService {
       };
 
       // 添加预设分类
-      await this.addPresetCategories(mainLedgerId, options?.categoryLabels, defaultCurrency);
+      await this.addPresetCategories(
+        mainLedgerId,
+        options?.categoryLabels,
+        defaultCurrency,
+      );
     }
 
     // 构建完整的 BookData
@@ -122,7 +123,10 @@ export class BookService {
 
     // 为每个账本加载账户
     for (const ledger of ledgers) {
-      ledger.accounts = await this.accountRepo.getAccounts(this.userId, ledger.id);
+      ledger.accounts = await this.accountRepo.getAccounts(
+        this.userId,
+        ledger.id,
+      );
     }
 
     return {
@@ -212,7 +216,11 @@ export class BookService {
     const expenseRoot = rootAccounts.find((a) => a.type === "expenses")!;
     const incomeRoot = rootAccounts.find((a) => a.type === "income")!;
 
-    const categories: Array<{ type: "expense" | "income"; labelKey: string; icon?: string }> = [
+    const categories: Array<{
+      type: "expense" | "income";
+      labelKey: string;
+      icon?: string;
+    }> = [
       ...EXPENSE_CATEGORIES.map((c) => ({ type: "expense" as const, ...c })),
       ...INCOME_CATEGORIES.map((c) => ({ type: "income" as const, ...c })),
     ];
@@ -226,7 +234,8 @@ export class BookService {
       categoryAccounts.push({
         id: generateId(),
         name,
-        type: cat.type === "expense" ? AccountType.EXPENSES : AccountType.INCOME,
+        type:
+          cat.type === "expense" ? AccountType.EXPENSES : AccountType.INCOME,
         currency: defaultCurrency,
         parentId,
         path: `${cat.type === "expense" ? "expenses" : "income"}/${cat.labelKey}`,
@@ -238,7 +247,11 @@ export class BookService {
       });
     }
 
-    await this.accountRepo.saveAccounts(this.userId, ledgerId, categoryAccounts);
+    await this.accountRepo.saveAccounts(
+      this.userId,
+      ledgerId,
+      categoryAccounts,
+    );
   }
 
   // ============================================================================
@@ -264,7 +277,10 @@ export class BookService {
       description: params.description,
       accounts: [],
       entries: [],
-      defaultCurrency: params.defaultCurrency ?? bookMeta.exchangeRates.length > 0 ? "CNY" : "CNY",
+      defaultCurrency:
+        (params.defaultCurrency ?? bookMeta.exchangeRates.length > 0)
+          ? "CNY"
+          : "CNY",
       icon: params.icon,
       archived: false,
       createdAt: new Date().toISOString(),
@@ -290,7 +306,9 @@ export class BookService {
 
   async updateLedgerInfo(
     ledgerId: string,
-    updates: Partial<Pick<LedgerData, "name" | "description" | "icon" | "archived">>,
+    updates: Partial<
+      Pick<LedgerData, "name" | "description" | "icon" | "archived">
+    >,
   ): Promise<LedgerData> {
     const ledger = await this.ledgerRepo.getLedger(this.userId, ledgerId);
     if (!ledger) {
@@ -345,7 +363,9 @@ export class BookService {
     }
 
     const parentAccount = ledger.accounts.find((a) => a.id === params.parentId);
-    const path = parentAccount ? `${parentAccount.path}/${params.name}` : params.name;
+    const path = parentAccount
+      ? `${parentAccount.path}/${params.name}`
+      : params.name;
 
     const account: AccountData = {
       id: generateId(),
@@ -369,7 +389,12 @@ export class BookService {
   async updateAccount(
     ledgerId: string,
     accountId: string,
-    updates: { name?: string; icon?: string; note?: string; archived?: boolean },
+    updates: {
+      name?: string;
+      icon?: string;
+      note?: string;
+      archived?: boolean;
+    },
   ): Promise<AccountData> {
     const accounts = await this.accountRepo.getAccounts(this.userId, ledgerId);
     const account = accounts.find((a) => a.id === accountId);
@@ -396,7 +421,10 @@ export class BookService {
   // 分录操作
   // ============================================================================
 
-  async addEntry(ledgerId: string, entry: JournalEntryData): Promise<JournalEntryData> {
+  async addEntry(
+    ledgerId: string,
+    entry: JournalEntryData,
+  ): Promise<JournalEntryData> {
     const newEntry: JournalEntryData = {
       ...entry,
       id: entry.id ?? generateId(),
@@ -466,7 +494,10 @@ export class BookService {
     return this.addEntry(params.ledgerId, entry);
   }
 
-  async updateEntry(ledgerId: string, entry: JournalEntryData): Promise<JournalEntryData> {
+  async updateEntry(
+    ledgerId: string,
+    entry: JournalEntryData,
+  ): Promise<JournalEntryData> {
     const updatedEntry: JournalEntryData = {
       ...entry,
       updatedAt: new Date().toISOString(),

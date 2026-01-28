@@ -10,11 +10,7 @@ import type {
   CurrencyCode,
   AccountType,
 } from "./types";
-import {
-  createAccount,
-  findAccountById,
-  generateAccountId,
-} from "./account";
+import { createAccount, findAccountById, generateAccountId } from "./account";
 import { postEntry, unpostEntry, isBalanced } from "./entry";
 import { AccountType as AT, LedgerType as LT } from "./types";
 
@@ -88,13 +84,11 @@ function createRootAccounts(
  */
 export function updateLedger(
   ledger: LedgerData,
-  updates: Partial<Pick<LedgerData, "name" | "description" | "icon" | "archived">>,
+  updates: Partial<
+    Pick<LedgerData, "name" | "description" | "icon" | "archived">
+  >,
 ): LedgerData {
-  return {
-    ...ledger,
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...ledger, ...updates, updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -148,11 +142,7 @@ export function updateAccount(
       : a,
   );
 
-  return {
-    ...ledger,
-    accounts,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...ledger, accounts, updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -180,10 +170,7 @@ export function addEntry(
 /**
  * 删除分录（撤销过账）
  */
-export function removeEntry(
-  ledger: LedgerData,
-  entryId: string,
-): LedgerData {
+export function removeEntry(ledger: LedgerData, entryId: string): LedgerData {
   const entry = ledger.entries.find((e) => e.id === entryId);
   if (!entry) {
     throw new Error(`Entry ${entryId} not found`);
@@ -264,10 +251,7 @@ export function getAccountTotalBalance(
 /**
  * 按类型获取账户汇总余额
  */
-export function getTypeBalance(
-  ledger: LedgerData,
-  type: AccountType,
-): number {
+export function getTypeBalance(ledger: LedgerData, type: AccountType): number {
   return ledger.accounts
     .filter((a) => a.type === type)
     .reduce((sum, a) => sum + a.balance, 0);

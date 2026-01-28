@@ -121,7 +121,11 @@ export function upsertExchangeRate(
   // 移除同一天的相同货币对
   const filtered = rates.filter(
     (r) =>
-      !(r.from === newRate.from && r.to === newRate.to && r.date === newRate.date),
+      !(
+        r.from === newRate.from &&
+        r.to === newRate.to &&
+        r.date === newRate.date
+      ),
   );
   return [...filtered, newRate];
 }
@@ -133,7 +137,7 @@ export function getAvailableCurrencyPairs(
   rates: ExchangeRate[],
 ): Array<{ from: CurrencyCode; to: CurrencyCode }> {
   const pairs = new Set<string>();
-  
+
   for (const rate of rates) {
     pairs.add(`${rate.from}-${rate.to}`);
     pairs.add(`${rate.to}-${rate.from}`); // 反向也可用

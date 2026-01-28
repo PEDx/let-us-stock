@@ -1,5 +1,3 @@
-;
-
 import { useEffect, useState } from "react";
 import { Select } from "@base-ui/react/select";
 import { ChevronDown, Check, Globe } from "lucide-react";
@@ -118,7 +116,7 @@ export function WorldClock({
   }
 
   return (
-    <div className={cn("flex items-center text-xs shrink-0", className)}>
+    <div className={cn("flex shrink-0 items-center text-xs", className)}>
       {/* 时间显示 */}
       <div className='flex items-center gap-1.5 rounded-xs border border-r-0 px-1.5 py-0.5'>
         <span className='font-mono tabular-nums'>{formatTime()}</span>
@@ -130,7 +128,7 @@ export function WorldClock({
       {/* 时区选择器 */}
       {showSelector && timezoneId && (
         <Select.Root value={timezoneId} onValueChange={handleTimezoneChange}>
-          <Select.Trigger className='flex cursor-pointer items-center gap-1 rounded-xs border px-1.5 py-0.5 text-muted-foreground transition-colors border-l-0 outline-none hover:text-foreground'>
+          <Select.Trigger className='text-muted-foreground hover:text-foreground flex cursor-pointer items-center gap-1 rounded-xs border border-l-0 px-1.5 py-0.5 transition-colors outline-none'>
             <Globe className='size-3' />
             <Select.Value />
             <Select.Icon>
@@ -139,12 +137,12 @@ export function WorldClock({
           </Select.Trigger>
           <Select.Portal>
             <Select.Positioner sideOffset={4}>
-              <Select.Popup className='rounded-xs border bg-popover text-xs shadow-md'>
+              <Select.Popup className='bg-popover rounded-xs border text-xs shadow-md'>
                 {TIMEZONES.map((tz) => (
                   <Select.Item
                     key={tz.id}
                     value={tz.id}
-                    className='flex cursor-pointer items-center gap-2 px-2 py-1 outline-none data-highlighted:bg-muted'>
+                    className='data-highlighted:bg-muted flex cursor-pointer items-center gap-2 px-2 py-1 outline-none'>
                     <Select.ItemIndicator className='inline-flex w-3'>
                       <Check className='size-3' />
                     </Select.ItemIndicator>

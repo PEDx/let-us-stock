@@ -1,5 +1,3 @@
-;
-
 import { RecordsPage } from "~/components/records";
 
 export function meta() {

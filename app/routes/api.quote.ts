@@ -9,7 +9,7 @@ export async function loader({ request }: { request: Request }) {
   }
 
   const symbols = symbolsParam.split(",").filter(Boolean);
-  
+
   if (symbols.length === 0) {
     return Response.json({ quotes: [] });
   }

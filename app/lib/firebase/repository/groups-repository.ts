@@ -10,7 +10,7 @@ import {
   Timestamp,
   type Firestore,
 } from "firebase/firestore";
-import { getApps } from 'firebase/app'
+import { getApps } from "firebase/app";
 import type { Group, GroupsData } from "../../storage/types";
 import { DEFAULT_GROUPS_DATA } from "../../storage/types";
 
@@ -115,11 +115,7 @@ export async function addGroup(
 ): Promise<GroupsData> {
   const repo = new GroupsRepository(userId);
   const data = await repo.getLocalOnly();
-  const newGroup: Group = {
-    id: `group-${generateId()}`,
-    name,
-    symbols: [],
-  };
+  const newGroup: Group = { id: `group-${generateId()}`, name, symbols: [] };
   data.groups.push(newGroup);
   data.activeGroupId = newGroup.id;
   await repo.saveGroupsData(data);

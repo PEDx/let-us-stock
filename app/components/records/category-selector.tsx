@@ -1,5 +1,3 @@
-;
-
 import { useState, useRef, useEffect } from "react";
 import { Plus, Settings, X, Check, Pencil } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
@@ -13,7 +11,10 @@ interface CategorySelectorProps {
   selectedId: string;
   onSelect: (id: string) => void;
   onAdd: (params: { name: string; icon?: string }) => Promise<void>;
-  onUpdate: (id: string, updates: { name?: string; icon?: string }) => Promise<void>;
+  onUpdate: (
+    id: string,
+    updates: { name?: string; icon?: string },
+  ) => Promise<void>;
   onArchive: (id: string) => Promise<void>;
   type: "expense" | "income";
 }
@@ -105,7 +106,7 @@ export function CategorySelector({
             return (
               <div
                 key={cat.id}
-                className='flex items-center gap-0.5 rounded-xs border border-primary px-1 py-0.5'>
+                className='border-primary flex items-center gap-0.5 rounded-xs border px-1 py-0.5'>
                 <button
                   type='button'
                   onClick={() => {
@@ -143,7 +144,9 @@ export function CategorySelector({
           return (
             <div key={cat.id} className='flex items-center'>
               <button
-                onClick={() => (isManaging ? handleStartEdit(cat) : onSelect(cat.id))}
+                onClick={() =>
+                  isManaging ? handleStartEdit(cat) : onSelect(cat.id)
+                }
                 className={cn(
                   "flex items-center gap-0.5 rounded-xs border px-1.5 py-0.5 text-xs transition-colors",
                   selectedId === cat.id && !isManaging
@@ -156,7 +159,7 @@ export function CategorySelector({
               </button>
               {isManaging && (
                 <ConfirmPopover onConfirm={() => onArchive(cat.id)}>
-                  <button className='ml-0.5 text-muted-foreground hover:text-red-500'>
+                  <button className='text-muted-foreground ml-0.5 hover:text-red-500'>
                     <X className='size-3' />
                   </button>
                 </ConfirmPopover>
@@ -167,7 +170,7 @@ export function CategorySelector({
 
         {/* 添加新分类 */}
         {isAdding ? (
-          <div className='flex items-center gap-0.5 rounded-xs border border-dashed border-primary px-1 py-0.5'>
+          <div className='border-primary flex items-center gap-0.5 rounded-xs border border-dashed px-1 py-0.5'>
             <button
               type='button'
               onClick={() => {
@@ -186,9 +189,11 @@ export function CategorySelector({
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={handleAddKeyDown}
               placeholder={t.records.category}
-              className='w-12 bg-transparent text-xs outline-none placeholder:text-muted-foreground'
+              className='placeholder:text-muted-foreground w-12 bg-transparent text-xs outline-none'
             />
-            <button onClick={handleAdd} className='text-primary hover:opacity-70'>
+            <button
+              onClick={handleAdd}
+              className='text-primary hover:opacity-70'>
               <Check className='size-3' />
             </button>
             <button
@@ -203,7 +208,7 @@ export function CategorySelector({
         ) : (
           <button
             onClick={() => setIsAdding(true)}
-            className='flex items-center gap-0.5 rounded-xs border border-dashed px-1 py-0.5 text-xs text-muted-foreground hover:border-solid hover:text-foreground'>
+            className='text-muted-foreground hover:text-foreground flex items-center gap-0.5 rounded-xs border border-dashed px-1 py-0.5 text-xs hover:border-solid'>
             <Plus className='size-3' />
           </button>
         )}
@@ -215,7 +220,7 @@ export function CategorySelector({
             "flex items-center rounded-xs border px-1 py-0.5 text-xs transition-colors",
             isManaging
               ? "border-primary bg-primary/10 text-primary"
-              : "border-transparent text-muted-foreground hover:text-foreground",
+              : "text-muted-foreground hover:text-foreground border-transparent",
           )}
           title={isManaging ? t.groups.doneManaging : t.groups.manageGroups}>
           <Settings className='size-3' />

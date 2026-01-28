@@ -52,14 +52,18 @@ export function queryEntries(
   // 金额范围筛选
   if (query.amountRange) {
     entries = entries.filter((e) => {
-      const totalAmount = e.lines.reduce(
-        (sum, line) => sum + line.amount,
-        0,
-      ) / 2; // 借贷各计一次，除以2
-      if (query.amountRange!.min !== undefined && totalAmount < query.amountRange!.min) {
+      const totalAmount =
+        e.lines.reduce((sum, line) => sum + line.amount, 0) / 2; // 借贷各计一次，除以2
+      if (
+        query.amountRange!.min !== undefined &&
+        totalAmount < query.amountRange!.min
+      ) {
         return false;
       }
-      if (query.amountRange!.max !== undefined && totalAmount > query.amountRange!.max) {
+      if (
+        query.amountRange!.max !== undefined &&
+        totalAmount > query.amountRange!.max
+      ) {
         return false;
       }
       return true;

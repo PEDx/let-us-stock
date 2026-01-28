@@ -1,5 +1,3 @@
-;
-
 import { AssetsPage } from "~/components/assets";
 
 export function meta() {

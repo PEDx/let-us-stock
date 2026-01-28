@@ -1,5 +1,3 @@
-;
-
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { QuoteColumn } from "./types";
 
@@ -23,7 +21,7 @@ export function SortableHeader({ column, children }: SortableHeaderProps) {
   return (
     <button
       onClick={column.getToggleSortingHandler()}
-      className='inline-flex cursor-pointer items-center gap-1 hover:text-foreground'>
+      className='hover:text-foreground inline-flex cursor-pointer items-center gap-1'>
       {children}
       {sorted === "asc" ? (
         <ArrowUp className='size-3' />

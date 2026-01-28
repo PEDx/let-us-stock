@@ -1,5 +1,3 @@
-;
-
 import { useMemo, useState } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
@@ -93,7 +91,7 @@ export function EntryStats() {
             <div className='flex size-5 items-center justify-center rounded-full bg-green-500/10'>
               <TrendingUp className='size-3 text-green-600' />
             </div>
-            <span className='text-xs text-muted-foreground'>
+            <span className='text-muted-foreground text-xs'>
               {t.records.incomeTotal}
             </span>
           </div>
@@ -109,7 +107,7 @@ export function EntryStats() {
             <div className='flex size-5 items-center justify-center rounded-full bg-red-500/10'>
               <TrendingDown className='size-3 text-red-600' />
             </div>
-            <span className='text-xs text-muted-foreground'>
+            <span className='text-muted-foreground text-xs'>
               {t.records.expenseTotal}
             </span>
           </div>
@@ -134,7 +132,9 @@ export function EntryStats() {
                 )}
               />
             </div>
-            <span className='text-xs text-muted-foreground'>{t.records.balance}</span>
+            <span className='text-muted-foreground text-xs'>
+              {t.records.balance}
+            </span>
           </div>
           <div
             className={cn(
@@ -149,7 +149,7 @@ export function EntryStats() {
       </div>
 
       {/* 占位：未来可添加图表 */}
-      <div className='flex h-20 items-center justify-center rounded-xs border border-dashed text-muted-foreground'>
+      <div className='text-muted-foreground flex h-20 items-center justify-center rounded-xs border border-dashed'>
         <p className='text-xs'>📊 图表功能开发中...</p>
       </div>
     </div>

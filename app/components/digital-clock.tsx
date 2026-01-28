@@ -1,5 +1,3 @@
-;
-
 import { useEffect, useState } from "react";
 import { cn } from "~/lib/utils";
 
@@ -236,7 +234,7 @@ export function DigitalClock({
         {format === "12h" && (
           <span
             className={cn(
-              "ml-1 font-mono font-bold self-end mb-1",
+              "mb-1 ml-1 self-end font-mono font-bold",
               periodSizeClass[size],
             )}>
             {period}
@@ -247,7 +245,10 @@ export function DigitalClock({
       {/* 日期 */}
       {showDate && (
         <div
-          className={cn("font-mono text-muted-foreground", periodSizeClass[size])}>
+          className={cn(
+            "text-muted-foreground font-mono",
+            periodSizeClass[size],
+          )}>
           {dateStr}
         </div>
       )}

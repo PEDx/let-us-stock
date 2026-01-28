@@ -6,7 +6,6 @@
 
 https://jsr.io/@gadicc/yahoo-finance2
 
-
 ## 📦 安装
 
 确保已安装 Node.js 和 pnpm：

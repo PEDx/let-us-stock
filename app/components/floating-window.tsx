@@ -1,6 +1,10 @@
-;
-
-import { useRef, useState, useCallback, useEffect, useLayoutEffect } from "react";
+import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+} from "react";
 import { X, RefreshCw, Minus } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -155,18 +159,15 @@ export function FloatingWindow({
     return (
       <>
         {/* 背景遮罩 */}
-        <div
-          className="fixed inset-0 z-40 bg-black/30"
-          onClick={onClose}
-        />
+        <div className='fixed inset-0 z-40 bg-black/30' onClick={onClose} />
         {/* 底部浮窗 */}
         <div
           ref={windowRef}
           data-floating-window={id}
-          className="fixed inset-x-0 bottom-0 z-50 rounded-t-xs border-t bg-background shadow-lg">
+          className='bg-background fixed inset-x-0 bottom-0 z-50 rounded-t-xs border-t shadow-lg'>
           {/* 拖拽指示条 */}
           <div className='flex justify-center py-2'>
-            <div className='h-1 w-10 rounded-full bg-muted-foreground/30' />
+            <div className='bg-muted-foreground/30 h-1 w-10 rounded-full' />
           </div>
           {/* 标题栏 */}
           <div className='flex h-8 items-center justify-between border-b px-3'>
@@ -176,7 +177,7 @@ export function FloatingWindow({
                 <button
                   onClick={onRefresh}
                   disabled={isLoading}
-                  className='rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50'>
+                  className='text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1 disabled:opacity-50'>
                   <RefreshCw
                     className={cn("size-4", isLoading && "animate-spin")}
                   />
@@ -184,7 +185,7 @@ export function FloatingWindow({
               )}
               <button
                 onClick={onClose}
-                className='rounded p-1 text-muted-foreground hover:bg-red-500/20 hover:text-red-500'>
+                className='text-muted-foreground rounded p-1 hover:bg-red-500/20 hover:text-red-500'>
                 <X className='size-4' />
               </button>
             </div>
@@ -206,7 +207,7 @@ export function FloatingWindow({
       ref={windowRef}
       data-floating-window={id}
       className={cn(
-        "fixed rounded-xs border bg-background shadow-lg",
+        "bg-background fixed rounded-xs border shadow-lg",
         isDragging && "cursor-grabbing select-none",
         isResizing && "select-none",
       )}
@@ -220,7 +221,7 @@ export function FloatingWindow({
       onMouseDown={bringToFront}>
       {/* 标题栏 */}
       <div
-        className='flex h-7 cursor-grab items-center justify-between border-b bg-muted/30 px-2'
+        className='bg-muted/30 flex h-7 cursor-grab items-center justify-between border-b px-2'
         onMouseDown={handleMouseDown}>
         <span className='truncate text-xs font-medium'>{title}</span>
         <div className='flex items-center gap-1' data-no-drag>
@@ -228,7 +229,7 @@ export function FloatingWindow({
             <button
               onClick={onRefresh}
               disabled={isLoading}
-              className='rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50'>
+              className='text-muted-foreground hover:bg-muted hover:text-foreground rounded p-0.5 disabled:opacity-50'>
               <RefreshCw
                 className={cn("size-3", isLoading && "animate-spin")}
               />
@@ -236,12 +237,12 @@ export function FloatingWindow({
           )}
           <button
             onClick={() => setIsMinimized(!isMinimized)}
-            className='rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground'>
+            className='text-muted-foreground hover:bg-muted hover:text-foreground rounded p-0.5'>
             <Minus className='size-3' />
           </button>
           <button
             onClick={onClose}
-            className='rounded p-0.5 text-muted-foreground hover:bg-red-500/20 hover:text-red-500'>
+            className='text-muted-foreground rounded p-0.5 hover:bg-red-500/20 hover:text-red-500'>
             <X className='size-3' />
           </button>
         </div>
@@ -257,10 +258,10 @@ export function FloatingWindow({
       {/* 调整大小手柄 */}
       {!isMinimized && (
         <div
-          className='absolute bottom-0 right-0 h-3 w-3 cursor-se-resize'
+          className='absolute right-0 bottom-0 h-3 w-3 cursor-se-resize'
           onMouseDown={handleResizeStart}>
           <svg
-            className='size-3 text-muted-foreground/50'
+            className='text-muted-foreground/50 size-3'
             viewBox='0 0 12 12'
             fill='currentColor'>
             <path d='M10 10H12V12H10V10ZM6 10H8V12H6V10ZM10 6H12V8H10V6Z' />

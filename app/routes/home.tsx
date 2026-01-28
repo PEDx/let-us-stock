@@ -1,31 +1,30 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
-import { QuoteTable } from '~/components/quote-table'
-import { StockSearch } from '~/components/stock-search'
-import { StockDetail } from '~/components/stock-detail'
-import { GroupTabs } from '~/components/group-tabs'
-import { useGroupsData, type GroupsData } from '~/lib/stock-store'
-import { useAuth } from '~/lib/firebase/auth-context'
-import type { Quote } from 'yahoo-finance2/modules/quote'
-import { Loader2 } from 'lucide-react'
+import { useEffect, useState, useCallback, useRef } from "react";
+import { QuoteTable } from "~/components/quote-table";
+import { StockSearch } from "~/components/stock-search";
+import { StockDetail } from "~/components/stock-detail";
+import { GroupTabs } from "~/components/group-tabs";
+import { useGroupsData, type GroupsData } from "~/lib/stock-store";
+import { useAuth } from "~/lib/firebase/auth-context";
+import type { Quote } from "yahoo-finance2/modules/quote";
+import { Loader2 } from "lucide-react";
 
 export function meta() {
   return [
-    { title: 'Market' },
+    { title: "Market" },
     {
-      name: 'description',
+      name: "description",
       content:
-        'Free stock tracking tool with real-time quotes for US stocks and crypto.',
+        "Free stock tracking tool with real-time quotes for US stocks and crypto.",
     },
-  ]
+  ];
 }
 
 interface OpenWindow {
-  symbol: string
-  position: { x: number; y: number }
+  symbol: string;
+  position: { x: number; y: number };
 }
 
 export default function Home() {
-  const { isAuthenticated: authLoading } = useAuth()
   const {
     groupsData,
     isLoading: groupsLoading,
@@ -37,171 +36,173 @@ export default function Home() {
     addSymbolToGroup,
     removeSymbolFromGroup,
     reorderSymbolsInGroup,
-  } = useGroupsData()
-  const [quotes, setQuotes] = useState<Quote[]>([])
-  const [isQuotesLoading, setIsQuotesLoading] = useState(false)
-  const [openWindows, setOpenWindows] = useState<OpenWindow[]>([])
+  } = useGroupsData();
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [isQuotesLoading, setIsQuotesLoading] = useState(false);
+  const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
 
   // 使用 ref 存储最新的 groupsData，解决闭包中的状态过期问题
-  const groupsDataRef = useRef(groupsData)
-  groupsDataRef.current = groupsData
+  const groupsDataRef = useRef(groupsData);
+  groupsDataRef.current = groupsData;
 
   // 获取当前激活的分组
   const activeGroup = groupsData.groups.find(
     (g) => g.id === groupsData.activeGroupId,
-  )
-  const currentSymbols = activeGroup?.symbols || []
+  );
+  const currentSymbols = activeGroup?.symbols || [];
 
   // 获取行情数据
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
     if (symbolList.length === 0) {
-      setQuotes([])
-      setIsQuotesLoading(false)
-      return
+      setQuotes([]);
+      setIsQuotesLoading(false);
+      return;
     }
 
-    setIsQuotesLoading(true)
+    setIsQuotesLoading(true);
     try {
-      const response = await fetch(`/api/quote?symbols=${symbolList.join(',')}`)
-      const data = await response.json()
+      const response = await fetch(
+        `/api/quote?symbols=${symbolList.join(",")}`,
+      );
+      const data = await response.json();
       // 按照 symbolList 的顺序排序 quotes
       const quotesMap = new Map(
         (data.quotes || []).map((q: Quote) => [q.symbol, q]),
-      )
+      );
       const sortedQuotes = symbolList
         .map((s) => quotesMap.get(s))
-        .filter(Boolean) as Quote[]
-      setQuotes(sortedQuotes)
+        .filter(Boolean) as Quote[];
+      setQuotes(sortedQuotes);
     } catch (error) {
-      console.error('Failed to fetch quotes:', error)
+      console.error("Failed to fetch quotes:", error);
     } finally {
-      setIsQuotesLoading(false)
+      setIsQuotesLoading(false);
     }
-  }, [])
+  }, []);
 
   // 初始化加载 - 等待分组数据加载完成
   useEffect(() => {
     // 等待分组数据加载
     if (groupsLoading) {
-      return
+      return;
     }
 
     // 加载完成后获取行情数据
     const group = groupsData.groups.find(
       (g) => g.id === groupsData.activeGroupId,
-    )
-    console.log('group', group)
+    );
+    console.log("group", group);
     if (group) {
-      fetchQuotes(group.symbols)
+      fetchQuotes(group.symbols);
     }
-  }, [groupsLoading, groupsData, fetchQuotes])
+  }, [groupsLoading, groupsData, fetchQuotes]);
 
   // 切换分组时重新获取行情
   const handleSelectGroup = async (groupId: string) => {
-    await setActiveGroup(groupId)
-    const group = groupsDataRef.current.groups.find((g) => g.id === groupId)
+    await setActiveGroup(groupId);
+    const group = groupsDataRef.current.groups.find((g) => g.id === groupId);
     if (group) {
-      setIsQuotesLoading(true)
-      await fetchQuotes(group.symbols)
+      setIsQuotesLoading(true);
+      await fetchQuotes(group.symbols);
     }
-  }
+  };
 
   // 添加分组
   const handleAddGroup = async (name: string) => {
-    await addGroup(name)
-    setQuotes([])
-  }
+    await addGroup(name);
+    setQuotes([]);
+  };
 
   // 删除分组
   const handleRemoveGroup = async (groupId: string) => {
-    await removeGroup(groupId)
+    await removeGroup(groupId);
     // 如果删除的是当前分组，需要重新获取行情
     if (groupId === groupsData.activeGroupId) {
       const activeGroup = groupsData.groups.find(
         (g) => g.id === groupsData.activeGroupId,
-      )
+      );
       if (activeGroup) {
-        setIsQuotesLoading(true)
-        await fetchQuotes(activeGroup.symbols)
+        setIsQuotesLoading(true);
+        await fetchQuotes(activeGroup.symbols);
       }
     }
-  }
+  };
 
   // 重命名分组
   const handleRenameGroup = async (groupId: string, newName: string) => {
-    await renameGroup(groupId, newName)
-  }
+    await renameGroup(groupId, newName);
+  };
 
   // 重新排序分组
   const handleReorderGroups = async (newOrder: string[]) => {
-    await reorderGroups(newOrder)
-  }
+    await reorderGroups(newOrder);
+  };
 
   // 添加股票
   const handleAddSymbol = async (symbol: string) => {
-    await addSymbolToGroup(groupsData.activeGroupId, symbol)
+    await addSymbolToGroup(groupsData.activeGroupId, symbol);
     // 使用 ref 获取最新的 groupsData，避免闭包中的过期状态
     const group = groupsDataRef.current.groups.find(
       (g) => g.id === groupsDataRef.current.activeGroupId,
-    )
+    );
     if (group) {
-      setIsQuotesLoading(true)
-      await fetchQuotes(group.symbols)
+      setIsQuotesLoading(true);
+      await fetchQuotes(group.symbols);
     }
-  }
+  };
 
   // 删除股票
   const handleRemoveSymbol = async (symbol: string) => {
-    await removeSymbolFromGroup(groupsData.activeGroupId, symbol)
-    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol))
-  }
+    await removeSymbolFromGroup(groupsData.activeGroupId, symbol);
+    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
+  };
 
   // 重新排序股票
   const handleReorder = async (newOrder: string[]) => {
     // 先更新 UI
-    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]))
+    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]));
     const sortedQuotes = newOrder
       .map((s) => quotesMap.get(s))
-      .filter(Boolean) as Quote[]
-    setQuotes(sortedQuotes)
+      .filter(Boolean) as Quote[];
+    setQuotes(sortedQuotes);
     // 保存到存储
-    await reorderSymbolsInGroup(groupsData.activeGroupId, newOrder)
-  }
+    await reorderSymbolsInGroup(groupsData.activeGroupId, newOrder);
+  };
 
   // 点击股票代码打开详情窗口
   const handleSymbolClick = (symbol: string, event: React.MouseEvent) => {
     // 检查是否已经打开
     if (openWindows.some((w) => w.symbol === symbol)) {
-      return
+      return;
     }
 
     // 计算新窗口位置（基于点击位置，稍微偏移）
-    const offset = openWindows.length * 30
+    const offset = openWindows.length * 30;
     const position = {
       x: Math.min(event.clientX + 20 + offset, window.innerWidth - 400),
       y: Math.min(event.clientY - 50 + offset, window.innerHeight - 450),
-    }
+    };
 
-    setOpenWindows((prev) => [...prev, { symbol, position }])
-  }
+    setOpenWindows((prev) => [...prev, { symbol, position }]);
+  };
 
   // 关闭详情窗口
   const handleCloseWindow = (symbol: string) => {
-    setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol))
-  }
+    setOpenWindows((prev) => prev.filter((w) => w.symbol !== symbol));
+  };
 
   // 整体 loading 状态：分组数据加载中
-  const isLoading = groupsLoading
+  const isLoading = groupsLoading;
 
   // 渲染加载状态
   if (isLoading) {
     return (
       <main className='page-area my-2'>
-        <div className='flex items-center justify-center h-[calc(100vh-200px)]'>
-          <Loader2 className='size-8 animate-spin text-muted-foreground' />
+        <div className='flex h-[calc(100vh-200px)] items-center justify-center'>
+          <Loader2 className='text-muted-foreground size-8 animate-spin' />
         </div>
       </main>
-    )
+    );
   }
 
   return (
@@ -227,8 +228,8 @@ export default function Home() {
 
       {/* 行情数据加载状态 */}
       {isQuotesLoading ? (
-        <div className='flex items-center justify-center h-40 border border-dashed'>
-          <Loader2 className='size-8 animate-spin text-muted-foreground' />
+        <div className='flex h-40 items-center justify-center border border-dashed'>
+          <Loader2 className='text-muted-foreground size-8 animate-spin' />
         </div>
       ) : (
         <QuoteTable
@@ -249,5 +250,5 @@ export default function Home() {
         />
       ))}
     </main>
-  )
+  );
 }

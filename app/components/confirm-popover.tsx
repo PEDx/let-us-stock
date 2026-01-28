@@ -1,5 +1,3 @@
-;
-
 import { Popover } from "@base-ui/react/popover";
 import { useI18n } from "~/lib/i18n";
 
@@ -25,16 +23,16 @@ export function ConfirmPopover({
       <Popover.Trigger render={children} nativeButton={false} />
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>
-          <Popover.Popup className="rounded-xs border bg-popover p-2 text-xs shadow-md">
-            <p className="mb-2 text-muted-foreground">
+          <Popover.Popup className='bg-popover rounded-xs border p-2 text-xs shadow-md'>
+            <p className='text-muted-foreground mb-2'>
               {title || t.confirm.deleteMessage}
             </p>
-            <div className="flex items-center justify-end gap-1">
-              <Popover.Close className="rounded-xs border px-2 py-0.5 text-muted-foreground hover:bg-muted">
+            <div className='flex items-center justify-end gap-1'>
+              <Popover.Close className='text-muted-foreground hover:bg-muted rounded-xs border px-2 py-0.5'>
                 {cancelText || t.confirm.cancel}
               </Popover.Close>
               <Popover.Close
-                className="rounded-xs border border-red-500/50 bg-red-500/10 px-2 py-0.5 text-red-600 hover:bg-red-500/20"
+                className='rounded-xs border border-red-500/50 bg-red-500/10 px-2 py-0.5 text-red-600 hover:bg-red-500/20'
                 onClick={onConfirm}>
                 {confirmText || t.confirm.delete}
               </Popover.Close>

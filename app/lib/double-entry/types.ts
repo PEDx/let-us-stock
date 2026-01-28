@@ -9,7 +9,14 @@
 /**
  * 货币代码
  */
-export type CurrencyCode = "CNY" | "USD" | "HKD" | "JPY" | "EUR" | "GBP" | "SGD";
+export type CurrencyCode =
+  | "CNY"
+  | "USD"
+  | "HKD"
+  | "JPY"
+  | "EUR"
+  | "GBP"
+  | "SGD";
 
 /**
  * 货币配置

@@ -1,5 +1,3 @@
-;
-
 import { useState, useRef, useEffect } from "react";
 import { Plus, Settings, X, GripVertical, Check } from "lucide-react";
 import {
@@ -65,10 +63,7 @@ function SortableTab({
     isDragging,
   } = useSortable({ id: group.id, disabled: !isManaging });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition };
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -100,7 +95,7 @@ function SortableTab({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-1 px-2 py-1 text-xs rounded-xs border transition-colors shrink-0",
+        "flex shrink-0 items-center gap-1 rounded-xs border px-2 py-1 text-xs transition-colors",
         isActive
           ? "bg-primary text-primary-foreground border-primary"
           : "bg-background border-border hover:bg-muted",
@@ -110,32 +105,35 @@ function SortableTab({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab text-muted-foreground hover:text-foreground -ml-1">
-          <GripVertical className="size-3" />
+          className='text-muted-foreground hover:text-foreground -ml-1 cursor-grab'>
+          <GripVertical className='size-3' />
         </button>
       )}
 
       {isEditing ? (
-        <div className="flex items-center gap-1">
+        <div className='flex items-center gap-1'>
           <input
             ref={inputRef}
-            type="text"
+            type='text'
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             onBlur={handleSubmitRename}
             onKeyDown={handleKeyDown}
-            className="w-16 px-1 py-0 text-xs leading-none bg-transparent border-b border-current h-3 outline-none"
+            className='h-3 w-16 border-b border-current bg-transparent px-1 py-0 text-xs leading-none outline-none'
           />
           <button
             onClick={handleSubmitRename}
-            className="text-current hover:opacity-70">
-            <Check className="size-3" />
+            className='text-current hover:opacity-70'>
+            <Check className='size-3' />
           </button>
         </div>
       ) : (
         <button
           onClick={() => (isManaging ? setIsEditing(true) : onSelect())}
-          className={cn("truncate max-w-20 leading-none", isManaging && "cursor-text")}>
+          className={cn(
+            "max-w-20 truncate leading-none",
+            isManaging && "cursor-text",
+          )}>
           {group.name}
         </button>
       )}
@@ -146,8 +144,8 @@ function SortableTab({
           onConfirm={onRemove}
           confirmText={t.confirm.delete}
           cancelText={t.confirm.cancel}>
-          <button className="text-muted-foreground hover:text-destructive -mr-1">
-            <X className="size-3" />
+          <button className='text-muted-foreground hover:text-destructive -mr-1'>
+            <X className='size-3' />
           </button>
         </ConfirmPopover>
       )}
@@ -215,7 +213,7 @@ export function GroupTabs({
   };
 
   return (
-    <div className="flex items-center gap-2 overflow-x-auto">
+    <div className='flex items-center gap-2 overflow-x-auto'>
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -240,10 +238,10 @@ export function GroupTabs({
 
       {/* 添加新分组 */}
       {isAdding ? (
-        <div className="flex items-center gap-1 px-2 leading-none text-xs rounded-xs border border-dashed border-primary bg-background shrink-0">
+        <div className='border-primary bg-background flex shrink-0 items-center gap-1 rounded-xs border border-dashed px-2 text-xs leading-none'>
           <input
             ref={addInputRef}
-            type="text"
+            type='text'
             value={newGroupName}
             onChange={(e) => setNewGroupName(e.target.value)}
             onBlur={() => {
@@ -253,28 +251,28 @@ export function GroupTabs({
             }}
             onKeyDown={handleAddKeyDown}
             placeholder={t.groups.newGroupPlaceholder}
-            className="w-24 px-1 py-0.5 text-xs bg-transparent outline-none placeholder:text-muted-foreground"
+            className='placeholder:text-muted-foreground w-24 bg-transparent px-1 py-0.5 text-xs outline-none'
           />
           <button
             onClick={handleAddGroup}
-            className="text-primary hover:opacity-70">
-            <Check className="size-3" />
+            className='text-primary hover:opacity-70'>
+            <Check className='size-3' />
           </button>
           <button
             onClick={() => {
               setNewGroupName("");
               setIsAdding(false);
             }}
-            className="text-muted-foreground hover:text-foreground">
-            <X className="size-3" />
+            className='text-muted-foreground hover:text-foreground'>
+            <X className='size-3' />
           </button>
         </div>
       ) : (
         <button
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-0.5 px-1.5 py-1 text-xs text-muted-foreground hover:text-foreground rounded-xs border border-dashed hover:border-solid transition-colors shrink-0"
+          className='text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-0.5 rounded-xs border border-dashed px-1.5 py-1 text-xs transition-colors hover:border-solid'
           title={t.groups.addGroup}>
-          <Plus className="size-3" />
+          <Plus className='size-3' />
         </button>
       )}
 
@@ -282,13 +280,13 @@ export function GroupTabs({
       <button
         onClick={() => setIsManaging(!isManaging)}
         className={cn(
-          "flex items-center gap-0.5 px-1.5 py-1 text-xs rounded-xs border transition-colors shrink-0",
+          "flex shrink-0 items-center gap-0.5 rounded-xs border px-1.5 py-1 text-xs transition-colors",
           isManaging
             ? "bg-primary text-primary-foreground border-primary"
-            : "text-muted-foreground hover:text-foreground border-transparent hover:border-border",
+            : "text-muted-foreground hover:text-foreground hover:border-border border-transparent",
         )}
         title={isManaging ? t.groups.doneManaging : t.groups.manageGroups}>
-        <Settings className="size-3" />
+        <Settings className='size-3' />
       </button>
     </div>
   );

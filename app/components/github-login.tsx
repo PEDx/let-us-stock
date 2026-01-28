@@ -1,29 +1,22 @@
-;
-
 import { useState } from "react";
 import { Popover } from "@base-ui/react/popover";
 import { useAuth } from "~/lib/firebase/auth-context";
 import { useI18n } from "~/lib/i18n";
-import {
-  LogOut,
-  Loader2,
-  Cloud,
-  CloudOff,
-  Download,
-} from "lucide-react";
+import { LogOut, Loader2, Cloud, CloudOff, Download } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { exportData } from "~/lib/export";
 import { cn } from "~/lib/utils";
 
 export function GitHubLogin() {
-  const { user, isLoading, loginWithGithub, loginWithGoogle, logout } = useAuth();
+  const { user, isLoading, loginWithGithub, loginWithGoogle, logout } =
+    useAuth();
   const { t } = useI18n();
   const [loginMenuOpen, setLoginMenuOpen] = useState(false);
 
   if (isLoading) {
     return (
-      <div className='flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground'>
+      <div className='text-muted-foreground flex items-center gap-1 px-2 py-1 text-xs'>
         <Loader2 className='size-3 animate-spin' />
       </div>
     );
@@ -38,7 +31,7 @@ export function GitHubLogin() {
             render={(props) => (
               <button
                 {...props}
-                className='flex items-center gap-2 rounded-xs border px-2 py-1 text-xs hover:bg-muted'>
+                className='hover:bg-muted flex items-center gap-2 rounded-xs border px-2 py-1 text-xs'>
                 <div className='flex items-center gap-1.5'>
                   {user.photoURL ? (
                     <img
@@ -47,7 +40,7 @@ export function GitHubLogin() {
                       className='size-4 rounded-full'
                     />
                   ) : (
-                    <div className='size-4 rounded-full bg-muted flex items-center justify-center text-xs'>
+                    <div className='bg-muted flex size-4 items-center justify-center rounded-full text-xs'>
                       {user.email?.[0]?.toUpperCase() || "?"}
                     </div>
                   )}
@@ -56,7 +49,7 @@ export function GitHubLogin() {
                   </span>
                   {/* 登录方式图标 */}
                   {user.provider === "github" ? (
-                    <FaGithub className='size-3 text-muted-foreground' />
+                    <FaGithub className='text-muted-foreground size-3' />
                   ) : (
                     <FcGoogle className='size-3' />
                   )}
@@ -65,7 +58,7 @@ export function GitHubLogin() {
                 {/* 连接状态 */}
                 <div
                   className={cn(
-                    "flex items-center gap-1 text-xs h-full border-l pl-2",
+                    "flex h-full items-center gap-1 border-l pl-2 text-xs",
                     "text-green-600",
                   )}
                   title={t.sync.connected}>
@@ -77,14 +70,14 @@ export function GitHubLogin() {
           />
           <Popover.Portal>
             <Popover.Positioner sideOffset={4}>
-              <Popover.Popup className='min-w-32 rounded-xs border bg-background p-1 shadow-lg'>
-                <div className='px-2 py-1 text-xs text-muted-foreground'>
+              <Popover.Popup className='bg-background min-w-32 rounded-xs border p-1 shadow-lg'>
+                <div className='text-muted-foreground px-2 py-1 text-xs'>
                   {user.email}
                 </div>
                 <hr className='my-1' />
                 <button
                   onClick={exportData}
-                  className='flex w-full items-center gap-2 rounded-xs px-2 py-1 text-xs hover:bg-muted'>
+                  className='hover:bg-muted flex w-full items-center gap-2 rounded-xs px-2 py-1 text-xs'>
                   <Download className='size-3' />
                   {t.sync.exportData}
                 </button>
@@ -113,7 +106,7 @@ export function GitHubLogin() {
               "flex items-center gap-1.5 rounded-xs border px-2 py-1 text-xs",
               "hover:bg-muted transition-colors",
             )}>
-            <CloudOff className='size-3 text-muted-foreground' />
+            <CloudOff className='text-muted-foreground size-3' />
             <span>{t.sync.login}</span>
           </button>
         )}
@@ -121,8 +114,8 @@ export function GitHubLogin() {
       />
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>
-          <Popover.Popup className='min-w-40 rounded-xs border bg-background p-1 shadow-lg'>
-            <div className='px-2 py-1.5 text-xs text-muted-foreground'>
+          <Popover.Popup className='bg-background min-w-40 rounded-xs border p-1 shadow-lg'>
+            <div className='text-muted-foreground px-2 py-1.5 text-xs'>
               {t.sync.chooseProvider}
             </div>
             {/* GitHub 登录 */}
@@ -131,7 +124,7 @@ export function GitHubLogin() {
                 setLoginMenuOpen(false);
                 loginWithGithub();
               }}
-              className='flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-xs hover:bg-muted'>
+              className='hover:bg-muted flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-xs'>
               <FaGithub className='size-4' />
               <span>GitHub</span>
             </button>
@@ -141,7 +134,7 @@ export function GitHubLogin() {
                 setLoginMenuOpen(false);
                 loginWithGoogle();
               }}
-              className='flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-xs hover:bg-muted'>
+              className='hover:bg-muted flex w-full items-center gap-2 rounded-xs px-2 py-1.5 text-xs'>
               <FcGoogle className='size-4' />
               <span>Google</span>
             </button>

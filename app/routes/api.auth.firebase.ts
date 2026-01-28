@@ -4,12 +4,15 @@
  * 处理 Firebase ID Token 的验证和存储
  */
 
-
 /**
  * POST - 保存 Firebase Token
  * DELETE - 清除 Firebase Token
  */
-export async function action({ request }: { request: Request }): Promise<Response> {
+export async function action({
+  request,
+}: {
+  request: Request;
+}): Promise<Response> {
   if (request.method === "DELETE") {
     const response = Response.json({ success: true });
     response.headers.set(

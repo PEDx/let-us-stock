@@ -1,5 +1,3 @@
-;
-
 import { useState } from "react";
 import { Tabs } from "@base-ui/react/tabs";
 import { useI18n } from "~/lib/i18n";
@@ -20,7 +18,7 @@ export function AssetsPage() {
   if (isLoading) {
     return (
       <div className='flex h-40 items-center justify-center'>
-        <Loader2 className='size-4 animate-spin text-muted-foreground' />
+        <Loader2 className='text-muted-foreground size-4 animate-spin' />
       </div>
     );
   }
@@ -36,7 +34,7 @@ export function AssetsPage() {
           className={cn(
             "pb-1 text-xs transition-colors",
             activeTab === "overview"
-              ? "border-b-2 border-primary font-medium text-foreground"
+              ? "border-primary text-foreground border-b-2 font-medium"
               : "text-muted-foreground hover:text-foreground",
           )}>
           {t.assets.overview}
@@ -46,7 +44,7 @@ export function AssetsPage() {
           className={cn(
             "pb-1 text-xs transition-colors",
             activeTab === "accounts"
-              ? "border-b-2 border-primary font-medium text-foreground"
+              ? "border-primary text-foreground border-b-2 font-medium"
               : "text-muted-foreground hover:text-foreground",
           )}>
           {t.assets.accounts}

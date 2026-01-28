@@ -17,7 +17,7 @@ export function Footer() {
           <LanguageSelector />
           <a
             href='#'
-            className='got-to-top text-muted-foreground flex items-center gap-2 text-xs border rounded-xs px-1.5 py-0.5'>
+            className='got-to-top text-muted-foreground flex items-center gap-2 rounded-xs border px-1.5 py-0.5 text-xs'>
             <ArrowUp className='size-4' />
           </a>
         </div>

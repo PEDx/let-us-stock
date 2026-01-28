@@ -1,5 +1,3 @@
-;
-
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { flexRender } from "@tanstack/react-table";
@@ -27,10 +25,7 @@ export function SortableRow({
     isDragging,
   } = useSortable({ id: quote.symbol });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition };
 
   const cells = visibleCells();
 
@@ -38,13 +33,13 @@ export function SortableRow({
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={cn("group", isDragging && "opacity-50 bg-muted")}>
+      className={cn("group", isDragging && "bg-muted opacity-50")}>
       {/* 拖拽手柄 */}
       <TableCell className='w-6'>
         <span
           {...attributes}
           {...listeners}
-          className='cursor-grab text-muted-foreground/50 hover:text-muted-foreground active:cursor-grabbing'>
+          className='text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing'>
           <GripVertical className='size-3' />
         </span>
       </TableCell>
@@ -100,7 +95,7 @@ export function SortableRow({
       {onRemoveSymbol && (
         <TableCell>
           <ConfirmPopover onConfirm={() => onRemoveSymbol(quote.symbol)}>
-            <span className='text-muted-foreground opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100'>
+            <span className='text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500'>
               <X className='size-3' />
             </span>
           </ConfirmPopover>

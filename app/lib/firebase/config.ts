@@ -113,7 +113,9 @@ export async function signOut(): Promise<void> {
 /**
  * 监听认证状态变化
  */
-export function onAuthChange(callback: (user: User | null) => void): () => void {
+export function onAuthChange(
+  callback: (user: User | null) => void,
+): () => void {
   return onAuthStateChanged(auth, callback);
 }
 

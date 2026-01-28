@@ -1,5 +1,3 @@
-;
-
 import { useMemo, useState, useEffect } from "react";
 import {
   DndContext,
@@ -105,10 +103,7 @@ export function QuoteTable({
   const table = useReactTable({
     data: quotes,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-    },
+    state: { sorting, columnVisibility },
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
@@ -118,11 +113,7 @@ export function QuoteTable({
 
   // 拖拽传感器配置
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -143,7 +134,7 @@ export function QuoteTable({
   // 空状态
   if (quotes.length === 0) {
     return (
-      <div className='flex h-40 flex-col items-center justify-center border border-dashed text-muted-foreground'>
+      <div className='text-muted-foreground flex h-40 flex-col items-center justify-center border border-dashed'>
         <Inbox className='mb-2 size-6 opacity-50' />
         <p className='text-sm'>{t.table.empty}</p>
       </div>
@@ -169,7 +160,9 @@ export function QuoteTable({
               {headerGroup.headers.map((header) => (
                 <TableHead
                   key={header.id}
-                  className={header.id === "marketCap" ? "text-right" : undefined}>
+                  className={
+                    header.id === "marketCap" ? "text-right" : undefined
+                  }>
                   <SortableHeader column={header.column}>
                     {flexRender(
                       header.column.columnDef.header,

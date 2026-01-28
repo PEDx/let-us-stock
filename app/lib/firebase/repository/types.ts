@@ -76,7 +76,9 @@ export interface EntryStats {
  */
 export interface IBookRepository {
   /** 获取账簿元数据（不包含明细） */
-  getBookMeta(userId: string): Promise<{
+  getBookMeta(
+    userId: string,
+  ): Promise<{
     mainLedgerId: string;
     commonTags: string[];
     exchangeRates: ExchangeRate[];
@@ -119,13 +121,25 @@ export interface IAccountRepository {
   getAccounts(userId: string, ledgerId: string): Promise<AccountData[]>;
 
   /** 保存账户 */
-  saveAccount(userId: string, ledgerId: string, account: AccountData): Promise<void>;
+  saveAccount(
+    userId: string,
+    ledgerId: string,
+    account: AccountData,
+  ): Promise<void>;
 
   /** 批量保存账户 */
-  saveAccounts(userId: string, ledgerId: string, accounts: AccountData[]): Promise<void>;
+  saveAccounts(
+    userId: string,
+    ledgerId: string,
+    accounts: AccountData[],
+  ): Promise<void>;
 
   /** 删除账户 */
-  deleteAccount(userId: string, ledgerId: string, accountId: string): Promise<void>;
+  deleteAccount(
+    userId: string,
+    ledgerId: string,
+    accountId: string,
+  ): Promise<void>;
 }
 
 /**
@@ -140,13 +154,25 @@ export interface IEntryRepository {
   ): Promise<PaginatedResult<JournalEntryData>>;
 
   /** 获取单条分录 */
-  getEntry(userId: string, ledgerId: string, entryId: string): Promise<JournalEntryData | null>;
+  getEntry(
+    userId: string,
+    ledgerId: string,
+    entryId: string,
+  ): Promise<JournalEntryData | null>;
 
   /** 保存分录 */
-  saveEntry(userId: string, ledgerId: string, entry: JournalEntryData): Promise<void>;
+  saveEntry(
+    userId: string,
+    ledgerId: string,
+    entry: JournalEntryData,
+  ): Promise<void>;
 
   /** 批量保存分录 */
-  saveEntries(userId: string, ledgerId: string, entries: JournalEntryData[]): Promise<void>;
+  saveEntries(
+    userId: string,
+    ledgerId: string,
+    entries: JournalEntryData[],
+  ): Promise<void>;
 
   /** 删除分录 */
   deleteEntry(userId: string, ledgerId: string, entryId: string): Promise<void>;

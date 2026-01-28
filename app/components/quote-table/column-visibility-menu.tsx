@@ -1,5 +1,3 @@
-;
-
 import { Settings2, Check } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";
 import { cn } from "~/lib/utils";
@@ -7,11 +5,7 @@ import type { QuoteTableInstance } from "./types";
 
 interface ColumnVisibilityMenuProps {
   table: QuoteTableInstance;
-  labels: {
-    columns: string;
-    showAll: string;
-    hideAll: string;
-  };
+  labels: { columns: string; showAll: string; hideAll: string };
 }
 
 /**
@@ -36,13 +30,13 @@ export function ColumnVisibilityMenu({
   return (
     <Popover.Root>
       <Popover.Trigger
-        className='cursor-pointer text-muted-foreground hover:text-foreground'
+        className='text-muted-foreground hover:text-foreground cursor-pointer'
         title={labels.columns}>
         <Settings2 className='size-3.5' />
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>
-          <Popover.Popup className='min-w-36 rounded-xs border bg-background p-1 shadow-lg'>
+          <Popover.Popup className='bg-background min-w-36 rounded-xs border p-1 shadow-lg'>
             <div className='flex gap-1 border-b px-2 pb-1 text-xs'>
               <button
                 onClick={handleShowAll}
@@ -59,7 +53,7 @@ export function ColumnVisibilityMenu({
             {allColumns.map((column) => (
               <label
                 key={column.id}
-                className='flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1 text-xs hover:bg-muted'>
+                className='hover:bg-muted flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1 text-xs'>
                 <span
                   className={cn(
                     "flex size-3.5 items-center justify-center rounded-xs border",

@@ -13,5 +13,4 @@ export default [
   // Auth routes
   route("api/auth/logout", "routes/api.auth.logout.ts"),
   route("api/auth/me", "routes/api.auth.me.ts"),
-
 ] satisfies RouteConfig;

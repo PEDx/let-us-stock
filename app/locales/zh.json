@@ -12,11 +12,7 @@
     "loading": "加载中...",
     "noData": "暂无数据"
   },
-  "nav": {
-    "market": "市场",
-    "assets": "资产",
-    "records": "记录"
-  },
+  "nav": { "market": "市场", "assets": "资产", "records": "记录" },
   "assets": {
     "overview": "总览",
     "accounts": "账户",

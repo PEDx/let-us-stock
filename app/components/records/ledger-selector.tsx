@@ -1,5 +1,3 @@
-;
-
 import { useState, useRef, useEffect } from "react";
 import { Menu } from "@base-ui/react/menu";
 import { ChevronDown, Plus, Check, X, BookOpen } from "lucide-react";
@@ -55,36 +53,38 @@ export function LedgerSelector({
 
   return (
     <div className='flex items-center gap-1'>
-      <BookOpen className='size-3 text-muted-foreground' />
-      <span className='text-xs text-muted-foreground'>{t.records.selectLedger}:</span>
+      <BookOpen className='text-muted-foreground size-3' />
+      <span className='text-muted-foreground text-xs'>
+        {t.records.selectLedger}:
+      </span>
 
       <Menu.Root>
-        <Menu.Trigger className='flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-xs hover:bg-muted'>
+        <Menu.Trigger className='hover:bg-muted flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-xs'>
           <span className='text-xs'>{currentLedger?.icon || "📒"}</span>
           <span>{currentLedger?.name || t.records.defaultLedger}</span>
-          <ChevronDown className='size-3 text-muted-foreground' />
+          <ChevronDown className='text-muted-foreground size-3' />
         </Menu.Trigger>
 
         <Menu.Portal>
           <Menu.Positioner sideOffset={4}>
-            <Menu.Popup className='min-w-32 rounded-xs border bg-popover p-1 shadow-md'>
+            <Menu.Popup className='bg-popover min-w-32 rounded-xs border p-1 shadow-md'>
               {ledgers.map((ledger) => (
                 <Menu.Item
                   key={ledger.id}
                   onClick={() => onSelect(ledger.id)}
                   className={cn(
-                    "flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs outline-none hover:bg-muted",
+                    "hover:bg-muted flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs outline-none",
                     ledger.id === currentLedgerId && "bg-muted",
                   )}>
                   <span className='text-xs'>{ledger.icon || "📒"}</span>
                   <span className='flex-1'>{ledger.name}</span>
                   {ledger.id === currentLedgerId && (
-                    <Check className='size-3 text-primary' />
+                    <Check className='text-primary size-3' />
                   )}
                 </Menu.Item>
               ))}
 
-              <Menu.Separator className='my-1 h-px bg-border' />
+              <Menu.Separator className='bg-border my-1 h-px' />
 
               {isCreating ? (
                 <div
@@ -97,11 +97,11 @@ export function LedgerSelector({
                     onChange={(e) => setNewName(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder={t.records.ledgerName}
-                    className='flex-1 rounded-xs border bg-background px-1 py-0.5 text-xs outline-none focus:border-primary'
+                    className='bg-background focus:border-primary flex-1 rounded-xs border px-1 py-0.5 text-xs outline-none'
                   />
                   <button
                     onClick={handleCreate}
-                    className='rounded-xs p-0.5 text-primary hover:bg-primary/10'>
+                    className='text-primary hover:bg-primary/10 rounded-xs p-0.5'>
                     <Check className='size-3' />
                   </button>
                   <button
@@ -109,7 +109,7 @@ export function LedgerSelector({
                       setNewName("");
                       setIsCreating(false);
                     }}
-                    className='rounded-xs p-0.5 text-muted-foreground hover:bg-muted'>
+                    className='text-muted-foreground hover:bg-muted rounded-xs p-0.5'>
                     <X className='size-3' />
                   </button>
                 </div>
@@ -119,7 +119,7 @@ export function LedgerSelector({
                     e.stopPropagation();
                     setIsCreating(true);
                   }}
-                  className='flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground'>
+                  className='text-muted-foreground hover:bg-muted hover:text-foreground flex cursor-pointer items-center gap-1 rounded-xs px-1.5 py-0.5 text-xs'>
                   <Plus className='size-3' />
                   <span>{t.records.newLedger}</span>
                 </div>

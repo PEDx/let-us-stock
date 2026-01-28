@@ -1,5 +1,3 @@
-;
-
 import { useState, useMemo } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Plus } from "lucide-react";
@@ -10,7 +8,11 @@ import {
   SUPPORTED_CURRENCIES,
   ACCOUNT_ICONS,
 } from "~/lib/accounting/constants";
-import { getMainLedger, findAccountsByType, getCurrencyMultiplier } from "~/lib/double-entry";
+import {
+  getMainLedger,
+  findAccountsByType,
+  getCurrencyMultiplier,
+} from "~/lib/double-entry";
 import { AccountType } from "~/lib/double-entry/types";
 import type { CurrencyCode, AccountData } from "~/lib/double-entry/types";
 import { cn } from "~/lib/utils";
@@ -53,9 +55,10 @@ export function AccountsManager() {
   const { assetAccounts, liabilityAccounts } = useMemo(() => {
     if (!mainLedger) return { assetAccounts: [], liabilityAccounts: [] };
     return {
-      assetAccounts: findAccountsByType(mainLedger.accounts, AccountType.ASSETS).filter(
-        (a) => a.parentId !== null,
-      ),
+      assetAccounts: findAccountsByType(
+        mainLedger.accounts,
+        AccountType.ASSETS,
+      ).filter((a) => a.parentId !== null),
       liabilityAccounts: findAccountsByType(
         mainLedger.accounts,
         AccountType.LIABILITIES,
@@ -84,7 +87,7 @@ export function AccountsManager() {
       <div className='flex justify-end'>
         <button
           onClick={handleAddAccount}
-          className='flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground'>
+          className='text-muted-foreground hover:bg-muted hover:text-foreground flex items-center gap-1 rounded-xs border px-1.5 py-0.5 text-xs'>
           <Plus className='size-3' />
           {t.assets.addAccount}
         </button>
@@ -148,7 +151,7 @@ function AccountSection({
       </div>
       <div className='divide-y'>
         {accounts.length === 0 ? (
-          <div className='px-2 py-3 text-center text-xs text-muted-foreground'>
+          <div className='text-muted-foreground px-2 py-3 text-center text-xs'>
             {emptyText}
           </div>
         ) : (
@@ -164,7 +167,9 @@ function AccountSection({
                 <div>
                   <div className='text-xs'>{account.name}</div>
                   {account.note && (
-                    <div className='text-xs text-muted-foreground'>{account.note}</div>
+                    <div className='text-muted-foreground text-xs'>
+                      {account.note}
+                    </div>
                   )}
                 </div>
               </div>
@@ -249,7 +254,7 @@ function AddAccountDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Backdrop className='fixed inset-0 bg-black/50' />
-        <Dialog.Popup className='fixed left-1/2 top-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xs border bg-background p-4 shadow-lg'>
+        <Dialog.Popup className='bg-background fixed top-1/2 left-1/2 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xs border p-4 shadow-lg'>
           <Dialog.Title className='text-sm font-medium'>
             {t.assets.addAccount}
           </Dialog.Title>
@@ -257,7 +262,7 @@ function AddAccountDialog({
           <div className='mt-3 space-y-3'>
             {/* 账户类型 */}
             <div>
-              <label className='mb-1 block text-xs text-muted-foreground'>
+              <label className='text-muted-foreground mb-1 block text-xs'>
                 {t.assets.accountType}
               </label>
               <div className='flex gap-1'>
@@ -288,21 +293,21 @@ function AddAccountDialog({
 
             {/* 账户名称 */}
             <div>
-              <label className='mb-1 block text-xs text-muted-foreground'>
+              <label className='text-muted-foreground mb-1 block text-xs'>
                 {t.assets.accountName}
               </label>
               <input
                 type='text'
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'
+                className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'
                 placeholder='e.g. 招商银行'
               />
             </div>
 
             {/* 图标选择 */}
             <div>
-              <label className='mb-1 block text-xs text-muted-foreground'>
+              <label className='text-muted-foreground mb-1 block text-xs'>
                 {t.assets.icon}
               </label>
               <div className='flex flex-wrap gap-1'>
@@ -325,13 +330,13 @@ function AddAccountDialog({
 
             {/* 币种 */}
             <div>
-              <label className='mb-1 block text-xs text-muted-foreground'>
+              <label className='text-muted-foreground mb-1 block text-xs'>
                 {t.assets.currency}
               </label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value as CurrencyCode)}
-                className='w-full rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'>
+                className='bg-background focus:border-primary w-full rounded-xs border px-1.5 py-0.5 text-xs outline-none'>
                 {SUPPORTED_CURRENCIES.map((c) => (
                   <option key={c.code} value={c.code}>
                     {c.symbol} {c.code}
@@ -342,18 +347,18 @@ function AddAccountDialog({
 
             {/* 初始余额 */}
             <div>
-              <label className='mb-1 block text-xs text-muted-foreground'>
+              <label className='text-muted-foreground mb-1 block text-xs'>
                 {t.assets.initialBalance}
               </label>
               <div className='flex items-center gap-1'>
-                <span className='text-xs text-muted-foreground'>
+                <span className='text-muted-foreground text-xs'>
                   {getCurrencySymbol(currency)}
                 </span>
                 <input
                   type='number'
                   value={initialBalance}
                   onChange={(e) => setInitialBalance(e.target.value)}
-                  className='flex-1 rounded-xs border bg-background px-1.5 py-0.5 text-xs outline-none focus:border-primary'
+                  className='bg-background focus:border-primary flex-1 rounded-xs border px-1.5 py-0.5 text-xs outline-none'
                   placeholder='0.00'
                   step='0.01'
                 />
@@ -363,13 +368,13 @@ function AddAccountDialog({
 
           {/* 按钮 */}
           <div className='mt-4 flex justify-end gap-1'>
-            <Dialog.Close className='rounded-xs border px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted'>
+            <Dialog.Close className='text-muted-foreground hover:bg-muted rounded-xs border px-1.5 py-0.5 text-xs'>
               {t.common.cancel}
             </Dialog.Close>
             <button
               onClick={handleSubmit}
               disabled={!name.trim() || isSubmitting}
-              className='rounded-xs border border-primary bg-primary/10 px-1.5 py-0.5 text-xs text-primary hover:bg-primary/20 disabled:opacity-50'>
+              className='border-primary bg-primary/10 text-primary hover:bg-primary/20 rounded-xs border px-1.5 py-0.5 text-xs disabled:opacity-50'>
               {t.common.save}
             </button>
           </div>

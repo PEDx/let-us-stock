@@ -1,9 +1,12 @@
-;
-
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
-import { cn, formatNumber, formatLargeNumber, formatLargeNumberZh } from "~/lib/utils";
+import {
+  cn,
+  formatNumber,
+  formatLargeNumber,
+  formatLargeNumberZh,
+} from "~/lib/utils";
 import { FloatingWindow } from "./floating-window";
 import { MiniChart, type ChartPoint } from "./mini-chart";
 
@@ -71,7 +74,10 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
 
   const isUp = summary && summary.change >= 0;
 
-  const formatLargeNumberFn = useMemo(() => language === "zh" ? formatLargeNumberZh : formatLargeNumber, [language]);
+  const formatLargeNumberFn = useMemo(
+    () => (language === "zh" ? formatLargeNumberZh : formatLargeNumber),
+    [language],
+  );
 
   return (
     <FloatingWindow
@@ -85,20 +91,20 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
       minWidth={300}
       minHeight={250}>
       {isLoading && !summary ? (
-        <div className="flex h-full items-center justify-center min-h-100">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        <div className='flex h-full min-h-100 items-center justify-center'>
+          <Loader2 className='text-muted-foreground size-6 animate-spin' />
         </div>
       ) : error ? (
-        <div className="flex h-full items-center justify-center text-red-500">
+        <div className='flex h-full items-center justify-center text-red-500'>
           {error}
         </div>
       ) : summary ? (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           {/* 价格头部 */}
-          <div className="flex items-center justify-between">
+          <div className='flex items-center justify-between'>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold">
+              <div className='flex items-center gap-2'>
+                <span className='text-xl font-bold'>
                   ${formatNumber(summary.price)}
                 </span>
                 <span
@@ -107,78 +113,94 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
                     isUp ? "text-green-500" : "text-red-500",
                   )}>
                   {isUp ? (
-                    <TrendingUp className="size-3" />
+                    <TrendingUp className='size-3' />
                   ) : (
-                    <TrendingDown className="size-3" />
+                    <TrendingDown className='size-3' />
                   )}
                   {formatNumber(summary.change)} (
                   {formatNumber(summary.changePercent)}%)
                 </span>
               </div>
-              <div className="text-muted-foreground">
+              <div className='text-muted-foreground'>
                 {summary.exchange} · {summary.currency}
               </div>
             </div>
           </div>
 
           {/* 迷你图 */}
-          <div className="rounded border p-2">
+          <div className='rounded border p-2'>
             <MiniChart symbol={symbol} initialData={chart} />
           </div>
 
           {/* 关键数据 */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.open}</span>
+          <div className='grid grid-cols-2 gap-x-4 gap-y-1 text-xs'>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.open}
+              </span>
               <span>{formatNumber(summary.open)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.prevClose}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.prevClose}
+              </span>
               <span>{formatNumber(summary.previousClose)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.dayRange}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.dayRange}
+              </span>
               <span>
                 {formatNumber(summary.dayLow)} - {formatNumber(summary.dayHigh)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.weekRange52}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.weekRange52}
+              </span>
               <span>
                 {formatNumber(summary.fiftyTwoWeekLow)} -{" "}
                 {formatNumber(summary.fiftyTwoWeekHigh)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.volume}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.volume}
+              </span>
               <span>{formatLargeNumberFn(summary.volume)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.avgVolume}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.avgVolume}
+              </span>
               <span>{formatLargeNumberFn(summary.avgVolume)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.marketCap}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.marketCap}
+              </span>
               <span>{formatLargeNumberFn(summary.marketCap)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.pe}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>{t.stockDetail.pe}</span>
               <span>{formatNumber(summary.pe)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.eps}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>{t.stockDetail.eps}</span>
               <span>{formatNumber(summary.eps)}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">{t.stockDetail.beta}</span>
+            <div className='flex justify-between'>
+              <span className='text-muted-foreground'>
+                {t.stockDetail.beta}
+              </span>
               <span>{formatNumber(summary.beta)}</span>
             </div>
           </div>
 
           {/* 行业信息 */}
           {(summary.sector || summary.industry) && (
-            <div className="border-t pt-2">
-              <div className="text-muted-foreground">
+            <div className='border-t pt-2'>
+              <div className='text-muted-foreground'>
                 {summary.sector}
                 {summary.sector && summary.industry && " · "}
                 {summary.industry}
@@ -188,9 +210,11 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
 
           {/* 公司简介 */}
           {summary.description && (
-            <div className="border-t pt-2">
-              <div className="mb-1 text-muted-foreground">{t.stockDetail.about}</div>
-              <p className="line-clamp-3 text-muted-foreground/80">
+            <div className='border-t pt-2'>
+              <div className='text-muted-foreground mb-1'>
+                {t.stockDetail.about}
+              </div>
+              <p className='text-muted-foreground/80 line-clamp-3'>
                 {summary.description}
               </p>
             </div>

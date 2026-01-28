@@ -1,11 +1,13 @@
-;
-
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Wallet, CreditCard } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
 import { useBook } from "~/lib/accounting";
 import { getCurrencySymbol } from "~/lib/accounting/constants";
-import { getMainLedger, findAccountsByType, getCurrencyMultiplier } from "~/lib/double-entry";
+import {
+  getMainLedger,
+  findAccountsByType,
+  getCurrencyMultiplier,
+} from "~/lib/double-entry";
 import { AccountType } from "~/lib/double-entry/types";
 import { cn } from "~/lib/utils";
 
@@ -40,9 +42,10 @@ export function AssetsOverview() {
     if (!book) return { assetAccounts: [], liabilityAccounts: [] };
     const mainLedger = getMainLedger(book);
     return {
-      assetAccounts: findAccountsByType(mainLedger.accounts, AccountType.ASSETS).filter(
-        (a) => a.parentId !== null && !a.archived,
-      ),
+      assetAccounts: findAccountsByType(
+        mainLedger.accounts,
+        AccountType.ASSETS,
+      ).filter((a) => a.parentId !== null && !a.archived),
       liabilityAccounts: findAccountsByType(
         mainLedger.accounts,
         AccountType.LIABILITIES,
@@ -53,8 +56,8 @@ export function AssetsOverview() {
   return (
     <div className='space-y-3'>
       {/* 净资产卡片 */}
-      <div className='rounded-xs border bg-gradient-to-br from-primary/5 to-primary/10 px-3 py-2'>
-        <div className='text-xs text-muted-foreground'>{t.assets.netWorth}</div>
+      <div className='from-primary/5 to-primary/10 rounded-xs border bg-gradient-to-br px-3 py-2'>
+        <div className='text-muted-foreground text-xs'>{t.assets.netWorth}</div>
         <div
           className={cn(
             "text-lg font-bold",
@@ -72,7 +75,9 @@ export function AssetsOverview() {
             <Wallet className='size-3 text-green-600' />
           </div>
           <div>
-            <div className='text-xs text-muted-foreground'>{t.assets.totalAssets}</div>
+            <div className='text-muted-foreground text-xs'>
+              {t.assets.totalAssets}
+            </div>
             <div className='text-sm font-semibold text-green-600'>
               {currencySymbol}
               {formatAmount(totalAssets)}
@@ -85,7 +90,7 @@ export function AssetsOverview() {
             <CreditCard className='size-3 text-red-600' />
           </div>
           <div>
-            <div className='text-xs text-muted-foreground'>
+            <div className='text-muted-foreground text-xs'>
               {t.assets.totalLiabilities}
             </div>
             <div className='text-sm font-semibold text-red-600'>
@@ -106,7 +111,7 @@ export function AssetsOverview() {
           </div>
           <div className='divide-y'>
             {assetAccounts.length === 0 ? (
-              <div className='px-2 py-1.5 text-xs text-muted-foreground'>
+              <div className='text-muted-foreground px-2 py-1.5 text-xs'>
                 {t.common.noData}
               </div>
             ) : (
@@ -132,11 +137,13 @@ export function AssetsOverview() {
         <div className='rounded-xs border'>
           <div className='flex items-center gap-1 border-b px-2 py-1'>
             <TrendingDown className='size-3 text-red-600' />
-            <span className='text-xs font-medium'>{t.assets.types.liabilities}</span>
+            <span className='text-xs font-medium'>
+              {t.assets.types.liabilities}
+            </span>
           </div>
           <div className='divide-y'>
             {liabilityAccounts.length === 0 ? (
-              <div className='px-2 py-1.5 text-xs text-muted-foreground'>
+              <div className='text-muted-foreground px-2 py-1.5 text-xs'>
                 {t.common.noData}
               </div>
             ) : (

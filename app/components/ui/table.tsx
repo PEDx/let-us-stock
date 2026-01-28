@@ -9,7 +9,10 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
       className='relative w-full overflow-x-auto'>
       <table
         data-slot='table'
-        className={cn("w-full caption-bottom text-xs overflow-hidden", className)}
+        className={cn(
+          "w-full caption-bottom overflow-hidden text-xs",
+          className,
+        )}
         {...props}
       />
     </div>

@@ -33,7 +33,8 @@ export function createColumns({
   language,
 }: CreateColumnsOptions): ColumnDef<Quote, unknown>[] {
   // 根据语言选择格式化函数
-  const formatMarketCap = language === "zh" ? formatLargeNumberZh : formatLargeNumber;
+  const formatMarketCap =
+    language === "zh" ? formatLargeNumberZh : formatLargeNumber;
   return [
     columnHelper.accessor("symbol", {
       header: t.symbol,

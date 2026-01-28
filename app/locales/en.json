@@ -12,11 +12,7 @@
     "loading": "Loading...",
     "noData": "No data"
   },
-  "nav": {
-    "market": "Market",
-    "assets": "Assets",
-    "records": "Records"
-  },
+  "nav": { "market": "Market", "assets": "Assets", "records": "Records" },
   "assets": {
     "overview": "Overview",
     "accounts": "Accounts",

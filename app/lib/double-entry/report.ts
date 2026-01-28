@@ -116,7 +116,10 @@ export function calculatePeriodSummary(
 
       if (account.type === AT.INCOME && line.type === EntryLineType.CREDIT) {
         income += line.amount;
-      } else if (account.type === AT.EXPENSES && line.type === EntryLineType.DEBIT) {
+      } else if (
+        account.type === AT.EXPENSES &&
+        line.type === EntryLineType.DEBIT
+      ) {
         expenses += line.amount;
       }
     }
@@ -147,7 +150,10 @@ export function generateTimeSeries(
 
       if (account.type === AT.INCOME && line.type === EntryLineType.CREDIT) {
         current.income += line.amount;
-      } else if (account.type === AT.EXPENSES && line.type === EntryLineType.DEBIT) {
+      } else if (
+        account.type === AT.EXPENSES &&
+        line.type === EntryLineType.DEBIT
+      ) {
         current.expenses += line.amount;
       }
     }
@@ -360,12 +366,9 @@ export function generateNetWorthTrend(
 
   // 从最近向过去计算
   const result: Array<{ period: string; netWorth: number }> = [];
-  
+
   for (let i = timeSeries.length - 1; i >= 0; i--) {
-    result.unshift({
-      period: timeSeries[i].period,
-      netWorth: currentNetWorth,
-    });
+    result.unshift({ period: timeSeries[i].period, netWorth: currentNetWorth });
     currentNetWorth -= timeSeries[i].netChange;
   }
 

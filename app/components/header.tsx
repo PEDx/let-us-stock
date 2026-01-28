@@ -21,9 +21,9 @@ export function Header() {
             key={item.path}
             to={item.path}
             className={cn(
-              "text-xs transition-colors hover:text-foreground",
+              "hover:text-foreground text-xs transition-colors",
               location.pathname === item.path
-                ? "font-medium text-foreground"
+                ? "text-foreground font-medium"
                 : "text-muted-foreground",
             )}>
             {item.label}

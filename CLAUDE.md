@@ -70,6 +70,7 @@ app/
 ## Firebase Setup
 
 Required environment variables in `.env`:
+
 ```
 VITE_FIREBASE_API_KEY
 VITE_FIREBASE_AUTH_DOMAIN
@@ -80,6 +81,7 @@ VITE_FIREBASE_APP_ID
 ```
 
 Firestore data structure:
+
 ```
 users/{userId}/
   meta/

@@ -1,5 +1,3 @@
-;
-
 import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "~/lib/utils";
@@ -118,7 +116,8 @@ function ChartWithAxis({
   const points = closes
     .map((close, i) => {
       const x = leftMargin + (i / (closes.length - 1)) * chartWidth;
-      const y = topMargin + chartHeight - ((close - min) / adjustedRange) * chartHeight;
+      const y =
+        topMargin + chartHeight - ((close - min) / adjustedRange) * chartHeight;
       return `${x},${y}`;
     })
     .join(" ");
@@ -135,11 +134,14 @@ function ChartWithAxis({
   return (
     <svg
       viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-      className="w-full"
+      className='w-full'
       style={{ aspectRatio: `${totalWidth} / ${totalHeight}` }}>
       {/* 网格线 */}
       {yTicks.map((tick, i) => {
-        const y = topMargin + chartHeight - ((tick - min) / adjustedRange) * chartHeight;
+        const y =
+          topMargin +
+          chartHeight -
+          ((tick - min) / adjustedRange) * chartHeight;
         return (
           <line
             key={`grid-y-${i}`}
@@ -147,7 +149,7 @@ function ChartWithAxis({
             y1={y}
             x2={leftMargin + chartWidth}
             y2={y}
-            stroke="currentColor"
+            stroke='currentColor'
             strokeOpacity={0.1}
             strokeWidth={1}
           />
@@ -156,15 +158,18 @@ function ChartWithAxis({
 
       {/* Y轴标签 */}
       {yTicks.map((tick, i) => {
-        const y = topMargin + chartHeight - ((tick - min) / adjustedRange) * chartHeight;
+        const y =
+          topMargin +
+          chartHeight -
+          ((tick - min) / adjustedRange) * chartHeight;
         return (
           <text
             key={`y-label-${i}`}
             x={leftMargin - 4}
             y={y}
-            textAnchor="end"
-            dominantBaseline="middle"
-            className="fill-muted-foreground"
+            textAnchor='end'
+            dominantBaseline='middle'
+            className='fill-muted-foreground'
             fontSize={10}>
             {formatPrice(tick)}
           </text>
@@ -179,9 +184,9 @@ function ChartWithAxis({
             key={`x-label-${idx}`}
             x={x}
             y={topMargin + chartHeight + 6}
-            textAnchor="middle"
-            dominantBaseline="hanging"
-            className="fill-muted-foreground"
+            textAnchor='middle'
+            dominantBaseline='hanging'
+            className='fill-muted-foreground'
             fontSize={10}>
             {formatDate(data[idx].date, range)}
           </text>
@@ -190,11 +195,11 @@ function ChartWithAxis({
 
       {/* 价格曲线 */}
       <polyline
-        fill="none"
+        fill='none'
         stroke={lineColor}
         strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeLinecap='round'
+        strokeLinejoin='round'
         points={points}
       />
     </svg>
@@ -212,22 +217,25 @@ export function MiniChart({
   const [data, setData] = useState<ChartPoint[]>(initialData || []);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchChart = useCallback(async (timeRange: TimeRange) => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(
-        `/api/chart?symbol=${symbol}&range=${timeRange}`,
-      );
-      const result = await response.json();
-      if (result.chart) {
-        setData(result.chart);
+  const fetchChart = useCallback(
+    async (timeRange: TimeRange) => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/chart?symbol=${symbol}&range=${timeRange}`,
+        );
+        const result = await response.json();
+        if (result.chart) {
+          setData(result.chart);
+        }
+      } catch (error) {
+        console.error("Failed to fetch chart:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch chart:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [symbol]);
+    },
+    [symbol],
+  );
 
   useEffect(() => {
     if (range !== "3M" || !initialData) {
@@ -238,15 +246,15 @@ export function MiniChart({
   }, [range, initialData, fetchChart]);
 
   return (
-    <div className="space-y-1">
+    <div className='space-y-1'>
       {/* 时间范围选择 */}
-      <div className="flex gap-0.5">
+      <div className='flex gap-0.5'>
         {TIME_RANGES.map((r) => (
           <button
             key={r}
             onClick={() => setRange(r)}
             className={cn(
-              "px-1.5 py-0.5 text-xs rounded-xs transition-colors",
+              "rounded-xs px-1.5 py-0.5 text-xs transition-colors",
               range === r
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground hover:bg-muted",
@@ -257,10 +265,10 @@ export function MiniChart({
       </div>
 
       {/* 图表 */}
-      <div className="relative">
+      <div className='relative'>
         {isLoading ? (
-          <div className="flex h-24 items-center justify-center">
-            <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          <div className='flex h-24 items-center justify-center'>
+            <Loader2 className='text-muted-foreground size-4 animate-spin' />
           </div>
         ) : (
           <ChartWithAxis

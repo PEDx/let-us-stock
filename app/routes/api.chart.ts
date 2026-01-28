@@ -48,6 +48,9 @@ export async function loader({ request }: { request: Request }) {
     });
   } catch (error) {
     console.error("Chart error:", error);
-    return Response.json({ error: "Failed to fetch chart data" }, { status: 500 });
+    return Response.json(
+      { error: "Failed to fetch chart data" },
+      { status: 500 },
+    );
   }
 }

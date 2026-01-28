@@ -31,4 +31,6 @@ export type QuoteTableInstance = ReturnType<typeof useReactTable<Quote>>;
 /**
  * Column 类型
  */
-export type QuoteColumn = ReturnType<QuoteTableInstance["getAllColumns"]>[number];
+export type QuoteColumn = ReturnType<
+  QuoteTableInstance["getAllColumns"]
+>[number];

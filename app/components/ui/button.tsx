@@ -40,7 +40,7 @@ function Button({
 }: React.ComponentProps<"button"> & VariantProps<typeof buttonVariants>) {
   return (
     <button
-      data-slot="button"
+      data-slot='button'
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />

@@ -60,11 +60,7 @@ export function updateEntry(
     >
   >,
 ): JournalEntryData {
-  return {
-    ...entry,
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...entry, ...updates, updatedAt: new Date().toISOString() };
 }
 
 /**

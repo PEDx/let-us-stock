@@ -29,7 +29,7 @@ import type {
   JournalEntryData,
   ExchangeRate,
 } from "../../double-entry/types";
-import { getApps } from 'firebase/app'
+import { getApps } from "firebase/app";
 import type {
   IBookRepository,
   ILedgerRepository,
@@ -100,7 +100,9 @@ class BookRepository implements IBookRepository {
     this.userId = userId;
   }
 
-  async getBookMeta(userId: string): Promise<{
+  async getBookMeta(
+    userId: string,
+  ): Promise<{
     mainLedgerId: string;
     commonTags: string[];
     exchangeRates: ExchangeRate[];
@@ -133,10 +135,7 @@ class BookRepository implements IBookRepository {
   ): Promise<void> {
     const db = getDB();
     const docRef = doc(db, `users/${userId}/meta`, "book");
-    await setDoc(docRef, {
-      ...meta,
-      updatedAt: Timestamp.now(),
-    });
+    await setDoc(docRef, { ...meta, updatedAt: Timestamp.now() });
   }
 }
 
@@ -174,7 +173,10 @@ class LedgerRepository implements ILedgerRepository {
     });
   }
 
-  async getLedger(userId: string, ledgerId: string): Promise<LedgerData | null> {
+  async getLedger(
+    userId: string,
+    ledgerId: string,
+  ): Promise<LedgerData | null> {
     const db = getDB();
     const docRef = doc(db, `users/${userId}/ledgers`, ledgerId);
     const docSnap = await getDoc(docRef);
@@ -209,7 +211,9 @@ class LedgerRepository implements ILedgerRepository {
       defaultCurrency: ledger.defaultCurrency ?? null,
       icon: ledger.icon ?? null,
       archived: ledger.archived ?? false,
-      createdAt: ledger.createdAt ? toTimestamp(ledger.createdAt) : Timestamp.now(),
+      createdAt: ledger.createdAt
+        ? toTimestamp(ledger.createdAt)
+        : Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
   }
@@ -245,7 +249,10 @@ class AccountRepository implements IAccountRepository {
 
   async getAccounts(userId: string, ledgerId: string): Promise<AccountData[]> {
     const db = getDB();
-    const collectionRef = collection(db, `users/${userId}/ledgers/${ledgerId}/accounts`);
+    const collectionRef = collection(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/accounts`,
+    );
     const snapshot = await getDocs(collectionRef);
 
     return snapshot.docs.map((doc) => {
@@ -267,9 +274,17 @@ class AccountRepository implements IAccountRepository {
     });
   }
 
-  async saveAccount(userId: string, ledgerId: string, account: AccountData): Promise<void> {
+  async saveAccount(
+    userId: string,
+    ledgerId: string,
+    account: AccountData,
+  ): Promise<void> {
     const db = getDB();
-    const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/accounts`, account.id);
+    const docRef = doc(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/accounts`,
+      account.id,
+    );
     await setDoc(docRef, {
       name: account.name,
       type: account.type,
@@ -280,17 +295,27 @@ class AccountRepository implements IAccountRepository {
       icon: account.icon ?? null,
       note: account.note ?? null,
       archived: account.archived ?? false,
-      createdAt: account.createdAt ? toTimestamp(account.createdAt) : Timestamp.now(),
+      createdAt: account.createdAt
+        ? toTimestamp(account.createdAt)
+        : Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
   }
 
-  async saveAccounts(userId: string, ledgerId: string, accounts: AccountData[]): Promise<void> {
+  async saveAccounts(
+    userId: string,
+    ledgerId: string,
+    accounts: AccountData[],
+  ): Promise<void> {
     const db = getDB();
     const batch = writeBatch(db);
 
     for (const account of accounts) {
-      const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/accounts`, account.id);
+      const docRef = doc(
+        db,
+        `users/${userId}/ledgers/${ledgerId}/accounts`,
+        account.id,
+      );
       batch.set(docRef, {
         name: account.name,
         type: account.type,
@@ -301,7 +326,9 @@ class AccountRepository implements IAccountRepository {
         icon: account.icon ?? null,
         note: account.note ?? null,
         archived: account.archived ?? false,
-        createdAt: account.createdAt ? toTimestamp(account.createdAt) : Timestamp.now(),
+        createdAt: account.createdAt
+          ? toTimestamp(account.createdAt)
+          : Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
     }
@@ -309,9 +336,17 @@ class AccountRepository implements IAccountRepository {
     await batch.commit();
   }
 
-  async deleteAccount(userId: string, ledgerId: string, accountId: string): Promise<void> {
+  async deleteAccount(
+    userId: string,
+    ledgerId: string,
+    accountId: string,
+  ): Promise<void> {
     const db = getDB();
-    const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/accounts`, accountId);
+    const docRef = doc(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/accounts`,
+      accountId,
+    );
     await deleteDoc(docRef);
   }
 }
@@ -338,7 +373,15 @@ class EntryRepository implements IEntryRepository {
     ledgerId: string,
     options: EntryQueryOptions = {},
   ): Promise<PaginatedResult<JournalEntryData>> {
-    const { page = 1, pageSize = this.DEFAULT_PAGE_SIZE, startDate, endDate, accountIds, tags, keyword } = options;
+    const {
+      page = 1,
+      pageSize = this.DEFAULT_PAGE_SIZE,
+      startDate,
+      endDate,
+      accountIds,
+      tags,
+      keyword,
+    } = options;
 
     const db = getDB();
     const collectionRef = this.getCollectionRef(ledgerId);
@@ -381,7 +424,9 @@ class EntryRepository implements IEntryRepository {
 
     // 账户过滤
     if (accountIds && accountIds.length > 0) {
-      items = items.filter((e) => e.lines.some((l) => accountIds.includes(l.accountId)));
+      items = items.filter((e) =>
+        e.lines.some((l) => accountIds.includes(l.accountId)),
+      );
     }
 
     // 标签过滤
@@ -390,7 +435,9 @@ class EntryRepository implements IEntryRepository {
     }
 
     // 获取总数
-    const countSnapshot = await getDocs(query(collectionRef, where("ledgerId", "==", ledgerId)));
+    const countSnapshot = await getDocs(
+      query(collectionRef, where("ledgerId", "==", ledgerId)),
+    );
     const total = countSnapshot.size;
 
     return {
@@ -403,9 +450,17 @@ class EntryRepository implements IEntryRepository {
     };
   }
 
-  async getEntry(userId: string, ledgerId: string, entryId: string): Promise<JournalEntryData | null> {
+  async getEntry(
+    userId: string,
+    ledgerId: string,
+    entryId: string,
+  ): Promise<JournalEntryData | null> {
     const db = getDB();
-    const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/entries`, entryId);
+    const docRef = doc(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/entries`,
+      entryId,
+    );
     const docSnap = await getDoc(docRef);
 
     if (!docSnap.exists()) {
@@ -415,9 +470,17 @@ class EntryRepository implements IEntryRepository {
     return entryFromDoc(docSnap as QueryDocumentSnapshot);
   }
 
-  async saveEntry(userId: string, ledgerId: string, entry: JournalEntryData): Promise<void> {
+  async saveEntry(
+    userId: string,
+    ledgerId: string,
+    entry: JournalEntryData,
+  ): Promise<void> {
     const db = getDB();
-    const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/entries`, entry.id);
+    const docRef = doc(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/entries`,
+      entry.id,
+    );
     await setDoc(docRef, {
       ledgerId,
       date: entry.date,
@@ -426,17 +489,27 @@ class EntryRepository implements IEntryRepository {
       tags: entry.tags ?? null,
       payee: entry.payee ?? null,
       note: entry.note ?? null,
-      createdAt: entry.createdAt ? toTimestamp(entry.createdAt) : Timestamp.now(),
+      createdAt: entry.createdAt
+        ? toTimestamp(entry.createdAt)
+        : Timestamp.now(),
       updatedAt: Timestamp.now(),
     });
   }
 
-  async saveEntries(userId: string, ledgerId: string, entries: JournalEntryData[]): Promise<void> {
+  async saveEntries(
+    userId: string,
+    ledgerId: string,
+    entries: JournalEntryData[],
+  ): Promise<void> {
     const db = getDB();
     const batch = writeBatch(db);
 
     for (const entry of entries) {
-      const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/entries`, entry.id);
+      const docRef = doc(
+        db,
+        `users/${userId}/ledgers/${ledgerId}/entries`,
+        entry.id,
+      );
       batch.set(docRef, {
         ledgerId,
         date: entry.date,
@@ -445,7 +518,9 @@ class EntryRepository implements IEntryRepository {
         tags: entry.tags ?? null,
         payee: entry.payee ?? null,
         note: entry.note ?? null,
-        createdAt: entry.createdAt ? toTimestamp(entry.createdAt) : Timestamp.now(),
+        createdAt: entry.createdAt
+          ? toTimestamp(entry.createdAt)
+          : Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
     }
@@ -453,13 +528,25 @@ class EntryRepository implements IEntryRepository {
     await batch.commit();
   }
 
-  async deleteEntry(userId: string, ledgerId: string, entryId: string): Promise<void> {
+  async deleteEntry(
+    userId: string,
+    ledgerId: string,
+    entryId: string,
+  ): Promise<void> {
     const db = getDB();
-    const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/entries`, entryId);
+    const docRef = doc(
+      db,
+      `users/${userId}/ledgers/${ledgerId}/entries`,
+      entryId,
+    );
     await deleteDoc(docRef);
   }
 
-  async getEntryStats(userId: string, ledgerId: string, options: EntryQueryOptions = {}): Promise<EntryStats> {
+  async getEntryStats(
+    userId: string,
+    ledgerId: string,
+    options: EntryQueryOptions = {},
+  ): Promise<EntryStats> {
     const { startDate, endDate } = options;
 
     // 获取所有分录进行统计
@@ -480,7 +567,8 @@ class EntryRepository implements IEntryRepository {
     for (const entry of result.items) {
       for (const line of entry.lines) {
         // 累计账户金额
-        stats.byAccount[line.accountId] = (stats.byAccount[line.accountId] || 0) + line.amount;
+        stats.byAccount[line.accountId] =
+          (stats.byAccount[line.accountId] || 0) + line.amount;
 
         // 收入/支出统计
         if (line.type === "credit") {
@@ -494,7 +582,10 @@ class EntryRepository implements IEntryRepository {
       if (entry.tags) {
         for (const tag of entry.tags) {
           // 计算该标签涉及的金额
-          const tagAmount = entry.lines.reduce((sum, line) => sum + line.amount, 0);
+          const tagAmount = entry.lines.reduce(
+            (sum, line) => sum + line.amount,
+            0,
+          );
           stats.byTag[tag] = (stats.byTag[tag] || 0) + tagAmount;
         }
       }
@@ -505,7 +596,11 @@ class EntryRepository implements IEntryRepository {
     return stats;
   }
 
-  watchEntries(userId: string, ledgerId: string, callback: (entries: JournalEntryData[]) => void): () => void {
+  watchEntries(
+    userId: string,
+    ledgerId: string,
+    callback: (entries: JournalEntryData[]) => void,
+  ): () => void {
     const db = getDB();
     const collectionRef = this.getCollectionRef(ledgerId);
 
@@ -570,7 +665,9 @@ export type {
 /**
  * 获取用户偏好
  */
-export async function getUserPreferences(userId: string): Promise<Record<string, string>> {
+export async function getUserPreferences(
+  userId: string,
+): Promise<Record<string, string>> {
   const db = getDB();
   const docRef = doc(db, `users/${userId}/meta`, "preferences");
 

@@ -1,5 +1,3 @@
-;
-
 import { useMemo } from "react";
 import { Trash2 } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
@@ -59,7 +57,10 @@ export function EntryFlow() {
       day: "numeric",
       weekday: "short",
     };
-    return date.toLocaleDateString(language === "zh" ? "zh-CN" : "en-US", options);
+    return date.toLocaleDateString(
+      language === "zh" ? "zh-CN" : "en-US",
+      options,
+    );
   };
 
   // 获取分录金额和类型
@@ -113,7 +114,7 @@ export function EntryFlow() {
 
   if (entries.length === 0) {
     return (
-      <div className='flex h-20 flex-col items-center justify-center text-muted-foreground'>
+      <div className='text-muted-foreground flex h-20 flex-col items-center justify-center'>
         <p className='text-xs'>{t.records.noEntries}</p>
       </div>
     );
@@ -123,7 +124,7 @@ export function EntryFlow() {
     <div className='space-y-2'>
       {groupedEntries.map(([date, dayEntries]) => (
         <div key={date} className='rounded-xs border'>
-          <div className='border-b bg-muted/50 px-2 py-1'>
+          <div className='bg-muted/50 border-b px-2 py-1'>
             <span className='text-xs font-medium'>{formatDate(date)}</span>
           </div>
           <div className='divide-y'>
@@ -143,7 +144,7 @@ export function EntryFlow() {
                     </span>
                     <div>
                       <div className='text-xs'>{entry.description}</div>
-                      <div className='text-xs text-muted-foreground'>
+                      <div className='text-muted-foreground text-xs'>
                         {info.type === "transfer"
                           ? `${info.fromAccount?.name} → ${info.toAccount?.name}`
                           : info.paymentAccount?.name}
@@ -160,12 +161,16 @@ export function EntryFlow() {
                             ? "text-green-600"
                             : "text-blue-600",
                       )}>
-                      {info.type === "expense" ? "-" : info.type === "income" ? "+" : ""}
+                      {info.type === "expense"
+                        ? "-"
+                        : info.type === "income"
+                          ? "+"
+                          : ""}
                       {getCurrencySymbol(info.currency as "CNY")}
                       {formatAmount(info.amount, info.currency)}
                     </span>
                     <ConfirmPopover onConfirm={() => deleteEntry(entry.id)}>
-                      <button className='rounded-xs p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-red-500 group-hover:opacity-100'>
+                      <button className='text-muted-foreground rounded-xs p-0.5 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500'>
                         <Trash2 className='size-3' />
                       </button>
                     </ConfirmPopover>

@@ -1,5 +1,3 @@
-;
-
 import { useState, useEffect, useRef } from "react";
 import { Search, Plus, X, Loader2 } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
@@ -83,17 +81,17 @@ export function StockSearch({
     existingSymbols.includes(symbol.toUpperCase());
 
   return (
-    <div ref={containerRef} className="relative">
-      <div className="flex items-center gap-1 rounded-xs border px-1 text-xs text-muted-foreground">
-        <Search className="size-3" />
+    <div ref={containerRef} className='relative'>
+      <div className='text-muted-foreground flex items-center gap-1 rounded-xs border px-1 text-xs'>
+        <Search className='size-3' />
         <input
-          type="text"
+          type='text'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.stockSearch.placeholder}
-          className="w-full bg-transparent py-0.5 outline-none placeholder:text-muted-foreground/60"
+          className='placeholder:text-muted-foreground/60 w-full bg-transparent py-0.5 outline-none'
         />
-        {isLoading && <Loader2 className="size-3 animate-spin" />}
+        {isLoading && <Loader2 className='size-3 animate-spin' />}
         {!isLoading && query && (
           <button
             onClick={() => {
@@ -101,42 +99,42 @@ export function StockSearch({
               setResults([]);
               setIsOpen(false);
             }}
-            className="hover:text-foreground">
-            <X className="size-3" />
+            className='hover:text-foreground'>
+            <X className='size-3' />
           </button>
         )}
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute left-0 top-full z-50 mt-0.5 w-full rounded-xs border bg-popover text-xs shadow-md">
-          <ul className="max-h-48 overflow-auto">
+        <div className='bg-popover absolute top-full left-0 z-50 mt-0.5 w-full rounded-xs border text-xs shadow-md'>
+          <ul className='max-h-48 overflow-auto'>
             {results.map((result) => {
               const added = isAlreadyAdded(result.symbol);
               return (
                 <li
                   key={result.symbol}
                   className={cn(
-                    "flex items-center justify-between gap-2 border-b border-border/50 px-1.5 py-1 last:border-b-0",
+                    "border-border/50 flex items-center justify-between gap-2 border-b px-1.5 py-1 last:border-b-0",
                     added ? "bg-muted/30" : "hover:bg-muted/50",
                   )}>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium text-blue-600">
+                  <div className='min-w-0 flex-1'>
+                    <span className='font-medium text-blue-600'>
                       {result.symbol}
                     </span>
-                    <span className="ml-1 text-muted-foreground/70">
+                    <span className='text-muted-foreground/70 ml-1'>
                       {result.type}
                     </span>
-                    <p className="truncate text-muted-foreground/60">
+                    <p className='text-muted-foreground/60 truncate'>
                       {result.name}
                     </p>
                   </div>
                   {added ? (
-                    <span className="text-muted-foreground/50">✓</span>
+                    <span className='text-muted-foreground/50'>✓</span>
                   ) : (
                     <button
                       onClick={() => handleAdd(result.symbol)}
-                      className="flex items-center rounded-xs border px-1 text-muted-foreground hover:border-blue-500 hover:text-blue-600">
-                      <Plus className="size-3" />
+                      className='text-muted-foreground flex items-center rounded-xs border px-1 hover:border-blue-500 hover:text-blue-600'>
+                      <Plus className='size-3' />
                     </button>
                   )}
                 </li>
@@ -147,7 +145,7 @@ export function StockSearch({
       )}
 
       {isOpen && query && !isLoading && results.length === 0 && (
-        <div className="absolute left-0 top-full z-50 mt-0.5 rounded-xs border bg-popover px-2 py-1 text-xs text-muted-foreground shadow-md">
+        <div className='bg-popover text-muted-foreground absolute top-full left-0 z-50 mt-0.5 rounded-xs border px-2 py-1 text-xs shadow-md'>
           {t.stockSearch.noResults}
         </div>
       )}

@@ -64,15 +64,9 @@ export function updateLedgerInBook(
   ledgerId: string,
   updater: (ledger: LedgerData) => LedgerData,
 ): BookData {
-  const ledgers = book.ledgers.map((l) =>
-    l.id === ledgerId ? updater(l) : l,
-  );
+  const ledgers = book.ledgers.map((l) => (l.id === ledgerId ? updater(l) : l));
 
-  return {
-    ...book,
-    ledgers,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...book, ledgers, updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -143,7 +137,7 @@ export function setExchangeRate(
   date?: string,
 ): BookData {
   const rateDate = date ?? new Date().toISOString().split("T")[0];
-  
+
   // 移除同一天的相同货币对
   const filtered = book.exchangeRates.filter(
     (r) => !(r.from === from && r.to === to && r.date === rateDate),
@@ -180,11 +174,7 @@ export function getExchangeRateHistory(
  */
 export function addCommonTags(book: BookData, tags: string[]): BookData {
   const newTags = [...new Set([...book.commonTags, ...tags])];
-  return {
-    ...book,
-    commonTags: newTags,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...book, commonTags: newTags, updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -203,7 +193,7 @@ export function removeCommonTags(book: BookData, tags: string[]): BookData {
  */
 export function getAllBookTags(book: BookData): string[] {
   const tags = new Set<string>(book.commonTags);
-  
+
   for (const ledger of book.ledgers) {
     for (const entry of ledger.entries) {
       for (const tag of entry.tags ?? []) {
@@ -211,6 +201,6 @@ export function getAllBookTags(book: BookData): string[] {
       }
     }
   }
-  
+
   return Array.from(tags).sort();
 }

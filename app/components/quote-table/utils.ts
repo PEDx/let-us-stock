@@ -15,9 +15,5 @@ export const restrictToVerticalAxisAndParent: Modifier = ({
   const minY = containerNodeRect.top - draggingNodeRect.top;
   const maxY = containerNodeRect.bottom - draggingNodeRect.bottom;
 
-  return {
-    ...transform,
-    x: 0,
-    y: Math.min(Math.max(transform.y, minY), maxY),
-  };
+  return { ...transform, x: 0, y: Math.min(Math.max(transform.y, minY), maxY) };
 };
