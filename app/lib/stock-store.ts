@@ -46,10 +46,10 @@ export function useGroupsData() {
     }
 
     try {
-      const repo = new GroupsRepository(currentUser.id);
-      const data = await repo.getGroupsData();
       setIsLoading(true);
       setError(null);
+      const repo = new GroupsRepository(currentUser.id);
+      const data = await repo.getGroupsData();
       setGroupsData(data);
     } catch (err) {
       console.error("Failed to load groups:", err);
@@ -57,78 +57,90 @@ export function useGroupsData() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, []); // 使用 authRef.current，无需依赖
 
-  // 初始加载
+  // 登录状态变化时加载数据
   useEffect(() => {
-    loadGroups();
-  }, [loadGroups]);
+    if (isAuthenticated && user) {
+      loadGroups();
+    } else if (!isAuthLoading && !isAuthenticated) {
+      // 已退出登录
+      setIsLoading(false);
+      setGroupsData(null);
+    }
+  }, [isAuthenticated, user, isAuthLoading, loadGroups]);
 
   // 添加分组
   const addGroup = useCallback(
     async (name: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await addGroupToRepo(currentUser.id, name);
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 删除分组
   const removeGroup = useCallback(
     async (groupId: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await removeGroupFromRepo(currentUser.id, groupId);
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 重命名分组
   const renameGroup = useCallback(
     async (groupId: string, newName: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await renameGroupInRepo(currentUser.id, groupId, newName);
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 重新排序分组
   const reorderGroups = useCallback(
     async (newOrder: string[]): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await reorderGroupsInRepo(currentUser.id, newOrder);
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 切换激活分组
   const setActiveGroup = useCallback(
     async (groupId: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await setActiveGroupInRepo(currentUser.id, groupId);
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 添加股票到分组
   const addSymbolToGroup = useCallback(
     async (groupId: string, symbol: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await addSymbolToGroupInRepo(
         currentUser.id,
         groupId,
@@ -137,14 +149,15 @@ export function useGroupsData() {
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 从分组删除股票
   const removeSymbolFromGroup = useCallback(
     async (groupId: string, symbol: string): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await removeSymbolFromGroupInRepo(
         currentUser.id,
         groupId,
@@ -153,14 +166,15 @@ export function useGroupsData() {
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 重新排序分组内股票
   const reorderSymbolsInGroup = useCallback(
     async (groupId: string, newOrder: string[]): Promise<GroupsData> => {
       const { user: currentUser } = authRef.current;
-      if (!currentUser || !groupsData) return DEFAULT_GROUPS_DATA;
+      if (!currentUser) return DEFAULT_GROUPS_DATA;
+
       const newData = await reorderSymbolsInGroupInRepo(
         currentUser.id,
         groupId,
@@ -169,17 +183,31 @@ export function useGroupsData() {
       setGroupsData(newData);
       return newData;
     },
-    [groupsData],
+    [], // 移除 groupsData 依赖
   );
 
   // 判断当前是否已登录
   const isLoggedIn = isAuthenticated && !!user;
 
   const groupsDataRet = useMemo(() => {
-    if (!isAuthLoading && !isLoggedIn) return DEFAULT_GROUPS_DATA;
-    if (isLoading) return { groups: [], activeGroupId: "" };
+    // 未登录或正在检查登录状态
+    if (isAuthLoading) {
+      return { groups: [], activeGroupId: "" };
+    }
+    
+    // 已退出登录
+    if (!isLoggedIn) {
+      return DEFAULT_GROUPS_DATA;
+    }
+    
+    // 正在加载数据，返回空数据
+    if (isLoading) {
+      return { groups: [], activeGroupId: "" };
+    }
+    
+    // 返回实际数据
     return groupsData ?? DEFAULT_GROUPS_DATA;
-  }, [groupsData, isLoading, isLoggedIn]);
+  }, [groupsData, isLoading, isLoggedIn, isAuthLoading]);
 
   // 数据加载完成
   return {

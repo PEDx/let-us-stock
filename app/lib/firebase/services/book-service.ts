@@ -277,10 +277,7 @@ export class BookService {
       description: params.description,
       accounts: [],
       entries: [],
-      defaultCurrency:
-        (params.defaultCurrency ?? bookMeta.exchangeRates.length > 0)
-          ? "CNY"
-          : "CNY",
+      defaultCurrency: params.defaultCurrency ?? "CNY",
       icon: params.icon,
       archived: false,
       createdAt: new Date().toISOString(),

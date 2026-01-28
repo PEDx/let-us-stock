@@ -281,11 +281,14 @@ export function useBook(): UseBookResult {
         accountParams,
       );
 
-      // 刷新账簿
-      const updatedBook = await service.getOrCreateBook({
-        mainLedgerName: t.records.defaultLedger,
-        categoryLabels: t.records.categories as Record<string, string>,
-      });
+      // 增量更新 book 而不是全量刷新
+      const updatedBook = { ...book };
+      const mainLedgerIndex = updatedBook.ledgers.findIndex(
+        (l) => l.id === book.mainLedgerId,
+      );
+      if (mainLedgerIndex >= 0) {
+        updatedBook.ledgers[mainLedgerIndex].accounts.push(newAccount);
+      }
       setBook(updatedBook);
 
       // 如果有初始余额，创建期初分录
@@ -306,7 +309,7 @@ export function useBook(): UseBookResult {
           });
           await service.addEntry(book.mainLedgerId, entry);
 
-          // 再次刷新
+          // 重新加载以获取准确数据
           const finalBook = await service.getOrCreateBook({
             mainLedgerName: t.records.defaultLedger,
             categoryLabels: t.records.categories as Record<string, string>,
@@ -331,16 +334,30 @@ export function useBook(): UseBookResult {
     ) => {
       if (!book) return;
       const service = getService();
+      
+      // 先获取更新后的账户
       await service.updateAccount(book.mainLedgerId, accountId, updates);
 
-      // 刷新账簿
-      const updatedBook = await service.getOrCreateBook({
-        mainLedgerName: t.records.defaultLedger,
-        categoryLabels: t.records.categories as Record<string, string>,
-      });
+      // 增量更新
+      const updatedBook = { ...book };
+      const mainLedgerIndex = updatedBook.ledgers.findIndex(
+        (l) => l.id === book.mainLedgerId,
+      );
+      if (mainLedgerIndex >= 0) {
+        const accountIndex = updatedBook.ledgers[mainLedgerIndex].accounts.findIndex(
+          (a) => a.id === accountId,
+        );
+        if (accountIndex >= 0) {
+          updatedBook.ledgers[mainLedgerIndex].accounts[accountIndex] = {
+            ...updatedBook.ledgers[mainLedgerIndex].accounts[accountIndex],
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+      }
       setBook(updatedBook);
     },
-    [book, t.records.defaultLedger, t.records.categories, getService],
+    [book, getService],
   );
 
   // 归档账户
@@ -385,26 +402,23 @@ export function useBook(): UseBookResult {
       if (!rootAccount) return;
 
       const service = getService();
-      await service.addAccount(book!.mainLedgerId, {
+      const newCategory = await service.addAccount(book!.mainLedgerId, {
         name: params.name,
         parentId: rootAccount.id,
         icon: params.icon,
       });
 
-      // 刷新账簿
-      const updatedBook = await service.getOrCreateBook({
-        mainLedgerName: t.records.defaultLedger,
-        categoryLabels: t.records.categories as Record<string, string>,
-      });
+      // 增量更新
+      const updatedBook = { ...book };
+      const mainLedgerIndex = updatedBook.ledgers.findIndex(
+        (l) => l.id === book.mainLedgerId,
+      );
+      if (mainLedgerIndex >= 0) {
+        updatedBook.ledgers[mainLedgerIndex].accounts.push(newCategory);
+      }
       setBook(updatedBook);
     },
-    [
-      mainLedger,
-      book,
-      t.records.defaultLedger,
-      t.records.categories,
-      getService,
-    ],
+    [mainLedger, book, getService],
   );
 
   // 更新分类
@@ -433,22 +447,15 @@ export function useBook(): UseBookResult {
         description,
       });
 
-      // 刷新账簿
-      const updatedBook = await service.getOrCreateBook({
-        mainLedgerName: t.records.defaultLedger,
-        categoryLabels: t.records.categories as Record<string, string>,
-      });
+      // 增量更新
+      const updatedBook = { ...book };
+      updatedBook.ledgers.push(newLedger);
       setBook(updatedBook);
 
       // 切换到新账本
       setCurrentLedgerId(newLedger.id);
     },
-    [
-      t.records.defaultLedger,
-      t.records.categories,
-      getService,
-      setCurrentLedgerId,
-    ],
+    [book, getService, setCurrentLedgerId],
   );
 
   // 删除账本
@@ -457,11 +464,9 @@ export function useBook(): UseBookResult {
       const service = getService();
       await service.removeLedger(id);
 
-      // 刷新账簿
-      const updatedBook = await service.getOrCreateBook({
-        mainLedgerName: t.records.defaultLedger,
-        categoryLabels: t.records.categories as Record<string, string>,
-      });
+      // 增量更新
+      const updatedBook = { ...book };
+      updatedBook.ledgers = updatedBook.ledgers.filter((l) => l.id !== id);
       setBook(updatedBook);
 
       // 如果删除的是当前账本，切换到主账本
@@ -469,13 +474,7 @@ export function useBook(): UseBookResult {
         setCurrentLedgerId(updatedBook.mainLedgerId);
       }
     },
-    [
-      currentLedgerId,
-      setCurrentLedgerId,
-      t.records.defaultLedger,
-      t.records.categories,
-      getService,
-    ],
+    [book, currentLedgerId, setCurrentLedgerId, getService],
   );
 
   // 添加简单分录
@@ -497,7 +496,7 @@ export function useBook(): UseBookResult {
       const service = getService();
       await service.addSimpleEntry({ ...params, ledgerId: currentLedger.id });
 
-      // 刷新账簿
+      // 分录会影响账户余额，需要重新加载
       const updatedBook = await service.getOrCreateBook({
         mainLedgerName: t.records.defaultLedger,
         categoryLabels: t.records.categories as Record<string, string>,
@@ -515,7 +514,7 @@ export function useBook(): UseBookResult {
       const service = getService();
       await service.removeEntry(currentLedger.id, entryId);
 
-      // 刷新账簿
+      // 分录删除会影响账户余额，需要重新加载
       const updatedBook = await service.getOrCreateBook({
         mainLedgerName: t.records.defaultLedger,
         categoryLabels: t.records.categories as Record<string, string>,

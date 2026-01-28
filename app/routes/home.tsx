@@ -3,8 +3,7 @@ import { QuoteTable } from "~/components/quote-table";
 import { StockSearch } from "~/components/stock-search";
 import { StockDetail } from "~/components/stock-detail";
 import { GroupTabs } from "~/components/group-tabs";
-import { useGroupsData, type GroupsData } from "~/lib/stock-store";
-import { useAuth } from "~/lib/firebase/auth-context";
+import { useGroupsData } from "~/lib/stock-store";
 import type { Quote } from "yahoo-finance2/modules/quote";
 import { Loader2 } from "lucide-react";
 
@@ -91,7 +90,6 @@ export default function Home() {
     const group = groupsData.groups.find(
       (g) => g.id === groupsData.activeGroupId,
     );
-    console.log("group", group);
     if (group) {
       fetchQuotes(group.symbols);
     }
@@ -198,7 +196,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <main className='page-area my-2'>
-        <div className='flex h-[calc(100vh-200px)] items-center justify-center'>
+        <div className='flex h-40 items-center justify-center border border-dashed'>
           <Loader2 className='text-muted-foreground size-8 animate-spin' />
         </div>
       </main>

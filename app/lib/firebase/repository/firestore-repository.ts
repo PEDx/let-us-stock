@@ -221,18 +221,33 @@ class LedgerRepository implements ILedgerRepository {
   async deleteLedger(userId: string, ledgerId: string): Promise<void> {
     const db = getDB();
 
-    // 使用 batch 删除账本及其子集合
-    const batch = writeBatch(db);
+    // 删除所有账户
+    const accountsRef = collection(db, `users/${userId}/ledgers/${ledgerId}/accounts`);
+    const accountsSnapshot = await getDocs(accountsRef);
+    for (const doc of accountsSnapshot.docs) {
+      await deleteDoc(doc.ref);
+    }
+
+    // 删除所有分录
+    const entriesRef = collection(db, `users/${userId}/ledgers/${ledgerId}/entries`);
+    const entriesSnapshot = await getDocs(entriesRef);
+    
+    // 使用 batch 删除分录（每个 batch 最多 500 个操作）
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < entriesSnapshot.docs.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = entriesSnapshot.docs.slice(i, i + BATCH_SIZE);
+      
+      for (const doc of chunk) {
+        batch.delete(doc.ref);
+      }
+      
+      await batch.commit();
+    }
 
     // 删除账本文档
     const ledgerRef = doc(db, `users/${userId}/ledgers`, ledgerId);
-    batch.delete(ledgerRef);
-
-    // 注意：Firestore 不支持递归删除子集合，
-    // 需要通过 Admin SDK 或 Cloud Functions 清理
-    // 这里只删除主文档，子集合数据由后台任务清理
-
-    await batch.commit();
+    await deleteDoc(ledgerRef);
   }
 }
 
@@ -342,12 +357,55 @@ class AccountRepository implements IAccountRepository {
     accountId: string,
   ): Promise<void> {
     const db = getDB();
-    const docRef = doc(
-      db,
-      `users/${userId}/ledgers/${ledgerId}/accounts`,
-      accountId,
-    );
-    await deleteDoc(docRef);
+
+    // 检查账户是否在分录中被使用
+    const entriesRef = collection(db, `users/${userId}/ledgers/${ledgerId}/entries`);
+    const entriesSnapshot = await getDocs(entriesRef);
+    
+    const isUsedInEntries = entriesSnapshot.docs.some((doc) => {
+      const lines = doc.data().lines;
+      return lines?.some((line: { accountId: string }) => line.accountId === accountId);
+    });
+
+    if (isUsedInEntries) {
+      throw new Error("Cannot delete account that is used in entries. Archive it instead.");
+    }
+
+    // 查找所有子账户（递归删除）
+    const accountsRef = collection(db, `users/${userId}/ledgers/${ledgerId}/accounts`);
+    const snapshot = await getDocs(accountsRef);
+    
+    // 找到所有需要删除的账户（目标账户及其所有子账户）
+    const toDelete: string[] = [accountId];
+    const allAccounts = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      parentId: doc.data().parentId,
+    }));
+
+    // 递归查找子账户
+    const findChildren = (parentId: string) => {
+      const children = allAccounts.filter((a) => a.parentId === parentId);
+      for (const child of children) {
+        toDelete.push(child.id);
+        findChildren(child.id);
+      }
+    };
+
+    findChildren(accountId);
+
+    // 删除所有相关账户
+    const BATCH_SIZE = 500;
+    for (let i = 0; i < toDelete.length; i += BATCH_SIZE) {
+      const batch = writeBatch(db);
+      const chunk = toDelete.slice(i, i + BATCH_SIZE);
+      
+      for (const id of chunk) {
+        const docRef = doc(db, `users/${userId}/ledgers/${ledgerId}/accounts`, id);
+        batch.delete(docRef);
+      }
+      
+      await batch.commit();
+    }
   }
 }
 
@@ -386,23 +444,52 @@ class EntryRepository implements IEntryRepository {
     const db = getDB();
     const collectionRef = this.getCollectionRef(ledgerId);
 
-    // 构建查询
-    let q = query(
-      collectionRef,
-      where("ledgerId", "==", ledgerId),
-      orderBy("date", "desc"),
-      orderBy("createdAt", "desc"),
-      limit(pageSize + 1), // 多取一条用于判断是否有更多
-    );
+    // 构建基础查询（路径已包含 ledgerId，无需 where 条件）
+    let baseQuery = query(collectionRef, orderBy("date", "desc"));
 
-    // 如果有关键词，在客户端过滤（firestore 不支持全文搜索）
+    // 添加日期过滤（服务端）
+    if (startDate && endDate) {
+      baseQuery = query(
+        collectionRef,
+        where("date", ">=", startDate),
+        where("date", "<=", endDate),
+        orderBy("date", "desc"),
+      );
+    } else if (startDate) {
+      baseQuery = query(
+        collectionRef,
+        where("date", ">=", startDate),
+        orderBy("date", "desc"),
+      );
+    } else if (endDate) {
+      baseQuery = query(
+        collectionRef,
+        where("date", "<=", endDate),
+        orderBy("date", "desc"),
+      );
+    }
+
+    // 获取数据（获取更多数据用于后续过滤）
+    const offset = (page - 1) * pageSize;
+    const fetchSize = pageSize * 2; // 获取更多数据以支持客户端过滤
+    let q = query(baseQuery, limit(fetchSize));
+
     const snapshot = await getDocs(q);
+    let items = snapshot.docs.map(entryFromDoc);
 
-    let items: JournalEntryData[] = snapshot.docs
-      .slice(0, pageSize) // 只取 pageSize 条
-      .map(entryFromDoc);
+    // 账户过滤（客户端，Firestore 不支持数组包含查询）
+    if (accountIds && accountIds.length > 0) {
+      items = items.filter((e) =>
+        e.lines.some((l) => accountIds.includes(l.accountId)),
+      );
+    }
 
-    // 关键词过滤
+    // 标签过滤（客户端，Firestore 不支持数组包含查询）
+    if (tags && tags.length > 0) {
+      items = items.filter((e) => e.tags?.some((t) => tags.includes(t)));
+    }
+
+    // 关键词过滤（客户端，Firestore 不支持全文搜索）
     if (keyword) {
       const lowerKeyword = keyword.toLowerCase();
       items = items.filter(
@@ -413,40 +500,25 @@ class EntryRepository implements IEntryRepository {
       );
     }
 
-    // 日期过滤
-    if (startDate || endDate) {
-      items = items.filter((e) => {
-        if (startDate && e.date < startDate) return false;
-        if (endDate && e.date > endDate) return false;
-        return true;
-      });
-    }
+    // 分页（在客户端过滤后）
+    const startIdx = offset;
+    const endIdx = startIdx + pageSize;
+    const pageItems = items.slice(startIdx, endIdx);
 
-    // 账户过滤
-    if (accountIds && accountIds.length > 0) {
-      items = items.filter((e) =>
-        e.lines.some((l) => accountIds.includes(l.accountId)),
-      );
-    }
+    // 获取总数（对于客户端过滤，总数是所有符合条件的文档）
+    const total = items.length;
 
-    // 标签过滤
-    if (tags && tags.length > 0) {
-      items = items.filter((e) => e.tags?.some((t) => tags.includes(t)));
-    }
-
-    // 获取总数
-    const countSnapshot = await getDocs(
-      query(collectionRef, where("ledgerId", "==", ledgerId)),
-    );
-    const total = countSnapshot.size;
+    // 计算总页数和是否有更多
+    const totalPages = Math.ceil(total / pageSize);
+    const hasMore = endIdx < items.length;
 
     return {
-      items,
+      items: pageItems,
       total,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
-      hasMore: snapshot.docs.length > pageSize,
+      totalPages,
+      hasMore,
     };
   }
 
@@ -549,14 +621,42 @@ class EntryRepository implements IEntryRepository {
   ): Promise<EntryStats> {
     const { startDate, endDate } = options;
 
-    // 获取所有分录进行统计
-    const result = await this.queryEntries(userId, ledgerId, {
-      ...options,
-      pageSize: 10000, // 获取全部
-    });
+    const db = getDB();
+    const collectionRef = this.getCollectionRef(ledgerId);
+
+    // 构建查询
+    let q = query(collectionRef, orderBy("date", "desc"));
+
+    // 如果有日期范围，添加日期过滤
+    if (startDate || endDate) {
+      if (startDate && endDate) {
+        q = query(
+          collectionRef,
+          where("date", ">=", startDate),
+          where("date", "<=", endDate),
+          orderBy("date", "desc"),
+        );
+      } else if (startDate) {
+        q = query(
+          collectionRef,
+          where("date", ">=", startDate),
+          orderBy("date", "desc"),
+        );
+      } else if (endDate) {
+        q = query(
+          collectionRef,
+          where("date", "<=", endDate),
+          orderBy("date", "desc"),
+        );
+      }
+    }
+
+    // 获取符合条件的所有文档进行统计
+    const snapshot = await getDocs(q);
+    const entries = snapshot.docs.map(entryFromDoc);
 
     const stats: EntryStats = {
-      totalCount: result.items.length,
+      totalCount: entries.length,
       totalIncome: 0,
       totalExpense: 0,
       balance: 0,
@@ -564,7 +664,7 @@ class EntryRepository implements IEntryRepository {
       byTag: {},
     };
 
-    for (const entry of result.items) {
+    for (const entry of entries) {
       for (const line of entry.lines) {
         // 累计账户金额
         stats.byAccount[line.accountId] =
@@ -606,7 +706,6 @@ class EntryRepository implements IEntryRepository {
 
     const q = query(
       collectionRef,
-      where("ledgerId", "==", ledgerId),
       orderBy("date", "desc"),
       limit(100),
     );
@@ -651,12 +750,10 @@ export class FirestoreRepositoryFactory {
   }
 }
 
-export type {
-  BookRepository,
-  LedgerRepository,
-  AccountRepository,
-  EntryRepository,
-};
+// 导出类型（用于测试）
+export type { BookRepository, LedgerRepository, AccountRepository, EntryRepository };
+
+// 注意：这些类本身不需要导出，通过工厂模式使用
 
 // ============================================================================
 // 用户偏好存储

@@ -16,6 +16,8 @@ import {
   signInWithGoogle,
   signOut,
   onAuthChange,
+  getIdToken,
+  getCurrentUser,
 } from "../firebase/config";
 import type { User } from "firebase/auth";
 
@@ -66,8 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
-    // 认证状态由 onAuthChange 处理
+    // 强制刷新 Firebase 认证状态
+    const user = getCurrentUser();
+    if (user) {
+      try {
+        const token = await getIdToken(true); // forceRefresh = true
+        setUser({
+          id: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          provider: getProviderInfo(user),
+        });
+      } catch (error) {
+        console.error("Failed to refresh token:", error);
+      }
+    }
     setIsLoading(false);
   }, []);
 

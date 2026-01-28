@@ -4,6 +4,7 @@
  */
 
 import type { LoaderFunctionArgs } from "react-router";
+import { verifyIdToken } from "~/lib/firebase/admin.server";
 
 export interface AuthUser {
   id: number;
@@ -43,19 +44,28 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ?.split("=")[1];
 
   if (firebaseToken) {
-    // TODO: 验证 Firebase token 并获取用户信息
-    // const { getAuth } = require("firebase-admin/auth");
-    // const auth = getAuth();
-    // const decodedToken = await auth.verifyIdToken(firebaseToken);
-    // 返回 Firebase 用户信息
-    return Response.json({
-      user: {
-        id: "firebase-user",
-        login: "Firebase User",
-        avatar_url: "",
-        name: null,
-      },
-    });
+    try {
+      // 验证 Firebase token 并获取用户信息
+      const decodedToken = await verifyIdToken(firebaseToken);
+
+      return Response.json({
+        user: {
+          id: decodedToken.uid,
+          login: decodedToken.email || "Firebase User",
+          avatar_url: decodedToken.photoURL || "",
+          name: decodedToken.displayName,
+        },
+      });
+    } catch (error) {
+      console.error("Failed to verify Firebase token:", error);
+      // Token 无效，清除 cookie
+      const response = Response.json({ user: null });
+      response.headers.set(
+        "Set-Cookie",
+        "firebase_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+      );
+      return response;
+    }
   }
 
   // 回退到 GitHub OAuth

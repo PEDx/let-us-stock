@@ -129,8 +129,8 @@ export function getCurrentUser(): User | null {
 /**
  * 获取 ID Token（用于后端验证）
  */
-export async function getIdToken(): Promise<string | null> {
+export async function getIdToken(forceRefresh?: boolean): Promise<string | null> {
   const user = auth.currentUser;
   if (!user) return null;
-  return user.getIdToken();
+  return user.getIdToken(forceRefresh);
 }
