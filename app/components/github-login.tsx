@@ -5,7 +5,6 @@ import { useI18n } from "~/lib/i18n";
 import { LogOut, Loader2, Cloud, CloudOff, Download } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { exportData } from "~/lib/export";
 import { cn } from "~/lib/utils";
 
 export function GitHubLogin() {
@@ -76,7 +75,7 @@ export function GitHubLogin() {
                 </div>
                 <hr className='my-1' />
                 <button
-                  onClick={exportData}
+                  onClick={() => {}}
                   className='hover:bg-muted flex w-full items-center gap-2 rounded-xs px-2 py-1 text-xs'>
                   <Download className='size-3' />
                   {t.sync.exportData}

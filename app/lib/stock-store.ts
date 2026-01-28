@@ -194,17 +194,17 @@ export function useGroupsData() {
     if (isAuthLoading) {
       return { groups: [], activeGroupId: "" };
     }
-    
+
     // 已退出登录
     if (!isLoggedIn) {
       return DEFAULT_GROUPS_DATA;
     }
-    
+
     // 正在加载数据，返回空数据
     if (isLoading) {
       return { groups: [], activeGroupId: "" };
     }
-    
+
     // 返回实际数据
     return groupsData ?? DEFAULT_GROUPS_DATA;
   }, [groupsData, isLoading, isLoggedIn, isAuthLoading]);

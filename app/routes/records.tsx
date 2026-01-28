@@ -1,5 +1,3 @@
-import { RecordsPage } from "~/components/records";
-
 export function meta() {
   return [
     { title: "Records" },
@@ -8,9 +6,5 @@ export function meta() {
 }
 
 export default function Records() {
-  return (
-    <main className='page-area py-4'>
-      <RecordsPage />
-    </main>
-  );
+  return <main className='page-area py-4'>records</main>;
 }
