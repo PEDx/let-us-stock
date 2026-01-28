@@ -32,10 +32,7 @@ export function createDemoLedger(): LedgerData {
   ledger = addAccount(ledger, { name: "Opening", parentId: equityRoot.id });
   ledger = addAccount(ledger, { name: "Salary", parentId: incomeRoot.id });
   ledger = addAccount(ledger, { name: "Food", parentId: expensesRoot.id });
-  ledger = addAccount(ledger, {
-    name: "Transport",
-    parentId: expensesRoot.id,
-  });
+  ledger = addAccount(ledger, { name: "Transport", parentId: expensesRoot.id });
 
   const cash = ledger.accounts.find((a) => a.path === "assets:cash")!;
   const bank = ledger.accounts.find((a) => a.path === "assets:bank")!;

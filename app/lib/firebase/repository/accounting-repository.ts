@@ -23,9 +23,16 @@ import type {
   JournalEntryData,
   LedgerData,
 } from "~/lib/double-entry/types";
-import { AccountType, LedgerType } from "~/lib/double-entry/types";
+import {
+  AccountType,
+  EntryLineType,
+  LedgerType,
+} from "~/lib/double-entry/types";
 import { createLedger } from "~/lib/double-entry/ledger";
-import { createAccount, isDebitIncreaseAccount } from "~/lib/double-entry/account";
+import {
+  createAccount,
+  isDebitIncreaseAccount,
+} from "~/lib/double-entry/account";
 import { fromMainUnit } from "~/lib/double-entry/money";
 import { createEntry } from "~/lib/double-entry/entry";
 
@@ -85,10 +92,9 @@ async function resolveLedger(userId: string, ledgerId?: string) {
   return { bookId, ledgerId: resolvedLedgerId };
 }
 
-export async function initializeAccounting(userId: string): Promise<{
-  bookId: string;
-  ledgerId: string;
-}> {
+export async function initializeAccounting(
+  userId: string,
+): Promise<{ bookId: string; ledgerId: string }> {
   const db = getDB();
   const bookId = await getBookIdForUser(userId);
   const bookRef = doc(db, "books", bookId);
@@ -151,17 +157,11 @@ async function createBookWithLedger(
       `books/${bookId}/ledgers/${ledgerId}/accounts`,
       account.id,
     );
-    batch.set(accountRef, {
-      ...account,
-    });
+    batch.set(accountRef, { ...account });
   }
 
   const memberRef = doc(db, `books/${bookId}/members`, userId);
-  batch.set(memberRef, {
-    role: "owner",
-    joinedAt: now,
-    status: "active",
-  });
+  batch.set(memberRef, { role: "owner", joinedAt: now, status: "active" });
 
   const metaRef = doc(db, `users/${userId}/meta`, "accounting");
   batch.set(metaRef, { bookId, updatedAt: now });
@@ -198,9 +198,7 @@ async function createMissingLedger(bookId: string, ledgerId: string) {
       `books/${bookId}/ledgers/${ledgerId}/accounts`,
       account.id,
     );
-    batch.set(accountRef, {
-      ...account,
-    });
+    batch.set(accountRef, { ...account });
   }
 
   await batch.commit();
@@ -237,7 +235,9 @@ function normalizeEntryDoc(
     id,
     date: normalizeDate(data.date) ?? now.split("T")[0],
     description: String(data.description ?? ""),
-    lines: Array.isArray(data.lines) ? (data.lines as JournalEntryData["lines"]) : [],
+    lines: Array.isArray(data.lines)
+      ? (data.lines as JournalEntryData["lines"])
+      : [],
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : undefined,
     payee: data.payee as string | undefined,
     note: data.note as string | undefined,
@@ -288,7 +288,8 @@ export async function fetchLedgerSnapshot(
     description: ledgerData.description as string | undefined,
     accounts,
     entries,
-    defaultCurrency: (ledgerData.defaultCurrency as LedgerData["defaultCurrency"]) ?? "CNY",
+    defaultCurrency:
+      (ledgerData.defaultCurrency as LedgerData["defaultCurrency"]) ?? "CNY",
     icon: ledgerData.icon as string | undefined,
     archived: ledgerData.archived as boolean | undefined,
     createdAt: normalizeTimestamp(ledgerData.createdAt) ?? now,
@@ -419,16 +420,8 @@ export async function createSimpleEntryForLedger(
     });
     entry.id = entryRef.id;
     entry.lines = [
-      {
-        accountId: debitAccount.id,
-        amount,
-        type: "debit",
-      },
-      {
-        accountId: creditAccount.id,
-        amount,
-        type: "credit",
-      },
+      { accountId: debitAccount.id, amount, type: EntryLineType.DEBIT },
+      { accountId: creditAccount.id, amount, type: EntryLineType.CREDIT },
     ];
     entry.createdAt = now;
     entry.updatedAt = now;

@@ -78,7 +78,9 @@ export function getFirebaseAuth(): Auth {
 /**
  * 验证 Firebase ID Token
  */
-export async function verifyIdToken(token: string): Promise<{
+export async function verifyIdToken(
+  token: string,
+): Promise<{
   uid: string;
   email: string | null;
   emailVerified: boolean;

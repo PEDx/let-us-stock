@@ -20,7 +20,7 @@ export function ConfirmPopover({
 
   return (
     <Popover.Root>
-      <Popover.Trigger render={children} nativeButton={false} />
+      <Popover.Trigger render={children} />
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>
           <Popover.Popup className='bg-popover rounded-xs border p-2 text-xs shadow-md'>

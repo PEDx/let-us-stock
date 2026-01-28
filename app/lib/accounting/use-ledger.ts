@@ -48,12 +48,7 @@ export function useLedgerData() {
       }
       if (!active.current) return;
       if (ledger) {
-        setState({
-          ledger,
-          isLoading: false,
-          error: null,
-          source: "cloud",
-        });
+        setState({ ledger, isLoading: false, error: null, source: "cloud" });
       } else {
         setState({
           ledger: createLedger({ name: "Main", defaultCurrency: "CNY" }),
@@ -67,8 +62,7 @@ export function useLedgerData() {
       setState({
         ledger: createDemoLedger(),
         isLoading: false,
-        error:
-          error instanceof Error ? error.message : "Failed to load ledger",
+        error: error instanceof Error ? error.message : "Failed to load ledger",
         source: "demo",
       });
     }

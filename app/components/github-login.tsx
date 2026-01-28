@@ -27,10 +27,8 @@ export function GitHubLogin() {
         {/* 用户头像和菜单 */}
         <Popover.Root>
           <Popover.Trigger
-            render={(props) => (
-              <button
-                {...props}
-                className='hover:bg-muted flex items-center gap-2 rounded-xs border px-2 py-1 text-xs'>
+            render={
+              <button className='hover:bg-muted inline-flex items-center gap-2 rounded-xs border px-2 py-1 text-xs'>
                 <div className='flex items-center gap-1.5'>
                   {user.photoURL ? (
                     <img
@@ -64,8 +62,7 @@ export function GitHubLogin() {
                   <Cloud className='size-3' />
                 </div>
               </button>
-            )}
-            nativeButton={false}
+            }
           />
           <Popover.Portal>
             <Popover.Positioner sideOffset={4}>
@@ -98,9 +95,8 @@ export function GitHubLogin() {
   return (
     <Popover.Root open={loginMenuOpen} onOpenChange={setLoginMenuOpen}>
       <Popover.Trigger
-        render={(props) => (
+        render={
           <button
-            {...props}
             className={cn(
               "flex items-center gap-1.5 rounded-xs border px-2 py-1 text-xs",
               "hover:bg-muted transition-colors",
@@ -108,8 +104,7 @@ export function GitHubLogin() {
             <CloudOff className='text-muted-foreground size-3' />
             <span>{t.sync.login}</span>
           </button>
-        )}
-        nativeButton={false}
+        }
       />
       <Popover.Portal>
         <Popover.Positioner sideOffset={4}>

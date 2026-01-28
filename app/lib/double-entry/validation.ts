@@ -65,9 +65,7 @@ export function validateEntry(entry: JournalEntryData): ValidationResult {
       .reduce((sum, l) => sum + l.amount, 0);
 
     if (totalDebit !== totalCredit) {
-      errors.push(
-        `借贷不平衡：借方 ${totalDebit} ≠ 贷方 ${totalCredit}`,
-      );
+      errors.push(`借贷不平衡：借方 ${totalDebit} ≠ 贷方 ${totalCredit}`);
     }
   }
 
@@ -84,11 +82,7 @@ export function validateEntry(entry: JournalEntryData): ValidationResult {
     warnings.push("标签数量过多（超过 10 个），可能影响性能");
   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-  };
+  return { valid: errors.length === 0, errors, warnings };
 }
 
 /**
@@ -110,11 +104,7 @@ export function validateEntryLine(line: EntryLineData): ValidationResult {
     errors.push("分录行类型必须是 debit 或 credit");
   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-  };
+  return { valid: errors.length === 0, errors, warnings };
 }
 
 // ============================================================================
@@ -142,7 +132,7 @@ export function canDeleteAccount(
 
   // 检查是否在分录中被使用
   const isInUse = ledger.entries.some((e) =>
-    e.lines.some((line) => line.accountId === accountId)
+    e.lines.some((line) => line.accountId === accountId),
   );
 
   if (isInUse) {
@@ -205,7 +195,7 @@ export function canMoveAccount(
 
   // 检查是否是自己的后代
   const isDescendant = ledger.accounts.some(
-    (a) => a.id === newParentId && a.path.startsWith(account.path + ":")
+    (a) => a.id === newParentId && a.path.startsWith(account.path + ":"),
   );
   if (isDescendant) {
     return { canMove: false, reason: "不能移动到自己的子账户下" };
@@ -282,10 +272,14 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
   for (const entry of ledger.entries) {
     const result = validateEntry(entry);
     if (!result.valid) {
-      errors.push(`分录 "${entry.description}" (ID: ${entry.id}): ${result.errors.join(", ")}`);
+      errors.push(
+        `分录 "${entry.description}" (ID: ${entry.id}): ${result.errors.join(", ")}`,
+      );
     }
     if (result.warnings.length > 0) {
-      warnings.push(`分录 "${entry.description}" (ID: ${entry.id}): ${result.warnings.join(", ")}`);
+      warnings.push(
+        `分录 "${entry.description}" (ID: ${entry.id}): ${result.warnings.join(", ")}`,
+      );
     }
   }
 
@@ -294,11 +288,7 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
     errors.push("会计恒等式不成立：资产 + 支出 ≠ 负债 + 权益 + 收入");
   }
 
-  return {
-    valid: errors.length === 0,
-    errors,
-    warnings,
-  };
+  return { valid: errors.length === 0, errors, warnings };
 }
 
 /**

@@ -95,9 +95,9 @@ export function SortableRow({
       {onRemoveSymbol && (
         <TableCell>
           <ConfirmPopover onConfirm={() => onRemoveSymbol(quote.symbol)}>
-            <span className='text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500'>
+            <button className='text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-500'>
               <X className='size-3' />
-            </span>
+            </button>
           </ConfirmPopover>
         </TableCell>
       )}

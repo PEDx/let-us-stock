@@ -99,7 +99,8 @@ export function buildAssetsOverview(ledger: LedgerData): {
     ledger.accounts.filter((a) => a.type === AccountType.LIABILITIES),
   );
   const netWorth = unionCurrencies(assets, liabilities).map((currency) => {
-    const assetsAmount = assets.find((a) => a.currency === currency)?.amount ?? 0;
+    const assetsAmount =
+      assets.find((a) => a.currency === currency)?.amount ?? 0;
     const liabilitiesAmount =
       liabilities.find((a) => a.currency === currency)?.amount ?? 0;
     const amount = assetsAmount - liabilitiesAmount;

@@ -163,8 +163,5 @@ export function updateAccountBalance(
  * 判断是否为借方增加账户（资产、支出）
  */
 export function isDebitIncreaseAccount(type: AccountType): boolean {
-  return (
-    type === AccountType.ASSETS ||
-    type === AccountType.EXPENSES
-  );
+  return type === AccountType.ASSETS || type === AccountType.EXPENSES;
 }

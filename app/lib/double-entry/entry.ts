@@ -307,11 +307,7 @@ export function replaceLine(
   const newLines = [...entry.lines];
   newLines[lineIndex] = newLine;
 
-  return {
-    ...entry,
-    lines: newLines,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...entry, lines: newLines, updatedAt: new Date().toISOString() };
 }
 
 /**
@@ -337,11 +333,7 @@ export function removeLine(
  */
 export function updateLines(
   entry: JournalEntryData,
-  updates: Array<{
-    lineIndex: number;
-    amount?: number;
-    accountId?: string;
-  }>,
+  updates: Array<{ lineIndex: number; amount?: number; accountId?: string }>,
 ): JournalEntryData {
   let newEntry = cloneEntry(entry);
 
@@ -386,12 +378,12 @@ export function getEntryCategory(
   const debitAccounts = new Set(
     entry.lines
       .filter((l) => l.type === EntryLineType.DEBIT)
-      .map((l) => l.accountId)
+      .map((l) => l.accountId),
   );
   const creditAccounts = new Set(
     entry.lines
       .filter((l) => l.type === EntryLineType.CREDIT)
-      .map((l) => l.accountId)
+      .map((l) => l.accountId),
   );
 
   // 检查是否有支出账户
@@ -411,14 +403,12 @@ export function getEntryCategory(
   }
 
   // 检查是否是转账
-  const hasAsset =
-    [...debitAccounts, ...creditAccounts].some(
-      (id) => accounts.get(id)?.type === AccountType.ASSETS
-    );
-  const hasLiability =
-    [...debitAccounts, ...creditAccounts].some(
-      (id) => accounts.get(id)?.type === AccountType.LIABILITIES
-    );
+  const hasAsset = [...debitAccounts, ...creditAccounts].some(
+    (id) => accounts.get(id)?.type === AccountType.ASSETS,
+  );
+  const hasLiability = [...debitAccounts, ...creditAccounts].some(
+    (id) => accounts.get(id)?.type === AccountType.LIABILITIES,
+  );
 
   if (hasAsset || hasLiability) {
     return "transfer";

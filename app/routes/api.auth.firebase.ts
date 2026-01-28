@@ -40,10 +40,7 @@ export async function action({
     try {
       const decodedToken = await verifyIdToken(token);
 
-      const response = Response.json({
-        success: true,
-        uid: decodedToken.uid,
-      });
+      const response = Response.json({ success: true, uid: decodedToken.uid });
 
       // 设置 httpOnly cookie
       response.headers.set(

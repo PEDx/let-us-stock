@@ -383,10 +383,7 @@ function getAccountsAsOf(
   ledger: LedgerData,
   snapshotDate: string,
 ): AccountData[] {
-  let accounts = ledger.accounts.map((account) => ({
-    ...account,
-    balance: 0,
-  }));
+  let accounts = ledger.accounts.map((account) => ({ ...account, balance: 0 }));
 
   const entries = ledger.entries
     .filter((entry) => entry.date <= snapshotDate)

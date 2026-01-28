@@ -9,7 +9,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "react-router typegen && tsc",
-    "format": "oxfmt",
+    "format": "oxfmt app",
     "format:check": "oxfmt --check"
   },
   "dependencies": {

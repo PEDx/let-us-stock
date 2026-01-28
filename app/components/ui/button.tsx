@@ -21,6 +21,7 @@ const buttonVariants = cva(
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
+        xs: "flex shrink-0 items-center text-xs gap-0.5 rounded-xs border px-1.5 py-1",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
         icon: "size-9",
@@ -28,7 +29,7 @@ const buttonVariants = cva(
         "icon-lg": "size-10",
       },
     },
-    defaultVariants: { variant: "default", size: "default" },
+    defaultVariants: { variant: "default", size: "xs" },
   },
 );
 
