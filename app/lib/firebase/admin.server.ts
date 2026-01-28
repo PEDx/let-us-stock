@@ -32,9 +32,9 @@ export function getFirebaseAdmin(): App {
   }
 
   // 检查必要的环境变量
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  const privateKey = import.meta.env.VITE_FIREBASE_PRIVATE_KEY;
+  const clientEmail = import.meta.env.VITE_FIREBASE_CLIENT_EMAIL;
 
   if (!projectId || !privateKey || !clientEmail) {
     throw new Error(

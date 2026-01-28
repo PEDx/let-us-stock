@@ -11,6 +11,7 @@ export default [
   route("api/stock-detail", "routes/api.stock-detail.ts"),
   route("api/chart", "routes/api.chart.ts"),
   // Auth routes
+  route("api/auth/firebase", "routes/api.auth.firebase.ts"),
   route("api/auth/logout", "routes/api.auth.logout.ts"),
   route("api/auth/me", "routes/api.auth.me.ts"),
 ] satisfies RouteConfig;
