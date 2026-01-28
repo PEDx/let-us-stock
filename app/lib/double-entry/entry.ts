@@ -5,11 +5,11 @@
 import type {
   JournalEntryData,
   EntryLineData,
-  EntryLineType,
   AccountData,
+  CurrencyCode,
 } from "./types";
-import { EntryLineType as ELT, AccountType } from "./types";
-import { findAccountById, isDebitIncreaseAccount } from "./account";
+import { EntryLineType, EntryLineType as ELT, AccountType } from "./types";
+import { isDebitIncreaseAccount } from "./account";
 
 /**
  * 生成分录 ID
@@ -271,4 +271,165 @@ export function getEntryAccountIds(entry: JournalEntryData): string[] {
  */
 export function getEntryTags(entry: JournalEntryData): string[] {
   return entry.tags ?? [];
+}
+
+// ============================================================================
+// 分录编辑功能
+// ============================================================================
+
+/**
+ * 克隆分录（用于编辑时保留原始数据）
+ */
+export function cloneEntry(entry: JournalEntryData): JournalEntryData {
+  return JSON.parse(JSON.stringify(entry));
+}
+
+/**
+ * 替换分录中的一行
+ */
+export function replaceLine(
+  entry: JournalEntryData,
+  lineIndex: number,
+  newLine: EntryLineData,
+): JournalEntryData {
+  if (lineIndex < 0 || lineIndex >= entry.lines.length) {
+    throw new Error(`Line index ${lineIndex} out of bounds`);
+  }
+
+  const newLines = [...entry.lines];
+  newLines[lineIndex] = newLine;
+
+  return {
+    ...entry,
+    lines: newLines,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * 删除分录中的一行
+ */
+export function removeLine(
+  entry: JournalEntryData,
+  lineIndex: number,
+): JournalEntryData {
+  if (entry.lines.length <= 2) {
+    throw new Error("Cannot remove line: entry must have at least 2 lines");
+  }
+
+  return {
+    ...entry,
+    lines: entry.lines.filter((_, i) => i !== lineIndex),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/**
+ * 批量修改分录行
+ */
+export function updateLines(
+  entry: JournalEntryData,
+  updates: Array<{
+    lineIndex: number;
+    amount?: number;
+    accountId?: string;
+  }>,
+): JournalEntryData {
+  let newEntry = cloneEntry(entry);
+
+  for (const update of updates) {
+    const line = newEntry.lines[update.lineIndex];
+    if (!line) {
+      throw new Error(`Line index ${update.lineIndex} not found`);
+    }
+
+    const newLine: EntryLineData = { ...line };
+    if (update.amount !== undefined) {
+      if (update.amount <= 0) {
+        throw new Error(`Amount must be greater than 0, got ${update.amount}`);
+      }
+      newLine.amount = update.amount;
+    }
+    if (update.accountId !== undefined) {
+      newLine.accountId = update.accountId;
+    }
+
+    newEntry = replaceLine(newEntry, update.lineIndex, newLine);
+  }
+
+  return newEntry;
+}
+
+/**
+ * 获取分录总额（用于显示）
+ */
+export function getEntryAmount(entry: JournalEntryData): number {
+  // 借方总额应该等于贷方总额，取其中之一
+  return getTotalDebit(entry);
+}
+
+/**
+ * 判断分录类型（支出、收入、转账）
+ */
+export function getEntryCategory(
+  entry: JournalEntryData,
+  accounts: Map<string, AccountData>,
+): "expense" | "income" | "transfer" | "unknown" {
+  const debitAccounts = new Set(
+    entry.lines
+      .filter((l) => l.type === EntryLineType.DEBIT)
+      .map((l) => l.accountId)
+  );
+  const creditAccounts = new Set(
+    entry.lines
+      .filter((l) => l.type === EntryLineType.CREDIT)
+      .map((l) => l.accountId)
+  );
+
+  // 检查是否有支出账户
+  for (const accountId of debitAccounts) {
+    const account = accounts.get(accountId);
+    if (account?.type === AccountType.EXPENSES) {
+      return "expense";
+    }
+  }
+
+  // 检查是否有收入账户
+  for (const accountId of creditAccounts) {
+    const account = accounts.get(accountId);
+    if (account?.type === AccountType.INCOME) {
+      return "income";
+    }
+  }
+
+  // 检查是否是转账
+  const hasAsset =
+    [...debitAccounts, ...creditAccounts].some(
+      (id) => accounts.get(id)?.type === AccountType.ASSETS
+    );
+  const hasLiability =
+    [...debitAccounts, ...creditAccounts].some(
+      (id) => accounts.get(id)?.type === AccountType.LIABILITIES
+    );
+
+  if (hasAsset || hasLiability) {
+    return "transfer";
+  }
+
+  return "unknown";
+}
+
+/**
+ * 获取分录的主要货币（第一个涉及的账户的货币）
+ */
+export function getEntryCurrency(
+  entry: JournalEntryData,
+  accounts: Map<string, AccountData>,
+): CurrencyCode {
+  if (entry.lines.length === 0) {
+    return "CNY";
+  }
+
+  const account = accounts.get(entry.lines[0].accountId);
+  return account?.currency ?? "CNY";
 }

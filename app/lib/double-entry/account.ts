@@ -2,7 +2,8 @@
  * 账户管理
  */
 
-import type { AccountData, AccountType, CurrencyCode } from "./types";
+import type { AccountData, CurrencyCode } from "./types";
+import { AccountType } from "./types";
 
 /**
  * 生成账户 ID
@@ -54,7 +55,6 @@ export function createAccount(params: {
  * 创建根账户（五大类）
  */
 export function createRootAccounts(currency: CurrencyCode): AccountData[] {
-  const { AccountType } = require("./types");
   const now = new Date().toISOString();
 
   const roots: Array<{ name: string; type: AccountType }> = [
@@ -163,6 +163,8 @@ export function updateAccountBalance(
  * 判断是否为借方增加账户（资产、支出）
  */
 export function isDebitIncreaseAccount(type: AccountType): boolean {
-  const { AccountType } = require("./types");
-  return type === AccountType.ASSETS || type === AccountType.EXPENSES;
+  return (
+    type === AccountType.ASSETS ||
+    type === AccountType.EXPENSES
+  );
 }

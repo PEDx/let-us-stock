@@ -158,6 +158,13 @@ export {
   createSimpleEntry,
   getEntryAccountIds,
   getEntryTags,
+  cloneEntry,
+  replaceLine,
+  removeLine,
+  updateLines,
+  getEntryAmount,
+  getEntryCategory,
+  getEntryCurrency,
 } from "./entry";
 
 // ============================================================================
@@ -236,3 +243,18 @@ export {
   generateBalanceSnapshotInCurrency,
   generateNetWorthTrend,
 } from "./report";
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+export {
+  validateEntry,
+  validateEntryLine,
+  canDeleteAccount,
+  canArchiveAccount,
+  canMoveAccount,
+  validateLedger,
+  canDeleteEntry,
+  type ValidationResult,
+} from "./validation";
