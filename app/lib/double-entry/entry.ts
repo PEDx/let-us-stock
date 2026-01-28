@@ -176,11 +176,19 @@ export function postEntry(
 
   // 创建账户映射
   const accountMap = new Map(accounts.map((a) => [a.id, { ...a }]));
+  let entryCurrency: CurrencyCode | null = null;
 
   for (const line of entry.lines) {
     const account = accountMap.get(line.accountId);
     if (!account) {
       throw new Error(`Account ${line.accountId} not found`);
+    }
+    if (entryCurrency === null) {
+      entryCurrency = account.currency;
+    } else if (account.currency !== entryCurrency) {
+      throw new Error(
+        `Cross-currency entry is not supported: ${entryCurrency} vs ${account.currency}`,
+      );
     }
 
     // 根据账户类型和借贷方向计算余额变化

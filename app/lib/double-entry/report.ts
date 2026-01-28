@@ -13,11 +13,13 @@ import type {
   CurrencyCode,
   AccountType,
   JournalEntryData,
+  AccountData,
 } from "./types";
 import { AccountType as AT, EntryLineType } from "./types";
 import { getTypeBalance } from "./ledger";
 import { queryEntries } from "./query";
 import { convertCurrency } from "./currency";
+import { postEntry } from "./entry";
 
 // ============================================================================
 // 时间工具
@@ -268,6 +270,7 @@ export function generateBalanceSnapshot(
   date?: string,
 ): BalanceSnapshot {
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
+  const accounts = getAccountsAsOf(ledger, snapshotDate);
 
   // 按货币分组的资产
   const assetsByCurrency: Record<CurrencyCode, number> = {} as Record<
@@ -278,7 +281,7 @@ export function generateBalanceSnapshot(
   let totalAssets = 0;
   let totalLiabilities = 0;
 
-  for (const account of ledger.accounts) {
+  for (const account of accounts) {
     if (account.type === AT.ASSETS) {
       totalAssets += account.balance;
       assetsByCurrency[account.currency] =
@@ -307,6 +310,7 @@ export function generateBalanceSnapshotInCurrency(
   date?: string,
 ): BalanceSnapshot {
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
+  const accounts = getAccountsAsOf(ledger, snapshotDate);
 
   const assetsByCurrency: Record<CurrencyCode, number> = {} as Record<
     CurrencyCode,
@@ -316,7 +320,7 @@ export function generateBalanceSnapshotInCurrency(
   let totalAssets = 0;
   let totalLiabilities = 0;
 
-  for (const account of ledger.accounts) {
+  for (const account of accounts) {
     let amount = account.balance;
 
     // 货币转换
@@ -373,4 +377,24 @@ export function generateNetWorthTrend(
   }
 
   return result;
+}
+
+function getAccountsAsOf(
+  ledger: LedgerData,
+  snapshotDate: string,
+): AccountData[] {
+  let accounts = ledger.accounts.map((account) => ({
+    ...account,
+    balance: 0,
+  }));
+
+  const entries = ledger.entries
+    .filter((entry) => entry.date <= snapshotDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  for (const entry of entries) {
+    accounts = postEntry(entry, accounts);
+  }
+
+  return accounts;
 }

@@ -55,8 +55,8 @@ export function validateEntry(entry: JournalEntryData): ValidationResult {
     errors.push("分录必须包含至少一行");
   } else if (entry.lines.length < 2) {
     errors.push("分录至少需要两行（借方和贷方）");
-  } else if (entry.lines.length === 2) {
-    // 检查是否借贷平衡
+  } else {
+    // 检查是否借贷平衡（多行也需平衡）
     const totalDebit = entry.lines
       .filter((l) => l.type === "debit")
       .reduce((sum, l) => sum + l.amount, 0);
@@ -77,16 +77,6 @@ export function validateEntry(entry: JournalEntryData): ValidationResult {
     if (line.amount <= 0) {
       errors.push(`第 ${i + 1} 行金额必须大于 0（当前：${line.amount}）`);
     }
-  }
-
-  // 检查是否有重复的账户
-  const accountIds = new Set<string>();
-  for (let i = 0; i < entry.lines.length; i++) {
-    const line = entry.lines[i];
-    if (accountIds.has(line.accountId)) {
-      errors.push(`账户 ${line.accountId} 在分录中重复出现`);
-    }
-    accountIds.add(line.accountId);
   }
 
   // 检查标签

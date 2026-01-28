@@ -10,7 +10,8 @@
     "add": "Add",
     "confirm": "Confirm",
     "loading": "Loading...",
-    "noData": "No data"
+    "noData": "No data",
+    "required": "Required"
   },
   "nav": { "market": "Market", "assets": "Assets", "records": "Records" },
   "assets": {
@@ -63,7 +64,9 @@
     "expense": "Expense",
     "income": "Income",
     "transfer": "Transfer",
+    "currencyMismatch": "Currency mismatch",
     "amount": "Amount",
+    "invalidAmount": "Invalid amount",
     "category": "Category",
     "account": "Account",
     "fromAccount": "From Account",
@@ -173,6 +176,7 @@
     "syncing": "Syncing...",
     "syncSuccess": "Sync successful",
     "syncError": "Sync failed",
+    "loginRequired": "Login required to write",
     "exportData": "Download Backup",
     "chooseProvider": "Choose login method:",
     "user": "User"

@@ -10,7 +10,8 @@
     "add": "添加",
     "confirm": "确认",
     "loading": "加载中...",
-    "noData": "暂无数据"
+    "noData": "暂无数据",
+    "required": "必填"
   },
   "nav": { "market": "市场", "assets": "资产", "records": "记录" },
   "assets": {
@@ -63,7 +64,9 @@
     "expense": "支出",
     "income": "收入",
     "transfer": "转账",
+    "currencyMismatch": "币种不一致",
     "amount": "金额",
+    "invalidAmount": "金额无效",
     "category": "分类",
     "account": "账户",
     "fromAccount": "从账户",
@@ -173,6 +176,7 @@
     "syncing": "同步中...",
     "syncSuccess": "同步成功",
     "syncError": "同步失败",
+    "loginRequired": "请先登录再写入",
     "exportData": "下载备份",
     "chooseProvider": "选择登录方式：",
     "user": "用户"
