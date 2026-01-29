@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router";
 import { GitHubLogin } from "./github-login";
+import { Logo } from "./logo";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/utils";
 import { useMemo } from "react";
@@ -20,21 +21,30 @@ export function Header() {
 
   return (
     <header className='page-area flex items-center justify-between py-1'>
-      <nav className='flex items-center gap-4'>
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={cn(
-              "hover:text-foreground text-xs transition-colors",
-              location.pathname === item.path
-                ? "text-foreground font-medium"
-                : "text-muted-foreground",
-            )}>
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <div className='flex items-center gap-6'>
+        {/* Logo */}
+        <Link to="/" className='flex items-center hover:opacity-80 transition-opacity'>
+          <Logo className='h-8 w-auto' />
+        </Link>
+
+        {/* Navigation */}
+        <nav className='flex items-center gap-4'>
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "hover:text-foreground text-xs transition-colors",
+                location.pathname === item.path
+                  ? "text-foreground font-medium"
+                  : "text-muted-foreground",
+              )}>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+
       <div className='flex items-center gap-2'>
         <GitHubLogin />
       </div>
