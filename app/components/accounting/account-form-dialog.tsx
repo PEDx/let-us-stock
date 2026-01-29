@@ -1,5 +1,5 @@
 import { Dialog } from "@base-ui/react/dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { AccountData } from "~/lib/double-entry/types";
 import { useI18n } from "~/lib/i18n";
 import { Button } from "~/components/ui/button";
@@ -35,6 +35,42 @@ export function AccountFormDialog({
     setError(null);
   }, [open, defaultParentId]);
 
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setName(e.target.value);
+  }, []);
+
+  const handleParentChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setParentId(e.target.value);
+  }, []);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!userId) {
+      setError(t.sync.loginRequired);
+      return;
+    }
+    if (!name.trim() || !parentId) {
+      setError(t.common.required);
+      return;
+    }
+    setIsSaving(true);
+    setError(null);
+    try {
+      await createAccountForLedger(userId, {
+        name: name.trim(),
+        parentId,
+      });
+      await onCreated?.();
+      onOpenChange(false);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : t.sync.syncError,
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -49,40 +85,14 @@ export function AccountFormDialog({
 
           <form
             className='mt-4 space-y-3'
-            onSubmit={async (event) => {
-              event.preventDefault();
-              if (!userId) {
-                setError(t.sync.loginRequired);
-                return;
-              }
-              if (!name.trim() || !parentId) {
-                setError(t.common.required);
-                return;
-              }
-              setIsSaving(true);
-              setError(null);
-              try {
-                await createAccountForLedger(userId, {
-                  name: name.trim(),
-                  parentId,
-                });
-                await onCreated?.();
-                onOpenChange(false);
-              } catch (error) {
-                setError(
-                  error instanceof Error ? error.message : t.sync.syncError,
-                );
-              } finally {
-                setIsSaving(false);
-              }
-            }}>
+            onSubmit={handleSubmit}>
             <div className='space-y-2'>
               <label className='text-muted-foreground text-xs font-medium'>
                 {t.assets.accountName}
               </label>
               <input
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={handleNameChange}
                 className='border-input bg-background h-8 w-full rounded-xs border px-2 text-xs'
                 placeholder={t.assets.accountName}
               />
@@ -93,7 +103,7 @@ export function AccountFormDialog({
               </label>
               <select
                 value={parentId ?? ""}
-                onChange={(event) => setParentId(event.target.value)}
+                onChange={handleParentChange}
                 className='border-input bg-background h-8 w-full rounded-xs border px-2 text-xs'>
                 {parentOptions.map((account) => (
                   <option key={account.id} value={account.id}>

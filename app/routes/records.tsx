@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { useI18n } from "~/lib/i18n";
 import {
   buildEntryRows,
@@ -17,6 +17,15 @@ export function meta() {
     { title: "Records" },
     { name: "description", content: "View your records" },
   ];
+}
+
+// Hoist static function for empty state
+function createEmptyState(message: string) {
+  return (
+    <div className='text-muted-foreground flex h-20 items-center justify-center rounded-xs border border-dashed text-xs'>
+      {message}
+    </div>
+  );
 }
 
 export default function Records() {
@@ -123,69 +132,75 @@ export default function Records() {
         </div>
 
         <div className='mt-3 space-y-2'>
-          {entries.length === 0 ? (
-            <div className='text-muted-foreground flex h-20 items-center justify-center rounded-xs border border-dashed text-xs'>
-              {t.records.noEntries}
-            </div>
-          ) : null}
-          {entries.map((entry) => (
-            <div
-              key={entry.id}
-              className='flex flex-col gap-2 rounded-xs border px-3 py-2 md:flex-row md:items-start md:justify-between'>
-              <div className='space-y-1'>
-                <div className='flex items-center gap-2'>
-                  <span className='text-foreground text-xs font-medium'>
-                    {entry.description}
-                  </span>
-                  <Badge variant='outline'>
-                    {categoryLabels[entry.category]}
-                  </Badge>
-                </div>
-                <p className='text-muted-foreground text-xs'>
-                  {entry.date}
-                  {entry.payee ? ` · ${entry.payee}` : ""}
-                </p>
-                <div className='text-muted-foreground flex flex-wrap gap-2 text-xs'>
-                  {entry.accounts.map((account) => (
-                    <span
-                      key={`${entry.id}-${account}`}
-                      className='rounded-full border px-2 py-0.5 text-[10px]'>
-                      {account}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className='flex flex-col items-end gap-2'>
-                <span
-                  className={cn(
-                    "text-xs font-semibold",
-                    entry.category === "expense"
-                      ? "text-destructive"
-                      : entry.category === "income"
-                        ? "text-emerald-600"
-                        : "text-foreground",
-                  )}>
-                  {entry.formattedAmount}
-                </span>
-                {entry.tags && entry.tags.length > 0 ? (
-                  <div className='flex flex-wrap gap-1'>
-                    {entry.tags.map((tag) => (
-                      <Badge key={`${entry.id}-${tag}`} variant='secondary'>
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-          ))}
+          {entries.length === 0
+            ? createEmptyState(t.records.noEntries)
+            : entries.map((entry) => <EntryItem key={entry.id} entry={entry} categoryLabels={categoryLabels} />)}
         </div>
       </section>
     </main>
   );
 }
 
-function SummaryCard({
+// Memoized entry item component to prevent unnecessary re-renders
+const EntryItem = memo(function EntryItem({
+  entry,
+  categoryLabels,
+}: {
+  entry: ReturnType<typeof buildEntryRows>[number];
+  categoryLabels: Record<string, string>;
+}) {
+  return (
+    <div className='flex flex-col gap-2 rounded-xs border px-3 py-2 md:flex-row md:items-start md:justify-between'>
+      <div className='space-y-1'>
+        <div className='flex items-center gap-2'>
+          <span className='text-foreground text-xs font-medium'>
+            {entry.description}
+          </span>
+          <Badge variant='outline'>
+            {categoryLabels[entry.category]}
+          </Badge>
+        </div>
+        <p className='text-muted-foreground text-xs'>
+          {entry.date}
+          {entry.payee ? ` · ${entry.payee}` : ""}
+        </p>
+        <div className='text-muted-foreground flex flex-wrap gap-2 text-xs'>
+          {entry.accounts.map((account) => (
+            <span
+              key={`${entry.id}-${account}`}
+              className='rounded-full border px-2 py-0.5 text-[10px]'>
+              {account}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className='flex flex-col items-end gap-2'>
+        <span
+          className={cn(
+            "text-xs font-semibold",
+            entry.category === "expense"
+              ? "text-destructive"
+              : entry.category === "income"
+                ? "text-emerald-600"
+                : "text-foreground",
+          )}>
+          {entry.formattedAmount}
+        </span>
+        {entry.tags && entry.tags.length > 0 ? (
+          <div className='flex flex-wrap gap-1'>
+            {entry.tags.map((tag) => (
+              <Badge key={`${entry.id}-${tag}`} variant='secondary'>
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+});
+
+const SummaryCard = memo(function SummaryCard({
   title,
   value,
 }: {
@@ -202,4 +217,4 @@ function SummaryCard({
       </p>
     </div>
   );
-}
+});

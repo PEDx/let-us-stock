@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback, memo } from "react";
 import {
   DndContext,
   closestCenter,
@@ -42,6 +42,16 @@ import { ColumnVisibilityMenu } from "./column-visibility-menu";
 
 export type { QuoteTableProps };
 
+// Hoist static empty state
+function createEmptyState(message: string) {
+  return (
+    <div className='text-muted-foreground flex h-40 flex-col items-center justify-center border border-dashed'>
+      <Inbox className='mb-2 size-6 opacity-50' />
+      <p className='text-sm'>{message}</p>
+    </div>
+  );
+}
+
 /**
  * 股票行情表格
  *
@@ -63,26 +73,18 @@ export function QuoteTable({
   // 排序状态
   const [sorting, setSorting] = useState<SortingState>([]);
 
-  // 列可见性状态
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [isVisibilityLoaded, setIsVisibilityLoaded] = useState(false);
-
-  // 从本地存储加载列可见性配置
-  useEffect(() => {
+  // 列可见性状态 - 使用懒初始化从 localStorage 读取
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() => {
     try {
       const saved = localStorage.getItem(COLUMN_VISIBILITY_KEY);
-      if (saved) {
-        setColumnVisibility(JSON.parse(saved));
-      }
+      return saved ? JSON.parse(saved) : {};
     } catch {
-      // ignore
+      return {};
     }
-    setIsVisibilityLoaded(true);
-  }, []);
+  });
 
   // 保存列可见性配置到本地存储
   useEffect(() => {
-    if (!isVisibilityLoaded) return;
     try {
       localStorage.setItem(
         COLUMN_VISIBILITY_KEY,
@@ -91,7 +93,7 @@ export function QuoteTable({
     } catch {
       // ignore
     }
-  }, [columnVisibility, isVisibilityLoaded]);
+  }, [columnVisibility]);
 
   // 列定义
   const columns = useMemo(
@@ -120,7 +122,7 @@ export function QuoteTable({
   );
 
   // 拖拽结束处理
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -129,19 +131,17 @@ export function QuoteTable({
       const newQuotes = arrayMove(quotes, oldIndex, newIndex);
       onReorder?.(newQuotes.map((q) => q.symbol));
     }
-  };
+  }, [quotes, onReorder]);
 
   // 空状态
   if (quotes.length === 0) {
-    return (
-      <div className='text-muted-foreground flex h-40 flex-col items-center justify-center border border-dashed'>
-        <Inbox className='mb-2 size-6 opacity-50' />
-        <p className='text-sm'>{t.table.empty}</p>
-      </div>
-    );
+    return createEmptyState(t.table.empty);
   }
 
   const { rows } = table.getRowModel();
+
+  // Memoize row IDs for SortableContext
+  const rowIds = useMemo(() => rows.map((row) => row.id), [rows]);
 
   return (
     <DndContext
@@ -190,7 +190,7 @@ export function QuoteTable({
         </TableHeader>
 
         <SortableContext
-          items={rows.map((row) => row.id)}
+          items={rowIds}
           strategy={verticalListSortingStrategy}>
           <TableBody>
             {rows.map((row) => (

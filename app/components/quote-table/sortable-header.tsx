@@ -1,5 +1,6 @@
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import type { QuoteColumn } from "./types";
+import { memo } from "react";
 
 interface SortableHeaderProps {
   column: QuoteColumn;
@@ -9,7 +10,10 @@ interface SortableHeaderProps {
 /**
  * 可排序表头组件
  */
-export function SortableHeader({ column, children }: SortableHeaderProps) {
+export const SortableHeader = memo(function SortableHeader({
+  column,
+  children,
+}: SortableHeaderProps) {
   const canSort = column.getCanSort();
 
   if (!canSort) {
@@ -17,10 +21,11 @@ export function SortableHeader({ column, children }: SortableHeaderProps) {
   }
 
   const sorted = column.getIsSorted();
+  const toggleHandler = column.getToggleSortingHandler();
 
   return (
     <button
-      onClick={column.getToggleSortingHandler()}
+      onClick={toggleHandler}
       className='hover:text-foreground inline-flex cursor-pointer items-center gap-1'>
       {children}
       {sorted === "asc" ? (
@@ -32,4 +37,4 @@ export function SortableHeader({ column, children }: SortableHeaderProps) {
       )}
     </button>
   );
-}
+});

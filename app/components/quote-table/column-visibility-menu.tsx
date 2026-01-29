@@ -2,6 +2,7 @@ import { Settings2, Check } from "lucide-react";
 import { Popover } from "@base-ui/react/popover";
 import { cn } from "~/lib/utils";
 import type { QuoteTableInstance } from "./types";
+import { useMemo, useCallback, memo } from "react";
 
 interface ColumnVisibilityMenuProps {
   table: QuoteTableInstance;
@@ -11,21 +12,22 @@ interface ColumnVisibilityMenuProps {
 /**
  * 列可见性配置菜单
  */
-export function ColumnVisibilityMenu({
+export const ColumnVisibilityMenu = memo(function ColumnVisibilityMenu({
   table,
   labels,
 }: ColumnVisibilityMenuProps) {
-  const allColumns = table
-    .getAllLeafColumns()
-    .filter((col) => col.getCanHide());
+  const allColumns = useMemo(
+    () => table.getAllLeafColumns().filter((col) => col.getCanHide()),
+    [table],
+  );
 
-  const handleShowAll = () => {
+  const handleShowAll = useCallback(() => {
     allColumns.forEach((col) => col.toggleVisibility(true));
-  };
+  }, [allColumns]);
 
-  const handleHideAll = () => {
+  const handleHideAll = useCallback(() => {
     allColumns.forEach((col) => col.toggleVisibility(false));
-  };
+  }, [allColumns]);
 
   return (
     <Popover.Root>
@@ -51,30 +53,41 @@ export function ColumnVisibilityMenu({
               </button>
             </div>
             {allColumns.map((column) => (
-              <label
+              <ColumnLabel
                 key={column.id}
-                className='hover:bg-muted flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1 text-xs'>
-                <span
-                  className={cn(
-                    "flex size-3.5 items-center justify-center rounded-xs border",
-                    column.getIsVisible()
-                      ? "border-blue-500 bg-blue-500 text-white"
-                      : "border-muted-foreground",
-                  )}>
-                  {column.getIsVisible() && <Check className='size-2.5' />}
-                </span>
-                <input
-                  type='checkbox'
-                  checked={column.getIsVisible()}
-                  onChange={column.getToggleVisibilityHandler()}
-                  className='sr-only'
-                />
-                <span>{column.columnDef.header as string}</span>
-              </label>
+                column={column}
+              />
             ))}
           </Popover.Popup>
         </Popover.Positioner>
       </Popover.Portal>
     </Popover.Root>
   );
-}
+});
+
+const ColumnLabel = memo(function ColumnLabel({
+  column,
+}: {
+  column: ReturnType<QuoteTableInstance["getAllLeafColumns"]>[number];
+}) {
+  return (
+    <label className='hover:bg-muted flex cursor-pointer items-center gap-2 rounded-xs px-2 py-1 text-xs'>
+      <span
+        className={cn(
+          "flex size-3.5 items-center justify-center rounded-xs border",
+          column.getIsVisible()
+            ? "border-blue-500 bg-blue-500 text-white"
+            : "border-muted-foreground",
+        )}>
+        {column.getIsVisible() && <Check className='size-2.5' />}
+      </span>
+      <input
+        type='checkbox'
+        checked={column.getIsVisible()}
+        onChange={column.getToggleVisibilityHandler()}
+        className='sr-only'
+      />
+      <span>{column.columnDef.header as string}</span>
+    </label>
+  );
+});

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { AccountType } from "~/lib/double-entry/types";
 import { useI18n } from "~/lib/i18n";
 import { buildAccountGroups, buildAssetsOverview } from "~/lib/accounting/view";
@@ -14,6 +14,15 @@ export function meta() {
     { title: "Assets" },
     { name: "description", content: "Manage your assets" },
   ];
+}
+
+// Hoist static function for empty state
+function createEmptyState(message: string) {
+  return (
+    <div className='text-muted-foreground flex h-20 items-center justify-center rounded-xs border border-dashed text-xs'>
+      {message}
+    </div>
+  );
 }
 
 export default function Assets() {
@@ -117,64 +126,100 @@ export default function Assets() {
 
       <section className='grid gap-4 md:grid-cols-2'>
         {groups.map((group) => (
-          <div
+          <AccountGroupCard
             key={group.type}
-            className='bg-card rounded-xs border p-3 shadow-sm'>
-            <div className='flex items-start justify-between gap-3'>
-              <div>
-                <h2 className='text-foreground text-xs font-semibold'>
-                  {typeLabels[group.type]}
-                </h2>
-                <p className='text-muted-foreground text-[10px]'>
-                  {t.assets.accounts}
-                </p>
-              </div>
-              <div className='flex flex-wrap gap-2'>
-                {group.totals.map((total) => (
-                  <Badge key={total.currency} variant='outline'>
-                    {total.formatted}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className='mt-3 space-y-1.5'>
-              {group.rows.map((row) => (
-                <div
-                  key={row.id}
-                  className={cn(
-                    "flex items-center justify-between rounded-xs border px-2 py-1.5 text-xs",
-                    row.isRoot ? "bg-muted/30 font-medium" : "bg-background",
-                  )}>
-                  <div className='flex items-center gap-2'>
-                    <span
-                      className='block'
-                      style={{ paddingLeft: row.level * 14 }}>
-                      {row.name}
-                    </span>
-                    {row.archived ? (
-                      <Badge variant='secondary'>{t.assets.archived}</Badge>
-                    ) : null}
-                  </div>
-                  <span className='text-foreground font-semibold'>
-                    {row.formattedBalance}
-                  </span>
-                </div>
-              ))}
-              {group.rows.length === 0 ? (
-                <div className='text-muted-foreground flex h-20 items-center justify-center rounded-xs border border-dashed text-xs'>
-                  {t.common.noData}
-                </div>
-              ) : null}
-            </div>
-          </div>
+            group={group}
+            typeLabel={typeLabels[group.type]}
+            accountsLabel={t.assets.accounts}
+            archivedLabel={t.assets.archived}
+            noDataLabel={t.common.noData}
+          />
         ))}
       </section>
     </main>
   );
 }
 
-function OverviewCard({
+// Memoized account group card component to prevent unnecessary re-renders
+const AccountGroupCard = memo(function AccountGroupCard({
+  group,
+  typeLabel,
+  accountsLabel,
+  archivedLabel,
+  noDataLabel,
+}: {
+  group: ReturnType<typeof buildAccountGroups>[number];
+  typeLabel: string;
+  accountsLabel: string;
+  archivedLabel: string;
+  noDataLabel: string;
+}) {
+  return (
+    <div className='bg-card rounded-xs border p-3 shadow-sm'>
+      <div className='flex items-start justify-between gap-3'>
+        <div>
+          <h2 className='text-foreground text-xs font-semibold'>
+            {typeLabel}
+          </h2>
+          <p className='text-muted-foreground text-[10px]'>
+            {accountsLabel}
+          </p>
+        </div>
+        <div className='flex flex-wrap gap-2'>
+          {group.totals.map((total) => (
+            <Badge key={total.currency} variant='outline'>
+              {total.formatted}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className='mt-3 space-y-1.5'>
+        {group.rows.map((row) => (
+          <AccountRow
+            key={row.id}
+            row={row}
+            archivedLabel={archivedLabel}
+          />
+        ))}
+        {group.rows.length === 0 ? createEmptyState(noDataLabel) : null}
+      </div>
+    </div>
+  );
+});
+
+// Memoized account row component to prevent unnecessary re-renders
+const AccountRow = memo(function AccountRow({
+  row,
+  archivedLabel,
+}: {
+  row: ReturnType<typeof buildAccountGroups>[number]["rows"][number];
+  archivedLabel: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-between rounded-xs border px-2 py-1.5 text-xs",
+        row.isRoot ? "bg-muted/30 font-medium" : "bg-background",
+      )}>
+      <div className='flex items-center gap-2'>
+        <span
+          className='block'
+          style={{ paddingLeft: row.level * 14 }}>
+          {row.name}
+        </span>
+        {row.archived ? (
+          <Badge variant='secondary'>{archivedLabel}</Badge>
+        ) : null}
+      </div>
+      <span className='text-foreground font-semibold'>
+        {row.formattedBalance}
+      </span>
+    </div>
+  );
+});
+
+const OverviewCard = memo(function OverviewCard({
   title,
   amounts,
 }: {
@@ -195,4 +240,4 @@ function OverviewCard({
       </div>
     </div>
   );
-}
+});

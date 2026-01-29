@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { Plus, Settings, X, GripVertical, Check } from "lucide-react";
 import {
   DndContext,
@@ -32,7 +32,7 @@ interface GroupTabsProps {
   onReorderGroups: (newOrder: string[]) => void;
 }
 
-function SortableTab({
+const SortableTab = memo(function SortableTab({
   group,
   isActive,
   isManaging,
@@ -72,23 +72,27 @@ function SortableTab({
     }
   }, [isEditing]);
 
-  const handleSubmitRename = () => {
+  const handleSubmitRename = useCallback(() => {
     if (editName.trim() && editName !== group.name) {
       onRename(editName.trim());
     } else {
       setEditName(group.name);
     }
     setIsEditing(false);
-  };
+  }, [editName, group.name, onRename]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSubmitRename();
     } else if (e.key === "Escape") {
       setEditName(group.name);
       setIsEditing(false);
     }
-  };
+  }, [group.name, handleSubmitRename]);
+
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditName(e.target.value);
+  }, []);
 
   return (
     <div
@@ -116,7 +120,7 @@ function SortableTab({
             ref={inputRef}
             type='text'
             value={editName}
-            onChange={(e) => setEditName(e.target.value)}
+            onChange={handleNameChange}
             onBlur={handleSubmitRename}
             onKeyDown={handleKeyDown}
             className='h-3 w-16 border-b border-current bg-transparent px-1 py-0 text-xs leading-none outline-none'
@@ -151,7 +155,7 @@ function SortableTab({
       )}
     </div>
   );
-}
+});
 
 export function GroupTabs({
   groups,
@@ -175,13 +179,16 @@ export function GroupTabs({
     }),
   );
 
+  // Memoize group IDs for SortableContext
+  const groupIds = useMemo(() => groups.map((g) => g.id), [groups]);
+
   useEffect(() => {
     if (isAdding && addInputRef.current) {
       addInputRef.current.focus();
     }
   }, [isAdding]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = groups.findIndex((g) => g.id === active.id);
@@ -193,24 +200,47 @@ export function GroupTabs({
       );
       onReorderGroups(newOrder);
     }
-  };
+  }, [groups, onReorderGroups]);
 
-  const handleAddGroup = () => {
+  const handleAddGroup = useCallback(() => {
     if (newGroupName.trim()) {
       onAddGroup(newGroupName.trim());
       setNewGroupName("");
       setIsAdding(false);
     }
-  };
+  }, [newGroupName, onAddGroup]);
 
-  const handleAddKeyDown = (e: React.KeyboardEvent) => {
+  const handleAddKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleAddGroup();
     } else if (e.key === "Escape") {
       setNewGroupName("");
       setIsAdding(false);
     }
-  };
+  }, [handleAddGroup]);
+
+  const handleAddInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewGroupName(e.target.value);
+  }, []);
+
+  const handleAddBlur = useCallback(() => {
+    if (!newGroupName.trim()) {
+      setIsAdding(false);
+    }
+  }, [newGroupName]);
+
+  const handleCancelAdd = useCallback(() => {
+    setNewGroupName("");
+    setIsAdding(false);
+  }, []);
+
+  const handleStartAdd = useCallback(() => {
+    setIsAdding(true);
+  }, []);
+
+  const handleToggleManage = useCallback(() => {
+    setIsManaging((prev) => !prev);
+  }, []);
 
   return (
     <div className='flex items-center gap-2 overflow-x-auto'>
@@ -219,7 +249,7 @@ export function GroupTabs({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}>
         <SortableContext
-          items={groups.map((g) => g.id)}
+          items={groupIds}
           strategy={horizontalListSortingStrategy}>
           {groups.map((group) => (
             <SortableTab
@@ -243,12 +273,8 @@ export function GroupTabs({
             ref={addInputRef}
             type='text'
             value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            onBlur={() => {
-              if (!newGroupName.trim()) {
-                setIsAdding(false);
-              }
-            }}
+            onChange={handleAddInputChange}
+            onBlur={handleAddBlur}
             onKeyDown={handleAddKeyDown}
             placeholder={t.groups.newGroupPlaceholder}
             className='placeholder:text-muted-foreground w-24 bg-transparent px-1 py-0.5 text-xs outline-none'
@@ -259,17 +285,14 @@ export function GroupTabs({
             <Check className='size-3' />
           </button>
           <button
-            onClick={() => {
-              setNewGroupName("");
-              setIsAdding(false);
-            }}
+            onClick={handleCancelAdd}
             className='text-muted-foreground hover:text-foreground'>
             <X className='size-3' />
           </button>
         </div>
       ) : (
         <button
-          onClick={() => setIsAdding(true)}
+          onClick={handleStartAdd}
           className='text-muted-foreground hover:text-foreground flex shrink-0 items-center gap-0.5 rounded-xs border border-dashed px-1.5 py-1 text-xs transition-colors hover:border-solid'
           title={t.groups.addGroup}>
           <Plus className='size-3' />
@@ -278,7 +301,7 @@ export function GroupTabs({
 
       {/* 管理按钮 */}
       <button
-        onClick={() => setIsManaging(!isManaging)}
+        onClick={handleToggleManage}
         className={cn(
           "flex shrink-0 items-center gap-0.5 rounded-xs border px-1.5 py-1 text-xs transition-colors",
           isManaging

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "~/lib/utils";
 
@@ -22,6 +22,13 @@ interface MiniChartProps {
   upColor?: string;
   downColor?: string;
 }
+
+// Hoist static loading spinner
+const loadingSpinner = (
+  <div className='flex h-24 items-center justify-center'>
+    <Loader2 className='text-muted-foreground size-4 animate-spin' />
+  </div>
+);
 
 // 格式化价格显示
 function formatPrice(price: number): string {
@@ -74,7 +81,7 @@ function getXTickIndices(dataLength: number, maxTicks: number = 5): number[] {
   return indices;
 }
 
-function ChartWithAxis({
+const ChartWithAxis = memo(function ChartWithAxis({
   data,
   range,
   strokeWidth = 1.5,
@@ -113,23 +120,27 @@ function ChartWithAxis({
   const totalHeight = chartHeight + topMargin + bottomMargin;
 
   // 生成折线
-  const points = closes
-    .map((close, i) => {
-      const x = leftMargin + (i / (closes.length - 1)) * chartWidth;
-      const y =
-        topMargin + chartHeight - ((close - min) / adjustedRange) * chartHeight;
-      return `${x},${y}`;
-    })
-    .join(" ");
+  const points = useMemo(
+    () =>
+      closes
+        .map((close, i) => {
+          const x = leftMargin + (i / (closes.length - 1)) * chartWidth;
+          const y =
+            topMargin + chartHeight - ((close - min) / adjustedRange) * chartHeight;
+          return `${x},${y}`;
+        })
+        .join(" "),
+    [closes, chartWidth, chartHeight, topMargin, min, adjustedRange, leftMargin],
+  );
 
   const isUp = closes[closes.length - 1] >= closes[0];
   const lineColor = isUp ? upColor : downColor;
 
   // Y轴刻度
-  const yTicks = getYTicks(min, max, 4);
+  const yTicks = useMemo(() => getYTicks(min, max, 4), [min, max]);
 
   // X轴刻度
-  const xTickIndices = getXTickIndices(data.length, 5);
+  const xTickIndices = useMemo(() => getXTickIndices(data.length, 5), [data.length]);
 
   return (
     <svg
@@ -204,7 +215,7 @@ function ChartWithAxis({
       />
     </svg>
   );
-}
+});
 
 export function MiniChart({
   symbol,
@@ -245,6 +256,10 @@ export function MiniChart({
     }
   }, [range, initialData, fetchChart]);
 
+  const handleRangeChange = useCallback((r: TimeRange) => {
+    setRange(r);
+  }, []);
+
   return (
     <div className='space-y-1'>
       {/* 时间范围选择 */}
@@ -252,7 +267,7 @@ export function MiniChart({
         {TIME_RANGES.map((r) => (
           <button
             key={r}
-            onClick={() => setRange(r)}
+            onClick={() => handleRangeChange(r)}
             className={cn(
               "rounded-xs px-1.5 py-0.5 text-xs transition-colors",
               range === r
@@ -266,11 +281,7 @@ export function MiniChart({
 
       {/* 图表 */}
       <div className='relative'>
-        {isLoading ? (
-          <div className='flex h-24 items-center justify-center'>
-            <Loader2 className='text-muted-foreground size-4 animate-spin' />
-          </div>
-        ) : (
+        {isLoading ? loadingSpinner : (
           <ChartWithAxis
             data={data}
             range={range}

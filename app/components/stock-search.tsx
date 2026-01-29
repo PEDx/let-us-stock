@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Search, Plus, X, Loader2 } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
 import { cn } from "~/lib/utils";
@@ -15,6 +15,15 @@ interface StockSearchProps {
   onAddSymbol: (symbol: string) => void;
 }
 
+// Hoist static JSX for no results
+function createNoResults(message: string) {
+  return (
+    <div className='bg-popover text-muted-foreground absolute top-full left-0 z-50 mt-0.5 rounded-xs border px-2 py-1 text-xs shadow-md'>
+      {message}
+    </div>
+  );
+}
+
 export function StockSearch({
   existingSymbols,
   onAddSymbol,
@@ -26,6 +35,17 @@ export function StockSearch({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Create Set for O(1) lookup instead of O(n) includes
+  const existingSymbolsSet = useMemo(
+    () => new Set(existingSymbols.map((s) => s.toUpperCase())),
+    [existingSymbols],
+  );
+
+  const isAlreadyAdded = useCallback((symbol: string) =>
+    existingSymbolsSet.has(symbol.toUpperCase()),
+    [existingSymbolsSet],
+  );
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -70,15 +90,22 @@ export function StockSearch({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAdd = (symbol: string) => {
+  const handleAdd = useCallback((symbol: string) => {
     onAddSymbol(symbol);
     setQuery("");
     setResults([]);
     setIsOpen(false);
-  };
+  }, [onAddSymbol]);
 
-  const isAlreadyAdded = (symbol: string) =>
-    existingSymbols.includes(symbol.toUpperCase());
+  const handleClear = useCallback(() => {
+    setQuery("");
+    setResults([]);
+    setIsOpen(false);
+  }, []);
+
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  }, []);
 
   return (
     <div ref={containerRef} className='relative'>
@@ -87,18 +114,14 @@ export function StockSearch({
         <input
           type='text'
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleInputChange}
           placeholder={t.stockSearch.placeholder}
           className='placeholder:text-muted-foreground/60 w-full bg-transparent py-0.5 outline-none'
         />
         {isLoading && <Loader2 className='size-3 animate-spin' />}
         {!isLoading && query && (
           <button
-            onClick={() => {
-              setQuery("");
-              setResults([]);
-              setIsOpen(false);
-            }}
+            onClick={handleClear}
             className='hover:text-foreground'>
             <X className='size-3' />
           </button>
@@ -144,11 +167,9 @@ export function StockSearch({
         </div>
       )}
 
-      {isOpen && query && !isLoading && results.length === 0 && (
-        <div className='bg-popover text-muted-foreground absolute top-full left-0 z-50 mt-0.5 rounded-xs border px-2 py-1 text-xs shadow-md'>
-          {t.stockSearch.noResults}
-        </div>
-      )}
+      {isOpen && query && !isLoading && results.length === 0
+        ? createNoResults(t.stockSearch.noResults)
+        : null}
     </div>
   );
 }

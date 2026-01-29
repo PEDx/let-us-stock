@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { QuoteTable } from "~/components/quote-table";
 import { StockSearch } from "~/components/stock-search";
 import { StockDetail } from "~/components/stock-detail";
@@ -23,6 +23,13 @@ interface OpenWindow {
   position: { x: number; y: number };
 }
 
+// Hoist static JSX to avoid re-creation
+const loadingSpinner = (
+  <div className='flex h-40 items-center justify-center border border-dashed'>
+    <Loader2 className='text-muted-foreground size-8 animate-spin' />
+  </div>
+);
+
 export default function Home() {
   const {
     groupsData,
@@ -40,17 +47,17 @@ export default function Home() {
   const [isQuotesLoading, setIsQuotesLoading] = useState(false);
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
 
-  // 使用 ref 存储最新的 groupsData，解决闭包中的状态过期问题
-  const groupsDataRef = useRef(groupsData);
-  groupsDataRef.current = groupsData;
-
-  // 获取当前激活的分组
-  const activeGroup = groupsData.groups.find(
-    (g) => g.id === groupsData.activeGroupId,
+  // 构建分组 Map 以优化查找性能 (O(1) vs O(n))
+  const groupMap = useMemo(
+    () => new Map(groupsData.groups.map((g) => [g.id, g])),
+    [groupsData.groups],
   );
+
+  // 获取当前激活的分组 - 使用 Map 优化查找
+  const activeGroup = groupMap.get(groupsData.activeGroupId);
   const currentSymbols = activeGroup?.symbols || [];
 
-  // 获取行情数据
+  // 获取行情数据 - 使用功能更新避免依赖 currentSymbols
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
     if (symbolList.length === 0) {
       setQuotes([]);
@@ -79,7 +86,7 @@ export default function Home() {
     }
   }, []);
 
-  // 初始化加载 - 等待分组数据加载完成
+  // 初始化加载 - 使用原始值作为依赖，避免整个 groupsData 对象
   useEffect(() => {
     // 等待分组数据加载
     if (groupsLoading) {
@@ -87,18 +94,16 @@ export default function Home() {
     }
 
     // 加载完成后获取行情数据
-    const group = groupsData.groups.find(
-      (g) => g.id === groupsData.activeGroupId,
-    );
+    const group = groupMap.get(groupsData.activeGroupId);
     if (group) {
       fetchQuotes(group.symbols);
     }
-  }, [groupsLoading, groupsData, fetchQuotes]);
+  }, [groupsLoading, groupsData.activeGroupId, groupMap, fetchQuotes]);
 
-  // 切换分组时重新获取行情
+  // 切换分组时重新获取行情 - 将逻辑放在事件处理器中，避免状态+效应模式
   const handleSelectGroup = async (groupId: string) => {
     await setActiveGroup(groupId);
-    const group = groupsDataRef.current.groups.find((g) => g.id === groupId);
+    const group = groupMap.get(groupId);
     if (group) {
       setIsQuotesLoading(true);
       await fetchQuotes(group.symbols);
@@ -113,15 +118,16 @@ export default function Home() {
 
   // 删除分组
   const handleRemoveGroup = async (groupId: string) => {
+    const wasActive = groupId === groupsData.activeGroupId;
     await removeGroup(groupId);
-    // 如果删除的是当前分组，需要重新获取行情
-    if (groupId === groupsData.activeGroupId) {
-      const activeGroup = groupsData.groups.find(
-        (g) => g.id === groupsData.activeGroupId,
-      );
-      if (activeGroup) {
+
+    // 如果删除的是当前分组，切换到第一个可用分组并获取行情
+    if (wasActive) {
+      const nextGroup = groupsData.groups.find((g) => g.id !== groupId);
+      if (nextGroup) {
+        await setActiveGroup(nextGroup.id);
         setIsQuotesLoading(true);
-        await fetchQuotes(activeGroup.symbols);
+        await fetchQuotes(nextGroup.symbols);
       }
     }
   };
@@ -136,36 +142,47 @@ export default function Home() {
     await reorderGroups(newOrder);
   };
 
-  // 添加股票
-  const handleAddSymbol = async (symbol: string) => {
-    await addSymbolToGroup(groupsData.activeGroupId, symbol);
-    // 使用 ref 获取最新的 groupsData，避免闭包中的过期状态
-    const group = groupsDataRef.current.groups.find(
-      (g) => g.id === groupsDataRef.current.activeGroupId,
-    );
-    if (group) {
-      setIsQuotesLoading(true);
-      await fetchQuotes(group.symbols);
-    }
-  };
+  // 添加股票 - 使用 activeGroupId 参数而非依赖状态
+  const handleAddSymbol = useCallback(
+    async (symbol: string) => {
+      const activeGroupId = groupsData.activeGroupId;
+      await addSymbolToGroup(activeGroupId, symbol);
+      // 重新获取最新分组数据
+      const group = groupsData.groups.find(
+        (g) => g.id === activeGroupId,
+      );
+      if (group) {
+        setIsQuotesLoading(true);
+        await fetchQuotes(group.symbols);
+      }
+    },
+    [addSymbolToGroup, groupsData.activeGroupId, groupsData.groups, fetchQuotes],
+  );
 
-  // 删除股票
-  const handleRemoveSymbol = async (symbol: string) => {
-    await removeSymbolFromGroup(groupsData.activeGroupId, symbol);
-    setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
-  };
+  // 删除股票 - 使用功能更新避免依赖 quotes 状态
+  const handleRemoveSymbol = useCallback(
+    async (symbol: string) => {
+      await removeSymbolFromGroup(groupsData.activeGroupId, symbol);
+      setQuotes((prev) => prev.filter((q) => q.symbol !== symbol));
+    },
+    [removeSymbolFromGroup, groupsData.activeGroupId],
+  );
 
-  // 重新排序股票
-  const handleReorder = async (newOrder: string[]) => {
-    // 先更新 UI
-    const quotesMap = new Map(quotes.map((q) => [q.symbol, q]));
-    const sortedQuotes = newOrder
-      .map((s) => quotesMap.get(s))
-      .filter(Boolean) as Quote[];
-    setQuotes(sortedQuotes);
-    // 保存到存储
-    await reorderSymbolsInGroup(groupsData.activeGroupId, newOrder);
-  };
+  // 重新排序股票 - 使用功能更新避免依赖 quotes 状态
+  const handleReorder = useCallback(
+    async (newOrder: string[]) => {
+      // 先更新 UI - 使用功能更新
+      setQuotes((prevQuotes) => {
+        const quotesMap = new Map(prevQuotes.map((q) => [q.symbol, q]));
+        return newOrder
+          .map((s) => quotesMap.get(s))
+          .filter(Boolean) as Quote[];
+      });
+      // 保存到存储
+      await reorderSymbolsInGroup(groupsData.activeGroupId, newOrder);
+    },
+    [reorderSymbolsInGroup, groupsData.activeGroupId],
+  );
 
   // 点击股票代码打开详情窗口
   const handleSymbolClick = (symbol: string, event: React.MouseEvent) => {
@@ -194,13 +211,7 @@ export default function Home() {
 
   // 渲染加载状态
   if (isLoading) {
-    return (
-      <main className='page-area my-2'>
-        <div className='flex h-40 items-center justify-center border border-dashed'>
-          <Loader2 className='text-muted-foreground size-8 animate-spin' />
-        </div>
-      </main>
-    );
+    return <main className='page-area my-2'>{loadingSpinner}</main>;
   }
 
   return (
@@ -225,11 +236,7 @@ export default function Home() {
       </div>
 
       {/* 行情数据加载状态 */}
-      {isQuotesLoading ? (
-        <div className='flex h-40 items-center justify-center border border-dashed'>
-          <Loader2 className='text-muted-foreground size-8 animate-spin' />
-        </div>
-      ) : (
+      {isQuotesLoading ? loadingSpinner : (
         <QuoteTable
           quotes={quotes}
           onRemoveSymbol={handleRemoveSymbol}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { useI18n } from "~/lib/i18n";
 import {
@@ -42,7 +42,84 @@ interface StockDetailProps {
   position: { x: number; y: number };
 }
 
-export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
+// Hoist static loading spinner
+const loadingSpinner = (
+  <div className='flex h-full min-h-100 items-center justify-center'>
+    <Loader2 className='text-muted-foreground size-6 animate-spin' />
+  </div>
+);
+
+// Memoized data row component
+const DataRow = memo(function DataRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className='flex justify-between'>
+      <span className='text-muted-foreground'>{label}</span>
+      <span>{value}</span>
+    </div>
+  );
+});
+
+// Memoized price header component
+const PriceHeader = memo(function PriceHeader({
+  symbol,
+  name,
+  price,
+  change,
+  changePercent,
+  exchange,
+  currency,
+  isUp,
+  formatFn,
+}: {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  exchange: string;
+  currency: string;
+  isUp: boolean;
+  formatFn: (n: number, decimals?: number) => string;
+}) {
+  return (
+    <div className='flex items-center justify-between'>
+      <div>
+        <div className='flex items-center gap-2'>
+          <span className='text-xl font-bold'>
+            ${formatFn(price)}
+          </span>
+          <span
+            className={cn(
+              "flex items-center gap-0.5 text-sm",
+              isUp ? "text-green-500" : "text-red-500",
+            )}>
+            {isUp ? (
+              <TrendingUp className='size-3' />
+            ) : (
+              <TrendingDown className='size-3' />
+            )}
+            {formatFn(change)} ({formatFn(changePercent)}%)
+          </span>
+        </div>
+        <div className='text-muted-foreground'>
+          {exchange} · {currency}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+export const StockDetail = memo(function StockDetail({
+  symbol,
+  onClose,
+  position,
+}: StockDetailProps) {
   const { t, language } = useI18n();
   const [summary, setSummary] = useState<StockSummary | null>(null);
   const [chart, setChart] = useState<ChartPoint[]>([]);
@@ -79,10 +156,19 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
     [language],
   );
 
+  const windowTitle = useMemo(
+    () => `${symbol} - ${summary?.name || t.stockDetail.loading}`,
+    [symbol, summary?.name, t.stockDetail.loading],
+  );
+
+  if (!summary && !isLoading) {
+    return null;
+  }
+
   return (
     <FloatingWindow
       id={`stock-${symbol}`}
-      title={`${symbol} - ${summary?.name || t.stockDetail.loading}`}
+      title={windowTitle}
       onClose={onClose}
       onRefresh={fetchData}
       isLoading={isLoading}
@@ -90,42 +176,24 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
       defaultSize={{ width: 400, height: 520 }}
       minWidth={300}
       minHeight={250}>
-      {isLoading && !summary ? (
-        <div className='flex h-full min-h-100 items-center justify-center'>
-          <Loader2 className='text-muted-foreground size-6 animate-spin' />
-        </div>
-      ) : error ? (
+      {isLoading && !summary ? loadingSpinner : error ? (
         <div className='flex h-full items-center justify-center text-red-500'>
           {error}
         </div>
       ) : summary ? (
         <div className='space-y-3'>
           {/* 价格头部 */}
-          <div className='flex items-center justify-between'>
-            <div>
-              <div className='flex items-center gap-2'>
-                <span className='text-xl font-bold'>
-                  ${formatNumber(summary.price)}
-                </span>
-                <span
-                  className={cn(
-                    "flex items-center gap-0.5 text-sm",
-                    isUp ? "text-green-500" : "text-red-500",
-                  )}>
-                  {isUp ? (
-                    <TrendingUp className='size-3' />
-                  ) : (
-                    <TrendingDown className='size-3' />
-                  )}
-                  {formatNumber(summary.change)} (
-                  {formatNumber(summary.changePercent)}%)
-                </span>
-              </div>
-              <div className='text-muted-foreground'>
-                {summary.exchange} · {summary.currency}
-              </div>
-            </div>
-          </div>
+          <PriceHeader
+            symbol={symbol}
+            name={summary.name}
+            price={summary.price}
+            change={summary.change}
+            changePercent={summary.changePercent}
+            exchange={summary.exchange}
+            currency={summary.currency}
+            isUp={isUp ?? false}
+            formatFn={formatNumber}
+          />
 
           {/* 迷你图 */}
           <div className='rounded border p-2'>
@@ -134,67 +202,22 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
 
           {/* 关键数据 */}
           <div className='grid grid-cols-2 gap-x-4 gap-y-1 text-xs'>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.open}
-              </span>
-              <span>{formatNumber(summary.open)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.prevClose}
-              </span>
-              <span>{formatNumber(summary.previousClose)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.dayRange}
-              </span>
-              <span>
-                {formatNumber(summary.dayLow)} - {formatNumber(summary.dayHigh)}
-              </span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.weekRange52}
-              </span>
-              <span>
-                {formatNumber(summary.fiftyTwoWeekLow)} -{" "}
-                {formatNumber(summary.fiftyTwoWeekHigh)}
-              </span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.volume}
-              </span>
-              <span>{formatLargeNumberFn(summary.volume)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.avgVolume}
-              </span>
-              <span>{formatLargeNumberFn(summary.avgVolume)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.marketCap}
-              </span>
-              <span>{formatLargeNumberFn(summary.marketCap)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>{t.stockDetail.pe}</span>
-              <span>{formatNumber(summary.pe)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>{t.stockDetail.eps}</span>
-              <span>{formatNumber(summary.eps)}</span>
-            </div>
-            <div className='flex justify-between'>
-              <span className='text-muted-foreground'>
-                {t.stockDetail.beta}
-              </span>
-              <span>{formatNumber(summary.beta)}</span>
-            </div>
+            <DataRow label={t.stockDetail.open} value={formatNumber(summary.open)} />
+            <DataRow label={t.stockDetail.prevClose} value={formatNumber(summary.previousClose)} />
+            <DataRow
+              label={t.stockDetail.dayRange}
+              value={`${formatNumber(summary.dayLow)} - ${formatNumber(summary.dayHigh)}`}
+            />
+            <DataRow
+              label={t.stockDetail.weekRange52}
+              value={`${formatNumber(summary.fiftyTwoWeekLow)} - ${formatNumber(summary.fiftyTwoWeekHigh)}`}
+            />
+            <DataRow label={t.stockDetail.volume} value={formatLargeNumberFn(summary.volume)} />
+            <DataRow label={t.stockDetail.avgVolume} value={formatLargeNumberFn(summary.avgVolume)} />
+            <DataRow label={t.stockDetail.marketCap} value={formatLargeNumberFn(summary.marketCap)} />
+            <DataRow label={t.stockDetail.pe} value={formatNumber(summary.pe)} />
+            <DataRow label={t.stockDetail.eps} value={formatNumber(summary.eps)} />
+            <DataRow label={t.stockDetail.beta} value={formatNumber(summary.beta)} />
           </div>
 
           {/* 行业信息 */}
@@ -223,4 +246,4 @@ export function StockDetail({ symbol, onClose, position }: StockDetailProps) {
       ) : null}
     </FloatingWindow>
   );
-}
+});

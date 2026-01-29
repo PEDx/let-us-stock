@@ -31,6 +31,7 @@ interface FloatingWindowProps {
   minHeight?: number;
 }
 
+// Derived state hook for mobile detection
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -43,6 +44,21 @@ function useIsMobile() {
 
   return isMobile;
 }
+
+// Hoist static SVG
+const resizeHandleSvg = (
+  <svg
+    className='text-muted-foreground/50 size-3'
+    viewBox='0 0 12 12'
+    fill='currentColor'>
+    <path d='M10 10H12V12H10V10ZM6 10H8V12H6V10ZM10 6H12V8H10V6Z' />
+  </svg>
+);
+
+// Hoist static drag indicator
+const dragIndicator = (
+  <div className='bg-muted-foreground/30 h-1 w-10 rounded-full' />
+);
 
 export function FloatingWindow({
   id,
@@ -154,6 +170,10 @@ export function FloatingWindow({
     }
   }, []);
 
+  const handleToggleMinimize = useCallback(() => {
+    setIsMinimized((prev) => !prev);
+  }, []);
+
   // 移动端：底部弹出浮窗
   if (isMobile) {
     return (
@@ -167,7 +187,7 @@ export function FloatingWindow({
           className='bg-background fixed inset-x-0 bottom-0 z-50 rounded-t-xs border-t shadow-lg'>
           {/* 拖拽指示条 */}
           <div className='flex justify-center py-2'>
-            <div className='bg-muted-foreground/30 h-1 w-10 rounded-full' />
+            {dragIndicator}
           </div>
           {/* 标题栏 */}
           <div className='flex h-8 items-center justify-between border-b px-3'>
@@ -236,7 +256,7 @@ export function FloatingWindow({
             </button>
           )}
           <button
-            onClick={() => setIsMinimized(!isMinimized)}
+            onClick={handleToggleMinimize}
             className='text-muted-foreground hover:bg-muted hover:text-foreground rounded p-0.5'>
             <Minus className='size-3' />
           </button>
@@ -260,12 +280,7 @@ export function FloatingWindow({
         <div
           className='absolute right-0 bottom-0 h-3 w-3 cursor-se-resize'
           onMouseDown={handleResizeStart}>
-          <svg
-            className='text-muted-foreground/50 size-3'
-            viewBox='0 0 12 12'
-            fill='currentColor'>
-            <path d='M10 10H12V12H10V10ZM6 10H8V12H6V10ZM10 6H12V8H10V6Z' />
-          </svg>
+          {resizeHandleSvg}
         </div>
       )}
     </div>
