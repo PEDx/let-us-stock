@@ -67,8 +67,6 @@ const DataRow = memo(function DataRow({
 
 // Memoized price header component
 const PriceHeader = memo(function PriceHeader({
-  symbol,
-  name,
   price,
   change,
   changePercent,
@@ -77,8 +75,6 @@ const PriceHeader = memo(function PriceHeader({
   isUp,
   formatFn,
 }: {
-  symbol: string;
-  name: string;
   price: number;
   change: number;
   changePercent: number;
@@ -184,8 +180,6 @@ export const StockDetail = memo(function StockDetail({
         <div className='space-y-3'>
           {/* 价格头部 */}
           <PriceHeader
-            symbol={symbol}
-            name={summary.name}
             price={summary.price}
             change={summary.change}
             changePercent={summary.changePercent}
