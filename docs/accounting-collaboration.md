@@ -1,6 +1,6 @@
 # 复式记账多人协作设计（Firebase）
 
-本文档描述复式记账在多人协作（家庭账本）场景下的权限、写入一致性和审计策略。
+本文档描述复式记账在多人协作（家庭账本）场景下的权限、写入一致性和审计策略，基于当前 **Book 作为顶层对象** 的架构。
 
 ## 目标
 - 多人协作且角色权限清晰。
@@ -13,29 +13,30 @@
 - **单分录单币种**，分录内所有账户币种必须一致。
 - **修改 = 回滚旧影响 + 应用新影响**。
 - **软删除优先**（保留 `deletedAt` 便于审计/恢复）。
+- **Book 为顶层空间**，分录通过时间/标签过滤来形成“账本视图”。
 
 ## 数据模型（逻辑结构）
-- 账簿 Book
-  - id, name, defaultCurrency, mainLedgerId, createdAt, updatedAt
-- 成员 Member
-  - bookId, uid, role(owner/admin/member), joinedAt, status
-- 账本 Ledger
-  - id, name, type, defaultCurrency, createdAt, updatedAt
-- 账户 Account
+- 账簿 Book（顶层）
+  - id, name, description, defaultCurrency, exchangeRates, commonTags, createdAt, updatedAt
+- 成员 Member（`books/{bookId}/members/{uid}`）
+  - role(owner/editor/viewer), joinedAt, status
+- 账户 Account（`books/{bookId}/accounts/{accountId}`）
   - id, name, type, currency, parentId, path, balance(缓存), archived
-- 分录 Entry
-  - id, date(YYYY-MM-DD), description, currency, tags, payee, note
-  - transferId(可选), createdAt, updatedAt, deletedAt(可选)
-- 分录行 EntryLine
-  - id, entryId, accountId, type(debit/credit), amount, note
-  - date, currency（冗余用于索引）
-- 分录修订 EntryRevision（可选）
-  - entryId, snapshot, createdAt, createdBy
+- 分录 Entry（`books/{bookId}/entries/{entryId}`）
+  - id, date(YYYY-MM-DD), description, tags, payee, note
+  - lines: [{ accountId, type(debit/credit), amount, note }]
+  - createdBy, updatedBy, createdAt, updatedAt, deletedAt(可选)
+- 邀请 Invite
+  - `books/{bookId}/invites/{inviteId}`：账簿内邀请记录
+  - `invites/{inviteId}`：用户收件箱（按 email 查询）
+  - 字段：bookId, bookName, inviterId, inviteeEmail, role, status, createdAt, acceptedAt
+- 用户索引 UserBooks（`users/{uid}/books/{bookId}`）
+  - name, role, joinedAt, updatedAt
 
 ## 角色与权限
-- **Owner**：成员管理、账户/账本/分录管理
-- **Admin**：账户/分录管理
-- **Member**：分录新增/修改/删除
+- **Owner**：成员管理、账户/分录管理、账簿设置
+- **Editor**：账户/分录管理
+- **Viewer**：只读
 
 ## 写入一致性（事务）
 
@@ -44,16 +45,16 @@
 ### 新增分录
 1. 读取涉及的账户
 2. 校验单币种与借贷平衡
-3. 写入 entry 与 entryLines
+3. 写入 entry（包含 lines 数组）
 4. 更新账户余额缓存
-5. 更新 ledger.updatedAt
+5. 更新 book.updatedAt
 
 ### 修改分录
-1. 读取旧 entry + lines + accounts
+1. 读取旧 entry + accounts
 2. 回滚旧 lines 对余额的影响
 3. 校验新 lines
 4. 应用新 lines 的影响
-5. 写入 entry + lines
+5. 写入 entry（覆盖 lines）
 6. 可选：写入 revision 备份
 
 ### 删除分录
@@ -91,7 +92,15 @@
 - 删除或修改共享分录时需确认
 - 冲突时提示刷新
 
+## 多账簿与邀请流程
+- 用户可以拥有多个 book，使用 `users/{uid}/books` 作为索引列表。
+- 邀请流程：
+  1) Owner/Editor 创建邀请（写入 `books/{bookId}/invites` 与顶层 `invites`）。
+  2) 受邀者通过 email 查询顶层 `invites` 作为收件箱。
+  3) 接受邀请后写入 `books/{bookId}/members/{uid}` 与 `users/{uid}/books/{bookId}`。
+  4) 邀请状态更新为 accepted。
+- 顶层 `invites` 用于避免 collectionGroup 索引要求，提升查询稳定性。
+
 ## 待定问题
-- entryLines 是否独立集合还是子集合
 - 快照粒度（月/周）
 - 是否引入历史汇率换算净资产
