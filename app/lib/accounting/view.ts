@@ -2,7 +2,7 @@ import type {
   AccountData,
   CurrencyCode,
   DateRange,
-  LedgerData,
+  BookData,
 } from "~/lib/double-entry/types";
 import { AccountType } from "~/lib/double-entry/types";
 import {
@@ -87,16 +87,16 @@ function unionCurrencies(
   return Array.from(set);
 }
 
-export function buildAssetsOverview(ledger: LedgerData): {
+export function buildAssetsOverview(book: BookData): {
   assets: CurrencyAmount[];
   liabilities: CurrencyAmount[];
   netWorth: CurrencyAmount[];
 } {
   const assets = sumByCurrency(
-    ledger.accounts.filter((a) => a.type === AccountType.ASSETS),
+    book.accounts.filter((a) => a.type === AccountType.ASSETS),
   );
   const liabilities = sumByCurrency(
-    ledger.accounts.filter((a) => a.type === AccountType.LIABILITIES),
+    book.accounts.filter((a) => a.type === AccountType.LIABILITIES),
   );
   const netWorth = unionCurrencies(assets, liabilities).map((currency) => {
     const assetsAmount =
@@ -111,11 +111,11 @@ export function buildAssetsOverview(ledger: LedgerData): {
 }
 
 export function buildAccountGroups(
-  ledger: LedgerData,
+  book: BookData,
   types: AccountType[],
 ): AccountGroup[] {
   return types.map((type) => {
-    const accounts = ledger.accounts.filter((a) => a.type === type);
+    const accounts = book.accounts.filter((a) => a.type === type);
     const rows = accounts
       .slice()
       .sort((a, b) => a.path.localeCompare(b.path))
@@ -139,9 +139,9 @@ export function buildAccountGroups(
   });
 }
 
-export function buildEntryRows(ledger: LedgerData): EntryRow[] {
-  const accountMap = new Map(ledger.accounts.map((a) => [a.id, a]));
-  return ledger.entries
+export function buildEntryRows(book: BookData): EntryRow[] {
+  const accountMap = new Map(book.accounts.map((a) => [a.id, a]));
+  return book.entries
     .slice()
     .sort((a, b) => b.date.localeCompare(a.date))
     .map((entry) => {
@@ -173,11 +173,11 @@ export function buildEntryRows(ledger: LedgerData): EntryRow[] {
 }
 
 export function buildPeriodSummary(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
 ): PeriodSummary {
-  const currency = ledger.defaultCurrency;
-  const summary = calculatePeriodSummary(ledger, dateRange);
+  const currency = book.defaultCurrency;
+  const summary = calculatePeriodSummary(book, dateRange);
   return {
     income: {
       currency,

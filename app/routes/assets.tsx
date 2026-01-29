@@ -2,12 +2,13 @@ import { useMemo, useState, memo } from "react";
 import { AccountType } from "~/lib/double-entry/types";
 import { useI18n } from "~/lib/i18n";
 import { buildAccountGroups, buildAssetsOverview } from "~/lib/accounting/view";
-import { useLedgerData } from "~/lib/accounting/use-ledger";
+import { useBookData } from "~/lib/accounting/use-book";
 import { useAuth } from "~/lib/firebase/auth-context";
 import { AccountFormDialog } from "~/components/accounting/account-form-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+import { BookSelector } from "~/components/book-selector";
 
 export function meta() {
   return [
@@ -28,11 +29,24 @@ function createEmptyState(message: string) {
 export default function Assets() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { ledger, isLoading, error, source, reload } = useLedgerData();
+  const {
+    book,
+    books,
+    invites,
+    selectedBookId,
+    selectBook,
+    createBook,
+    sendInvite,
+    acceptInvite,
+    isLoading,
+    error,
+    source,
+    reload,
+  } = useBookData();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const parentOptions = useMemo(
-    () => ledger?.accounts.filter((account) => !account.archived) ?? [],
-    [ledger],
+    () => book?.accounts.filter((account) => !account.archived) ?? [],
+    [book],
   );
   const defaultParentId =
     parentOptions.find((account) => account.type === AccountType.ASSETS)?.id ??
@@ -49,24 +63,70 @@ export default function Assets() {
     );
   }
 
-  if (!ledger) {
+  if (!book) {
+    const pendingInvites = invites.filter((invite) => invite.status === "pending");
     return (
-      <main className='page-area my-2'>
-        <div className='text-muted-foreground flex h-40 items-center justify-center border border-dashed text-sm'>
-          {t.common.noData}
+      <main className='page-area my-2 space-y-3'>
+        <BookSelector
+          books={books}
+          invites={invites}
+          selectedBookId={selectedBookId}
+          canManage={!!user}
+          onSelect={selectBook}
+          onCreateBook={createBook}
+          onInvite={sendInvite}
+          onAcceptInvite={acceptInvite}
+        />
+        <div className='rounded-xs border border-dashed p-4 text-sm'>
+          <p className='text-foreground font-medium'>{t.books.emptyTitle}</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            {t.books.emptyDescription}
+          </p>
         </div>
+        {pendingInvites.length > 0 ? (
+          <div className='space-y-2'>
+            <p className='text-muted-foreground text-xs font-medium'>
+              {t.books.pendingInvites}
+            </p>
+            <div className='space-y-2'>
+              {pendingInvites.map((invite) => (
+                <div
+                  key={invite.id}
+                  className='flex items-center justify-between rounded-xs border px-3 py-2 text-xs'>
+                  <div className='min-w-0'>
+                    <p className='text-foreground truncate'>{invite.bookName}</p>
+                    <p className='text-muted-foreground truncate text-[10px]'>
+                      {invite.inviteeEmail}
+                    </p>
+                  </div>
+                  <Button
+                    size='xs'
+                    onClick={() => acceptInvite(invite)}
+                    disabled={!user}>
+                    {t.books.accept}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {error ? (
+          <div className='border-destructive/50 bg-destructive/5 text-destructive rounded-xs border px-3 py-2 text-xs'>
+            {error}
+          </div>
+        ) : null}
       </main>
     );
   }
 
-  const overview = buildAssetsOverview(ledger);
-  const groups = buildAccountGroups(ledger, [
+  const overview = buildAssetsOverview(book);
+  const groups = buildAccountGroups(book, [
     AccountType.ASSETS,
     AccountType.LIABILITIES,
   ]);
-  const sourceLabel =
-    source === "demo" ? t.sync.disconnected : t.sync.connected;
-  const sourceVariant = source === "demo" ? "secondary" : "outline";
+  const isDisconnected = source === "demo" || source === "empty";
+  const sourceLabel = isDisconnected ? t.sync.disconnected : t.sync.connected;
+  const sourceVariant = isDisconnected ? "secondary" : "outline";
 
   const typeLabels = {
     [AccountType.ASSETS]: t.assets.types.assets,
@@ -92,6 +152,16 @@ export default function Assets() {
             </Badge>
           </div>
           <p className='text-muted-foreground text-xs'>{t.assets.accounts}</p>
+          <BookSelector
+            books={books}
+            invites={invites}
+            selectedBookId={selectedBookId}
+            canManage={!!user}
+            onSelect={selectBook}
+            onCreateBook={createBook}
+            onInvite={sendInvite}
+            onAcceptInvite={acceptInvite}
+          />
         </div>
         <Button
           variant='outline'
@@ -112,6 +182,7 @@ export default function Assets() {
         parentOptions={parentOptions}
         defaultParentId={defaultParentId}
         userId={user?.id}
+        bookId={selectedBookId ?? undefined}
         onCreated={reload}
       />
 

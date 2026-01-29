@@ -29,12 +29,17 @@ export function useGroupsData() {
   // 使用 ref 获取最新的 auth 状态
   const authRef = useRef({ isAuthenticated, user });
   authRef.current = { isAuthenticated, user };
+  const groupsDataRef = useRef<GroupsData | null>(null);
+  const activeGroupRequestRef = useRef(0);
 
   // 登录后：使用 loading 状态直到数据加载完成
   // 未登录时：groupsData 为 null，isLoading 为 false
   const [groupsData, setGroupsData] = useState<GroupsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  useEffect(() => {
+    groupsDataRef.current = groupsData;
+  }, [groupsData]);
 
   // 获取分组数据
   const loadGroups = useCallback(async () => {
@@ -128,9 +133,29 @@ export function useGroupsData() {
       const { user: currentUser } = authRef.current;
       if (!currentUser) return DEFAULT_GROUPS_DATA;
 
-      const newData = await setActiveGroupInRepo(currentUser.id, groupId);
-      setGroupsData(newData);
-      return newData;
+      const previousData = groupsDataRef.current ?? DEFAULT_GROUPS_DATA;
+      const optimisticData: GroupsData = {
+        ...previousData,
+        activeGroupId: groupId,
+      };
+      setGroupsData(optimisticData);
+
+      const requestId = activeGroupRequestRef.current + 1;
+      activeGroupRequestRef.current = requestId;
+
+      try {
+        const newData = await setActiveGroupInRepo(currentUser.id, groupId);
+        if (activeGroupRequestRef.current === requestId) {
+          setGroupsData(newData);
+        }
+        return newData;
+      } catch (err) {
+        console.error("Failed to set active group:", err);
+        if (activeGroupRequestRef.current === requestId) {
+          setGroupsData(previousData);
+        }
+        return previousData;
+      }
     },
     [], // 移除 groupsData 依赖
   );

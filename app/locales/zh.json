@@ -8,10 +8,13 @@
     "delete": "删除",
     "edit": "编辑",
     "add": "添加",
+    "create": "创建",
     "confirm": "确认",
     "loading": "加载中...",
     "noData": "暂无数据",
-    "required": "必填"
+    "required": "必填",
+    "send": "发送",
+    "error": "出错了"
   },
   "nav": { "market": "市场", "assets": "资产", "records": "记录" },
   "assets": {
@@ -104,6 +107,22 @@
       "gift": "红包",
       "other": "其他"
     }
+  },
+  "books": {
+    "selectBook": "选择账簿",
+    "newBook": "新建账簿",
+    "newBookDescription": "创建新的账簿用于家庭记账。",
+    "emptyTitle": "还没有账簿",
+    "emptyDescription": "创建第一个账簿，或接受邀请开始记账。",
+    "bookName": "账簿名称",
+    "bookNamePlaceholder": "例如 家庭/2026日本游",
+    "invite": "邀请成员",
+    "inviteDescription": "邀请家庭成员协作记账。",
+    "invitePermission": "仅拥有者或编辑可邀请。",
+    "inviteEmail": "成员邮箱",
+    "inviteEmailPlaceholder": "name@example.com",
+    "pendingInvites": "待处理邀请",
+    "accept": "接受"
   },
   "error": {
     "oops": "哎呀！",

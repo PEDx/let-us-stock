@@ -4,30 +4,30 @@ import { createSimpleEntry, updateEntry as updateEntryData } from "../entry";
 import {
   addAccount,
   addEntry,
-  createLedger,
+  createBook,
   getRootAccount,
   removeEntry,
   updateEntry,
-} from "../ledger";
+} from "../book";
 import { AccountType } from "../types";
 
-function setupLedger() {
-  let ledger = createLedger({ name: "Test Ledger", defaultCurrency: "CNY" });
-  const assetsRoot = getRootAccount(ledger, AccountType.ASSETS)!;
-  const expensesRoot = getRootAccount(ledger, AccountType.EXPENSES)!;
+function setupBook() {
+  let book = createBook({ name: "Test Book", defaultCurrency: "CNY" });
+  const assetsRoot = getRootAccount(book, AccountType.ASSETS)!;
+  const expensesRoot = getRootAccount(book, AccountType.EXPENSES)!;
 
-  ledger = addAccount(ledger, { name: "Cash", parentId: assetsRoot.id });
-  ledger = addAccount(ledger, { name: "Food", parentId: expensesRoot.id });
+  book = addAccount(book, { name: "Cash", parentId: assetsRoot.id });
+  book = addAccount(book, { name: "Food", parentId: expensesRoot.id });
 
-  const cash = ledger.accounts.find((a) => a.path === "assets:cash")!;
-  const food = ledger.accounts.find((a) => a.path === "expenses:food")!;
+  const cash = book.accounts.find((a) => a.path === "assets:cash")!;
+  const food = book.accounts.find((a) => a.path === "expenses:food")!;
 
-  return { ledger, cashId: cash.id, foodId: food.id };
+  return { book, cashId: cash.id, foodId: food.id };
 }
 
-describe("ledger entry posting", () => {
+describe("book entry posting", () => {
   it("posts balances and can remove entry to revert", () => {
-    let { ledger, cashId, foodId } = setupLedger();
+    let { book, cashId, foodId } = setupBook();
 
     const entry = createSimpleEntry({
       date: "2024-01-01",
@@ -37,25 +37,25 @@ describe("ledger entry posting", () => {
       amount: 500,
     });
 
-    ledger = addEntry(ledger, entry);
+    book = addEntry(book, entry);
 
-    const cash = ledger.accounts.find((a) => a.id === cashId)!;
-    const food = ledger.accounts.find((a) => a.id === foodId)!;
+    const cash = book.accounts.find((a) => a.id === cashId)!;
+    const food = book.accounts.find((a) => a.id === foodId)!;
 
     expect(cash.balance).toBe(-500);
     expect(food.balance).toBe(500);
 
-    ledger = removeEntry(ledger, entry.id);
+    book = removeEntry(book, entry.id);
 
-    const cashAfter = ledger.accounts.find((a) => a.id === cashId)!;
-    const foodAfter = ledger.accounts.find((a) => a.id === foodId)!;
+    const cashAfter = book.accounts.find((a) => a.id === cashId)!;
+    const foodAfter = book.accounts.find((a) => a.id === foodId)!;
 
     expect(cashAfter.balance).toBe(0);
     expect(foodAfter.balance).toBe(0);
   });
 
   it("updates entry by reversing old and applying new", () => {
-    let { ledger, cashId, foodId } = setupLedger();
+    let { book, cashId, foodId } = setupBook();
 
     let entry = createSimpleEntry({
       date: "2024-01-01",
@@ -65,36 +65,36 @@ describe("ledger entry posting", () => {
       amount: 500,
     });
 
-    ledger = addEntry(ledger, entry);
+    book = addEntry(book, entry);
 
     entry = updateEntryData(entry, {
       lines: entry.lines.map((line) => ({ ...line, amount: 800 })),
     });
 
-    ledger = updateEntry(ledger, entry);
+    book = updateEntry(book, entry);
 
-    const cash = ledger.accounts.find((a) => a.id === cashId)!;
-    const food = ledger.accounts.find((a) => a.id === foodId)!;
+    const cash = book.accounts.find((a) => a.id === cashId)!;
+    const food = book.accounts.find((a) => a.id === foodId)!;
 
     expect(cash.balance).toBe(-800);
     expect(food.balance).toBe(800);
   });
 });
 
-describe("ledger currency rules", () => {
+describe("book currency rules", () => {
   it("rejects cross-currency entries", () => {
-    let ledger = createLedger({ name: "Test Ledger", defaultCurrency: "CNY" });
-    const assetsRoot = getRootAccount(ledger, AccountType.ASSETS)!;
+    let book = createBook({ name: "Test Book", defaultCurrency: "CNY" });
+    const assetsRoot = getRootAccount(book, AccountType.ASSETS)!;
 
-    ledger = addAccount(ledger, { name: "CashCNY", parentId: assetsRoot.id });
-    ledger = addAccount(ledger, {
+    book = addAccount(book, { name: "CashCNY", parentId: assetsRoot.id });
+    book = addAccount(book, {
       name: "WalletUSD",
       parentId: assetsRoot.id,
       currency: "USD",
     });
 
-    const cashCny = ledger.accounts.find((a) => a.path === "assets:cashcny")!;
-    const walletUsd = ledger.accounts.find(
+    const cashCny = book.accounts.find((a) => a.path === "assets:cashcny")!;
+    const walletUsd = book.accounts.find(
       (a) => a.path === "assets:walletusd",
     )!;
 
@@ -106,7 +106,7 @@ describe("ledger currency rules", () => {
       amount: 100,
     });
 
-    expect(() => addEntry(ledger, entry)).toThrowError(
+    expect(() => addEntry(book, entry)).toThrowError(
       /Cross-currency entry is not supported/,
     );
   });

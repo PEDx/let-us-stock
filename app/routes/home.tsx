@@ -1,4 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  useTransition,
+  useRef,
+} from "react";
 import { QuoteTable } from "~/components/quote-table";
 import { StockSearch } from "~/components/stock-search";
 import { StockDetail } from "~/components/stock-detail";
@@ -45,7 +52,9 @@ export default function Home() {
   } = useGroupsData();
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [isQuotesLoading, setIsQuotesLoading] = useState(false);
+  const [isQuotesPending, startTransition] = useTransition();
   const [openWindows, setOpenWindows] = useState<OpenWindow[]>([]);
+  const lastFetchKeyRef = useRef<string | null>(null);
 
   // 构建分组 Map 以优化查找性能 (O(1) vs O(n))
   const groupMap = useMemo(
@@ -60,7 +69,9 @@ export default function Home() {
   // 获取行情数据 - 使用功能更新避免依赖 currentSymbols
   const fetchQuotes = useCallback(async (symbolList: string[]) => {
     if (symbolList.length === 0) {
-      setQuotes([]);
+      startTransition(() => {
+        setQuotes([]);
+      });
       setIsQuotesLoading(false);
       return;
     }
@@ -78,13 +89,15 @@ export default function Home() {
       const sortedQuotes = symbolList
         .map((s) => quotesMap.get(s))
         .filter(Boolean) as Quote[];
-      setQuotes(sortedQuotes);
+      startTransition(() => {
+        setQuotes(sortedQuotes);
+      });
     } catch (error) {
       console.error("Failed to fetch quotes:", error);
     } finally {
       setIsQuotesLoading(false);
     }
-  }, []);
+  }, [startTransition]);
 
   // 初始化加载 - 使用原始值作为依赖，避免整个 groupsData 对象
   useEffect(() => {
@@ -96,6 +109,11 @@ export default function Home() {
     // 加载完成后获取行情数据
     const group = groupMap.get(groupsData.activeGroupId);
     if (group) {
+      const fetchKey = `${group.id}:${group.symbols.join(",")}`;
+      if (lastFetchKeyRef.current === fetchKey) {
+        return;
+      }
+      lastFetchKeyRef.current = fetchKey;
       fetchQuotes(group.symbols);
     }
   }, [groupsLoading, groupsData.activeGroupId, groupMap, fetchQuotes]);
@@ -103,11 +121,6 @@ export default function Home() {
   // 切换分组时重新获取行情 - 将逻辑放在事件处理器中，避免状态+效应模式
   const handleSelectGroup = async (groupId: string) => {
     await setActiveGroup(groupId);
-    const group = groupMap.get(groupId);
-    if (group) {
-      setIsQuotesLoading(true);
-      await fetchQuotes(group.symbols);
-    }
   };
 
   // 添加分组
@@ -125,9 +138,8 @@ export default function Home() {
     if (wasActive) {
       const nextGroup = groupsData.groups.find((g) => g.id !== groupId);
       if (nextGroup) {
+        setQuotes([]);
         await setActiveGroup(nextGroup.id);
-        setIsQuotesLoading(true);
-        await fetchQuotes(nextGroup.symbols);
       }
     }
   };
@@ -208,6 +220,7 @@ export default function Home() {
 
   // 整体 loading 状态：分组数据加载中
   const isLoading = groupsLoading;
+  const isQuotesBusy = isQuotesLoading || isQuotesPending;
 
   // 渲染加载状态
   if (isLoading) {
@@ -236,7 +249,7 @@ export default function Home() {
       </div>
 
       {/* 行情数据加载状态 */}
-      {isQuotesLoading ? loadingSpinner : (
+      {isQuotesBusy ? loadingSpinner : (
         <QuoteTable
           quotes={quotes}
           onRemoveSymbol={handleRemoveSymbol}

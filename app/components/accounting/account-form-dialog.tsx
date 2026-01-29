@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import type { AccountData } from "~/lib/double-entry/types";
 import { useI18n } from "~/lib/i18n";
 import { Button } from "~/components/ui/button";
-import { createAccountForLedger } from "~/lib/firebase/repository";
+import { createAccountForBook } from "~/lib/firebase/repository";
 
 interface AccountFormDialogProps {
   open: boolean;
@@ -11,6 +11,7 @@ interface AccountFormDialogProps {
   parentOptions: AccountData[];
   defaultParentId: string | null;
   userId?: string;
+  bookId?: string;
   onCreated?: () => Promise<void> | void;
 }
 
@@ -20,6 +21,7 @@ export function AccountFormDialog({
   parentOptions,
   defaultParentId,
   userId,
+  bookId,
   onCreated,
 }: AccountFormDialogProps) {
   const { t } = useI18n();
@@ -45,10 +47,10 @@ export function AccountFormDialog({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!userId) {
-      setError(t.sync.loginRequired);
-      return;
-    }
+              if (!userId || !bookId) {
+                setError(t.sync.loginRequired);
+                return;
+              }
     if (!name.trim() || !parentId) {
       setError(t.common.required);
       return;
@@ -56,10 +58,11 @@ export function AccountFormDialog({
     setIsSaving(true);
     setError(null);
     try {
-      await createAccountForLedger(userId, {
-        name: name.trim(),
-        parentId,
-      });
+                await createAccountForBook(userId, {
+                  bookId,
+                  name: name.trim(),
+                  parentId,
+                });
       await onCreated?.();
       onOpenChange(false);
     } catch (err) {

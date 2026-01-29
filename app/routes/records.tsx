@@ -5,12 +5,13 @@ import {
   buildPeriodSummary,
   getCurrentMonthRange,
 } from "~/lib/accounting/view";
-import { useLedgerData } from "~/lib/accounting/use-ledger";
+import { useBookData } from "~/lib/accounting/use-book";
 import { useAuth } from "~/lib/firebase/auth-context";
 import { EntryFormDialog } from "~/components/accounting/entry-form-dialog";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
+import { BookSelector } from "~/components/book-selector";
 
 export function meta() {
   return [
@@ -31,11 +32,24 @@ function createEmptyState(message: string) {
 export default function Records() {
   const { t } = useI18n();
   const { user } = useAuth();
-  const { ledger, isLoading, error, source, reload } = useLedgerData();
+  const {
+    book,
+    books,
+    invites,
+    selectedBookId,
+    selectBook,
+    createBook,
+    sendInvite,
+    acceptInvite,
+    isLoading,
+    error,
+    source,
+    reload,
+  } = useBookData();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const accountOptions = useMemo(
-    () => ledger?.accounts.filter((account) => !account.archived) ?? [],
-    [ledger],
+    () => book?.accounts.filter((account) => !account.archived) ?? [],
+    [book],
   );
   const defaultDebitId =
     accountOptions.find((account) => account.type === "expenses")?.id ??
@@ -56,28 +70,74 @@ export default function Records() {
     );
   }
 
-  if (!ledger) {
+  if (!book) {
+    const pendingInvites = invites.filter((invite) => invite.status === "pending");
     return (
-      <main className='page-area my-2'>
-        <div className='text-muted-foreground flex h-40 items-center justify-center border border-dashed text-sm'>
-          {t.common.noData}
+      <main className='page-area my-2 space-y-3'>
+        <BookSelector
+          books={books}
+          invites={invites}
+          selectedBookId={selectedBookId}
+          canManage={!!user}
+          onSelect={selectBook}
+          onCreateBook={createBook}
+          onInvite={sendInvite}
+          onAcceptInvite={acceptInvite}
+        />
+        <div className='rounded-xs border border-dashed p-4 text-sm'>
+          <p className='text-foreground font-medium'>{t.books.emptyTitle}</p>
+          <p className='text-muted-foreground mt-1 text-xs'>
+            {t.books.emptyDescription}
+          </p>
         </div>
+        {pendingInvites.length > 0 ? (
+          <div className='space-y-2'>
+            <p className='text-muted-foreground text-xs font-medium'>
+              {t.books.pendingInvites}
+            </p>
+            <div className='space-y-2'>
+              {pendingInvites.map((invite) => (
+                <div
+                  key={invite.id}
+                  className='flex items-center justify-between rounded-xs border px-3 py-2 text-xs'>
+                  <div className='min-w-0'>
+                    <p className='text-foreground truncate'>{invite.bookName}</p>
+                    <p className='text-muted-foreground truncate text-[10px]'>
+                      {invite.inviteeEmail}
+                    </p>
+                  </div>
+                  <Button
+                    size='xs'
+                    onClick={() => acceptInvite(invite)}
+                    disabled={!user}>
+                    {t.books.accept}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {error ? (
+          <div className='border-destructive/50 bg-destructive/5 text-destructive rounded-xs border px-3 py-2 text-xs'>
+            {error}
+          </div>
+        ) : null}
       </main>
     );
   }
 
   const monthRange = getCurrentMonthRange();
-  const summary = buildPeriodSummary(ledger, monthRange);
-  const entries = buildEntryRows(ledger);
+  const summary = buildPeriodSummary(book, monthRange);
+  const entries = buildEntryRows(book);
   const categoryLabels = {
     expense: t.records.expense,
     income: t.records.income,
     transfer: t.records.transfer,
     unknown: t.records.entryType,
   };
-  const sourceLabel =
-    source === "demo" ? t.sync.disconnected : t.sync.connected;
-  const sourceVariant = source === "demo" ? "secondary" : "outline";
+  const isDisconnected = source === "demo" || source === "empty";
+  const sourceLabel = isDisconnected ? t.sync.disconnected : t.sync.connected;
+  const sourceVariant = isDisconnected ? "secondary" : "outline";
 
   return (
     <main className='page-area space-y-4 py-4'>
@@ -95,6 +155,16 @@ export default function Records() {
             </Badge>
           </div>
           <p className='text-muted-foreground text-xs'>{t.records.thisMonth}</p>
+          <BookSelector
+            books={books}
+            invites={invites}
+            selectedBookId={selectedBookId}
+            canManage={!!user}
+            onSelect={selectBook}
+            onCreateBook={createBook}
+            onInvite={sendInvite}
+            onAcceptInvite={acceptInvite}
+          />
         </div>
         <Button disabled={!user} onClick={() => setIsFormOpen(true)}>
           {t.records.newEntry}
@@ -112,6 +182,7 @@ export default function Records() {
         defaultDebitId={defaultDebitId}
         defaultCreditId={defaultCreditId}
         userId={user?.id}
+        bookId={selectedBookId ?? undefined}
         onCreated={reload}
       />
 

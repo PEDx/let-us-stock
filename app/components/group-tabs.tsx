@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Plus, Settings, X, GripVertical, Check } from "lucide-react";
 import {
   DndContext,
@@ -32,7 +32,7 @@ interface GroupTabsProps {
   onReorderGroups: (newOrder: string[]) => void;
 }
 
-const SortableTab = memo(function SortableTab({
+function SortableTab({
   group,
   isActive,
   isManaging,
@@ -72,27 +72,27 @@ const SortableTab = memo(function SortableTab({
     }
   }, [isEditing]);
 
-  const handleSubmitRename = useCallback(() => {
+  const handleSubmitRename = () => {
     if (editName.trim() && editName !== group.name) {
       onRename(editName.trim());
     } else {
       setEditName(group.name);
     }
     setIsEditing(false);
-  }, [editName, group.name, onRename]);
+  };
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleSubmitRename();
     } else if (e.key === "Escape") {
       setEditName(group.name);
       setIsEditing(false);
     }
-  }, [group.name, handleSubmitRename]);
+  };
 
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditName(e.target.value);
-  }, []);
+  };
 
   return (
     <div
@@ -155,7 +155,7 @@ const SortableTab = memo(function SortableTab({
       )}
     </div>
   );
-});
+}
 
 export function GroupTabs({
   groups,
@@ -179,16 +179,13 @@ export function GroupTabs({
     }),
   );
 
-  // Memoize group IDs for SortableContext
-  const groupIds = useMemo(() => groups.map((g) => g.id), [groups]);
-
   useEffect(() => {
     if (isAdding && addInputRef.current) {
       addInputRef.current.focus();
     }
   }, [isAdding]);
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       const oldIndex = groups.findIndex((g) => g.id === active.id);
@@ -200,47 +197,47 @@ export function GroupTabs({
       );
       onReorderGroups(newOrder);
     }
-  }, [groups, onReorderGroups]);
+  };
 
-  const handleAddGroup = useCallback(() => {
+  const handleAddGroup = () => {
     if (newGroupName.trim()) {
       onAddGroup(newGroupName.trim());
       setNewGroupName("");
       setIsAdding(false);
     }
-  }, [newGroupName, onAddGroup]);
+  };
 
-  const handleAddKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleAddKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       handleAddGroup();
     } else if (e.key === "Escape") {
       setNewGroupName("");
       setIsAdding(false);
     }
-  }, [handleAddGroup]);
+  };
 
-  const handleAddInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewGroupName(e.target.value);
-  }, []);
+  };
 
-  const handleAddBlur = useCallback(() => {
+  const handleAddBlur = () => {
     if (!newGroupName.trim()) {
       setIsAdding(false);
     }
-  }, [newGroupName]);
+  };
 
-  const handleCancelAdd = useCallback(() => {
+  const handleCancelAdd = () => {
     setNewGroupName("");
     setIsAdding(false);
-  }, []);
+  };
 
-  const handleStartAdd = useCallback(() => {
+  const handleStartAdd = () => {
     setIsAdding(true);
-  }, []);
+  };
 
-  const handleToggleManage = useCallback(() => {
+  const handleToggleManage = () => {
     setIsManaging((prev) => !prev);
-  }, []);
+  };
 
   return (
     <div className='flex items-center gap-2 overflow-x-auto'>
@@ -249,7 +246,7 @@ export function GroupTabs({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}>
         <SortableContext
-          items={groupIds}
+          items={groups.map((g) => g.id)}
           strategy={horizontalListSortingStrategy}>
           {groups.map((group) => (
             <SortableTab

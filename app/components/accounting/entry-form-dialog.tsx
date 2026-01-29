@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import type { AccountData } from "~/lib/double-entry/types";
 import { useI18n } from "~/lib/i18n";
 import { Button } from "~/components/ui/button";
-import { createSimpleEntryForLedger } from "~/lib/firebase/repository";
+import { createSimpleEntryForBook } from "~/lib/firebase/repository";
 
 interface EntryFormDialogProps {
   open: boolean;
@@ -12,6 +12,7 @@ interface EntryFormDialogProps {
   defaultDebitId: string;
   defaultCreditId: string;
   userId?: string;
+  bookId?: string;
   onCreated?: () => Promise<void> | void;
 }
 
@@ -40,6 +41,7 @@ export function EntryFormDialog({
   defaultDebitId,
   defaultCreditId,
   userId,
+  bookId,
   onCreated,
 }: EntryFormDialogProps) {
   const { t } = useI18n();
@@ -87,10 +89,10 @@ export function EntryFormDialog({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!userId) {
-      setError(t.sync.loginRequired);
-      return;
-    }
+              if (!userId || !bookId) {
+                setError(t.sync.loginRequired);
+                return;
+              }
     if (!form.description.trim()) {
       setError(t.common.required);
       return;
@@ -115,15 +117,16 @@ export function EntryFormDialog({
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean);
-      await createSimpleEntryForLedger(userId, {
-        date: form.date,
-        description: form.description.trim(),
-        debitAccountId: form.debitAccountId,
-        creditAccountId: form.creditAccountId,
-        amount,
-        payee: form.payee.trim() || undefined,
-        tags: tags.length ? tags : undefined,
-      });
+                await createSimpleEntryForBook(userId, {
+                  bookId,
+                  date: form.date,
+                  description: form.description.trim(),
+                  debitAccountId: form.debitAccountId,
+                  creditAccountId: form.creditAccountId,
+                  amount,
+                  payee: form.payee.trim() || undefined,
+                  tags: tags.length ? tags : undefined,
+                });
       await onCreated?.();
       setForm(createInitialForm(defaultDebitId, defaultCreditId));
       onOpenChange(false);

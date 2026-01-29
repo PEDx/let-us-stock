@@ -139,9 +139,7 @@ export function QuoteTable({
   }
 
   const { rows } = table.getRowModel();
-
-  // Memoize row IDs for SortableContext
-  const rowIds = useMemo(() => rows.map((row) => row.id), [rows]);
+  const rowIds = rows.map((row) => row.id);
 
   return (
     <DndContext

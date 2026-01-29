@@ -3,7 +3,7 @@
  *
  * 支持：
  * - 多币种资产管理
- * - 多账本（主账本、日常账本、专题账本）
+ * - 标签与时间维度分类
  * - 分录标签分类
  * - 时间维度查询和统计
  * - 收支报表和资产负债表
@@ -12,8 +12,7 @@
  * ```typescript
  * import {
  *   createBook,
- *   addLedger,
- *   updateLedgerInBook,
+ *   updateBook,
  *   addAccount,
  *   addEntry,
  *   createSimpleEntry,
@@ -24,22 +23,11 @@
  * } from "~/lib/double-entry";
  *
  * // 创建账簿
- * let book = createBook({ mainLedgerName: "我的账本" });
+ * let book = createBook({ name: "我的账本" });
  *
- * // 在主账本中添加账户
- * const mainLedger = getMainLedger(book);
- * const assetsRoot = mainLedger.accounts.find(a => a.path === "assets")!;
- *
- * book = updateLedgerInBook(book, mainLedger.id, ledger =>
- *   addAccount(ledger, { name: "招商银行", parentId: assetsRoot.id })
- * );
- *
- * // 创建旅游账本
- * book = addLedger(book, {
- *   name: "日本旅游",
- *   type: LedgerType.TOPIC,
- *   description: "2024年日本旅游",
- * });
+ * // 添加账户
+ * const assetsRoot = book.accounts.find(a => a.path === "assets")!;
+ * book = addAccount(book, { name: "招商银行", parentId: assetsRoot.id });
  *
  * // 记账
  * const entry = createSimpleEntry({
@@ -51,15 +39,13 @@
  *   tags: ["餐饮", "午餐"],
  * });
  *
- * book = updateLedgerInBook(book, ledgerId, ledger =>
- *   addEntry(ledger, entry)
- * );
+ * book = addEntry(book, entry);
  *
  * // 查询本月分录
- * const thisMonthEntries = getThisMonthEntries(ledger);
+ * const thisMonthEntries = getThisMonthEntries(book);
  *
  * // 生成月度报表
- * const monthlyReport = generateTimeSeries(ledger, dateRange, "month");
+ * const monthlyReport = generateTimeSeries(book, dateRange, "month");
  * ```
  */
 
@@ -74,7 +60,6 @@ export type {
   AccountData,
   EntryLineData,
   JournalEntryData,
-  LedgerData,
   BookData,
   DateRange,
   TimeGranularity,
@@ -84,7 +69,7 @@ export type {
   BalanceSnapshot,
 } from "./types";
 
-export { AccountType, EntryLineType, LedgerType } from "./types";
+export { AccountType, EntryLineType } from "./types";
 
 // ============================================================================
 // Currency
@@ -168,13 +153,13 @@ export {
 } from "./entry";
 
 // ============================================================================
-// Ledger
+// Book
 // ============================================================================
 
 export {
-  generateLedgerId,
-  createLedger,
-  updateLedger,
+  generateBookId,
+  createBook,
+  updateBook,
   addAccount,
   updateAccount,
   addEntry,
@@ -188,26 +173,6 @@ export {
   verifyAccountingEquation,
   getRootAccount,
   getAllTags,
-} from "./ledger";
-
-// ============================================================================
-// Book (Multi-ledger)
-// ============================================================================
-
-export {
-  createBook,
-  addLedger,
-  updateLedgerInBook,
-  removeLedger,
-  getLedger,
-  getMainLedger,
-  getLedgersByType,
-  getActiveLedgers,
-  setExchangeRate,
-  getExchangeRateHistory,
-  addCommonTags,
-  removeCommonTags,
-  getAllBookTags,
 } from "./book";
 
 // ============================================================================
@@ -254,7 +219,7 @@ export {
   canDeleteAccount,
   canArchiveAccount,
   canMoveAccount,
-  validateLedger,
+  validateBook,
   canDeleteEntry,
   type ValidationResult,
 } from "./validation";

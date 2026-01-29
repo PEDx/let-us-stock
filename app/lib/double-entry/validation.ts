@@ -7,12 +7,12 @@
 import type {
   JournalEntryData,
   AccountData,
-  LedgerData,
+  BookData,
   EntryLineData,
   EntryLineType,
 } from "./types";
 import { AccountType } from "./types";
-import { verifyAccountingEquation } from "./ledger";
+import { verifyAccountingEquation } from "./book";
 
 // ============================================================================
 // 验证结果类型
@@ -116,22 +116,22 @@ export function validateEntryLine(line: EntryLineData): ValidationResult {
  * @returns 可以删除返回 true，否则返回 false 和原因
  */
 export function canDeleteAccount(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
 ): { canDelete: boolean; reason?: string } {
-  const account = ledger.accounts.find((a) => a.id === accountId);
+  const account = book.accounts.find((a) => a.id === accountId);
   if (!account) {
     return { canDelete: false, reason: "账户不存在" };
   }
 
   // 检查是否有子账户
-  const hasChildren = ledger.accounts.some((a) => a.parentId === accountId);
+  const hasChildren = book.accounts.some((a) => a.parentId === accountId);
   if (hasChildren) {
     return { canDelete: false, reason: "账户包含子账户，请先删除或移动子账户" };
   }
 
   // 检查是否在分录中被使用
-  const isInUse = ledger.entries.some((e) =>
+  const isInUse = book.entries.some((e) =>
     e.lines.some((line) => line.accountId === accountId),
   );
 
@@ -149,10 +149,10 @@ export function canDeleteAccount(
  * 检查账户是否可以归档
  */
 export function canArchiveAccount(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
 ): { canArchive: boolean; reason?: string } {
-  const account = ledger.accounts.find((a) => a.id === accountId);
+  const account = book.accounts.find((a) => a.id === accountId);
   if (!account) {
     return { canArchive: false, reason: "账户不存在" };
   }
@@ -174,16 +174,16 @@ export function canArchiveAccount(
  * 检查账户是否可以移动（更改父账户）
  */
 export function canMoveAccount(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
   newParentId: string,
 ): { canMove: boolean; reason?: string } {
-  const account = ledger.accounts.find((a) => a.id === accountId);
+  const account = book.accounts.find((a) => a.id === accountId);
   if (!account) {
     return { canMove: false, reason: "账户不存在" };
   }
 
-  const newParent = ledger.accounts.find((a) => a.id === newParentId);
+  const newParent = book.accounts.find((a) => a.id === newParentId);
   if (!newParent) {
     return { canMove: false, reason: "目标父账户不存在" };
   }
@@ -194,7 +194,7 @@ export function canMoveAccount(
   }
 
   // 检查是否是自己的后代
-  const isDescendant = ledger.accounts.some(
+  const isDescendant = book.accounts.some(
     (a) => a.id === newParentId && a.path.startsWith(account.path + ":"),
   );
   if (isDescendant) {
@@ -227,7 +227,7 @@ export function canMoveAccount(
 /**
  * 验证账本数据的完整性
  */
-export function validateLedger(ledger: LedgerData): ValidationResult {
+export function validateBook(book: BookData): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
@@ -240,7 +240,7 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
     AccountType.EXPENSES,
   ];
 
-  const rootAccounts = ledger.accounts.filter((a) => a.parentId === null);
+  const rootAccounts = book.accounts.filter((a) => a.parentId === null);
   const existingTypes = new Set(rootAccounts.map((a) => a.type));
 
   for (const type of requiredTypes) {
@@ -251,7 +251,7 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
 
   // 检查是否有重复的路径
   const paths = new Set<string>();
-  for (const account of ledger.accounts) {
+  for (const account of book.accounts) {
     if (paths.has(account.path)) {
       errors.push(`重复的账户路径：${account.path}`);
     }
@@ -259,9 +259,9 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
   }
 
   // 检查父账户是否存在
-  for (const account of ledger.accounts) {
+  for (const account of book.accounts) {
     if (account.parentId !== null) {
-      const parent = ledger.accounts.find((a) => a.id === account.parentId);
+      const parent = book.accounts.find((a) => a.id === account.parentId);
       if (!parent) {
         errors.push(`账户 ${account.name} 的父账户 ${account.parentId} 不存在`);
       }
@@ -269,7 +269,7 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
   }
 
   // 验证所有分录
-  for (const entry of ledger.entries) {
+  for (const entry of book.entries) {
     const result = validateEntry(entry);
     if (!result.valid) {
       errors.push(
@@ -284,7 +284,7 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
   }
 
   // 验证会计恒等式
-  if (!verifyAccountingEquation(ledger)) {
+  if (!verifyAccountingEquation(book)) {
     errors.push("会计恒等式不成立：资产 + 支出 ≠ 负债 + 权益 + 收入");
   }
 
@@ -295,10 +295,10 @@ export function validateLedger(ledger: LedgerData): ValidationResult {
  * 检查分录是否可以删除
  */
 export function canDeleteEntry(
-  ledger: LedgerData,
+  book: BookData,
   entryId: string,
 ): { canDelete: boolean; reason?: string } {
-  const entry = ledger.entries.find((e) => e.id === entryId);
+  const entry = book.entries.find((e) => e.id === entryId);
   if (!entry) {
     return { canDelete: false, reason: "分录不存在" };
   }

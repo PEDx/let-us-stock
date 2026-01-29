@@ -3,7 +3,6 @@
  */
 
 import type {
-  LedgerData,
   BookData,
   DateRange,
   TimeGranularity,
@@ -12,11 +11,10 @@ import type {
   BalanceSnapshot,
   CurrencyCode,
   AccountType,
-  JournalEntryData,
   AccountData,
 } from "./types";
 import { AccountType as AT, EntryLineType } from "./types";
-import { getTypeBalance } from "./ledger";
+import { getTypeBalance } from "./book";
 import { queryEntries } from "./query";
 import { convertCurrency } from "./currency";
 import { postEntry } from "./entry";
@@ -103,17 +101,17 @@ function getISOWeek(date: Date): number {
  * 计算时间段内的收支汇总
  */
 export function calculatePeriodSummary(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
 ): { income: number; expenses: number; netChange: number } {
-  const entries = queryEntries(ledger, { dateRange });
+  const entries = queryEntries(book, { dateRange });
 
   let income = 0;
   let expenses = 0;
 
   for (const entry of entries) {
     for (const line of entry.lines) {
-      const account = ledger.accounts.find((a) => a.id === line.accountId);
+      const account = book.accounts.find((a) => a.id === line.accountId);
       if (!account) continue;
 
       if (account.type === AT.INCOME && line.type === EntryLineType.CREDIT) {
@@ -134,11 +132,11 @@ export function calculatePeriodSummary(
  * 生成时间序列收支报表
  */
 export function generateTimeSeries(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
   granularity: TimeGranularity,
 ): SummaryPoint[] {
-  const entries = queryEntries(ledger, { dateRange });
+  const entries = queryEntries(book, { dateRange });
   const periodMap = new Map<string, { income: number; expenses: number }>();
 
   // 按时间段分组统计
@@ -147,7 +145,7 @@ export function generateTimeSeries(
     const current = periodMap.get(period) ?? { income: 0, expenses: 0 };
 
     for (const line of entry.lines) {
-      const account = ledger.accounts.find((a) => a.id === line.accountId);
+      const account = book.accounts.find((a) => a.id === line.accountId);
       if (!account) continue;
 
       if (account.type === AT.INCOME && line.type === EntryLineType.CREDIT) {
@@ -178,17 +176,17 @@ export function generateTimeSeries(
  * 生成分类汇总（支出或收入）
  */
 export function generateCategorySummary(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
   type: AccountType.EXPENSES | AccountType.INCOME,
 ): CategorySummary[] {
-  const entries = queryEntries(ledger, { dateRange });
+  const entries = queryEntries(book, { dateRange });
   const categoryMap = new Map<string, { name: string; amount: number }>();
 
   // 按账户分组统计
   for (const entry of entries) {
     for (const line of entry.lines) {
-      const account = ledger.accounts.find((a) => a.id === line.accountId);
+      const account = book.accounts.find((a) => a.id === line.accountId);
       if (!account || account.type !== type) continue;
 
       // 只统计正确方向的行
@@ -227,10 +225,10 @@ export function generateCategorySummary(
  * 生成标签汇总
  */
 export function generateTagSummary(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
 ): CategorySummary[] {
-  const entries = queryEntries(ledger, { dateRange });
+  const entries = queryEntries(book, { dateRange });
   const tagMap = new Map<string, number>();
 
   for (const entry of entries) {
@@ -266,11 +264,11 @@ export function generateTagSummary(
  * 生成资产负债快照
  */
 export function generateBalanceSnapshot(
-  ledger: LedgerData,
+  book: BookData,
   date?: string,
 ): BalanceSnapshot {
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
-  const accounts = getAccountsAsOf(ledger, snapshotDate);
+  const accounts = getAccountsAsOf(book, snapshotDate);
 
   // 按货币分组的资产
   const assetsByCurrency: Record<CurrencyCode, number> = {} as Record<
@@ -304,13 +302,12 @@ export function generateBalanceSnapshot(
  * 生成资产负债快照（多币种转换为统一货币）
  */
 export function generateBalanceSnapshotInCurrency(
-  ledger: LedgerData,
   book: BookData,
   targetCurrency: CurrencyCode,
   date?: string,
 ): BalanceSnapshot {
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
-  const accounts = getAccountsAsOf(ledger, snapshotDate);
+  const accounts = getAccountsAsOf(book, snapshotDate);
 
   const assetsByCurrency: Record<CurrencyCode, number> = {} as Record<
     CurrencyCode,
@@ -357,16 +354,16 @@ export function generateBalanceSnapshotInCurrency(
  * 生成净资产趋势
  */
 export function generateNetWorthTrend(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
   granularity: TimeGranularity,
 ): Array<{ period: string; netWorth: number }> {
   // 获取初始净资产
   let currentNetWorth =
-    getTypeBalance(ledger, AT.ASSETS) - getTypeBalance(ledger, AT.LIABILITIES);
+    getTypeBalance(book, AT.ASSETS) - getTypeBalance(book, AT.LIABILITIES);
 
   // 获取时间序列数据
-  const timeSeries = generateTimeSeries(ledger, dateRange, granularity);
+  const timeSeries = generateTimeSeries(book, dateRange, granularity);
 
   // 从最近向过去计算
   const result: Array<{ period: string; netWorth: number }> = [];
@@ -380,12 +377,12 @@ export function generateNetWorthTrend(
 }
 
 function getAccountsAsOf(
-  ledger: LedgerData,
+  book: BookData,
   snapshotDate: string,
 ): AccountData[] {
-  let accounts = ledger.accounts.map((account) => ({ ...account, balance: 0 }));
+  let accounts = book.accounts.map((account) => ({ ...account, balance: 0 }));
 
-  const entries = ledger.entries
+  const entries = book.entries
     .filter((entry) => entry.date <= snapshotDate)
     .sort((a, b) => a.date.localeCompare(b.date));
 

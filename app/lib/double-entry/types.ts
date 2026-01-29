@@ -132,6 +132,10 @@ export interface JournalEntryData {
   payee?: string;
   /** 备注 */
   note?: string;
+  /** 创建人 */
+  createdBy?: string;
+  /** 更新人 */
+  updatedBy?: string;
   /** 创建时间 */
   createdAt: string;
   /** 更新时间 */
@@ -139,30 +143,16 @@ export interface JournalEntryData {
 }
 
 // ============================================================================
-// 账本
+// 账簿（顶层）
 // ============================================================================
 
 /**
- * 账本类型
+ * 账簿数据（可序列化）
  */
-export enum LedgerType {
-  /** 主账本 - 资产管理 */
-  MAIN = "main",
-  /** 日常账本 - 日常记账 */
-  DAILY = "daily",
-  /** 专题账本 - 如旅游、装修等 */
-  TOPIC = "topic",
-}
-
-/**
- * 账本数据（可序列化）
- */
-export interface LedgerData {
+export interface BookData {
   id: string;
-  /** 账本名称 */
+  /** 账簿名称 */
   name: string;
-  /** 账本类型 */
-  type: LedgerType;
   /** 描述 */
   description?: string;
   /** 所有账户 */
@@ -171,32 +161,16 @@ export interface LedgerData {
   entries: JournalEntryData[];
   /** 默认货币 */
   defaultCurrency: CurrencyCode;
+  /** 汇率表 */
+  exchangeRates: ExchangeRate[];
+  /** 常用标签 */
+  commonTags: string[];
   /** 图标 */
   icon?: string;
   /** 是否归档 */
   archived?: boolean;
   /** 创建时间 */
   createdAt: string;
-  /** 更新时间 */
-  updatedAt: string;
-}
-
-// ============================================================================
-// 账簿（多账本容器）
-// ============================================================================
-
-/**
- * 账簿数据（包含多个账本）
- */
-export interface BookData {
-  /** 所有账本 */
-  ledgers: LedgerData[];
-  /** 主账本 ID */
-  mainLedgerId: string;
-  /** 汇率表 */
-  exchangeRates: ExchangeRate[];
-  /** 常用标签 */
-  commonTags: string[];
   /** 更新时间 */
   updatedAt: string;
 }

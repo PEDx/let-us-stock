@@ -3,7 +3,7 @@
  */
 
 import type {
-  LedgerData,
+  BookData,
   JournalEntryData,
   AccountData,
   EntryQuery,
@@ -15,10 +15,10 @@ import type {
  * 按条件查询分录
  */
 export function queryEntries(
-  ledger: LedgerData,
+  book: BookData,
   query: EntryQuery,
 ): JournalEntryData[] {
-  let entries = [...ledger.entries];
+  let entries = [...book.entries];
 
   // 日期范围筛选
   if (query.dateRange) {
@@ -89,60 +89,60 @@ export function queryEntries(
  * 获取日期范围内的分录
  */
 export function getEntriesByDateRange(
-  ledger: LedgerData,
+  book: BookData,
   dateRange: DateRange,
 ): JournalEntryData[] {
-  return queryEntries(ledger, { dateRange });
+  return queryEntries(book, { dateRange });
 }
 
 /**
  * 获取某账户相关的分录
  */
 export function getEntriesByAccount(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
   dateRange?: DateRange,
 ): JournalEntryData[] {
-  return queryEntries(ledger, { accountIds: [accountId], dateRange });
+  return queryEntries(book, { accountIds: [accountId], dateRange });
 }
 
 /**
  * 获取某标签的分录
  */
 export function getEntriesByTag(
-  ledger: LedgerData,
+  book: BookData,
   tag: string,
   dateRange?: DateRange,
 ): JournalEntryData[] {
-  return queryEntries(ledger, { tags: [tag], dateRange });
+  return queryEntries(book, { tags: [tag], dateRange });
 }
 
 /**
  * 获取今日分录
  */
-export function getTodayEntries(ledger: LedgerData): JournalEntryData[] {
+export function getTodayEntries(book: BookData): JournalEntryData[] {
   const today = new Date().toISOString().split("T")[0];
-  return queryEntries(ledger, { dateRange: { start: today, end: today } });
+  return queryEntries(book, { dateRange: { start: today, end: today } });
 }
 
 /**
  * 获取本月分录
  */
-export function getThisMonthEntries(ledger: LedgerData): JournalEntryData[] {
+export function getThisMonthEntries(book: BookData): JournalEntryData[] {
   const now = new Date();
   const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const end = now.toISOString().split("T")[0];
-  return queryEntries(ledger, { dateRange: { start, end } });
+  return queryEntries(book, { dateRange: { start, end } });
 }
 
 /**
  * 获取本年分录
  */
-export function getThisYearEntries(ledger: LedgerData): JournalEntryData[] {
+export function getThisYearEntries(book: BookData): JournalEntryData[] {
   const now = new Date();
   const start = `${now.getFullYear()}-01-01`;
   const end = now.toISOString().split("T")[0];
-  return queryEntries(ledger, { dateRange: { start, end } });
+  return queryEntries(book, { dateRange: { start, end } });
 }
 
 // ============================================================================
@@ -153,10 +153,10 @@ export function getThisYearEntries(ledger: LedgerData): JournalEntryData[] {
  * 获取账户的完整层级路径名称
  */
 export function getAccountFullName(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
 ): string {
-  const account = ledger.accounts.find((a) => a.id === accountId);
+  const account = book.accounts.find((a) => a.id === accountId);
   if (!account) return "";
 
   const names: string[] = [];
@@ -165,7 +165,7 @@ export function getAccountFullName(
   while (current) {
     names.unshift(current.name);
     current = current.parentId
-      ? ledger.accounts.find((a) => a.id === current!.parentId)
+      ? book.accounts.find((a) => a.id === current!.parentId)
       : undefined;
   }
 
@@ -176,13 +176,13 @@ export function getAccountFullName(
  * 获取账户及其所有子账户
  */
 export function getAccountWithDescendants(
-  ledger: LedgerData,
+  book: BookData,
   accountId: string,
 ): AccountData[] {
-  const account = ledger.accounts.find((a) => a.id === accountId);
+  const account = book.accounts.find((a) => a.id === accountId);
   if (!account) return [];
 
-  return ledger.accounts.filter(
+  return book.accounts.filter(
     (a) => a.id === accountId || a.path.startsWith(account.path + ":"),
   );
 }
@@ -191,7 +191,7 @@ export function getAccountWithDescendants(
  * 获取活跃账户（未归档且有余额或近期有交易）
  */
 export function getActiveAccounts(
-  ledger: LedgerData,
+  book: BookData,
   days: number = 90,
 ): AccountData[] {
   const cutoffDate = new Date();
@@ -200,7 +200,7 @@ export function getActiveAccounts(
 
   // 近期有交易的账户
   const recentAccountIds = new Set<string>();
-  for (const entry of ledger.entries) {
+  for (const entry of book.entries) {
     if (entry.date >= cutoff) {
       for (const line of entry.lines) {
         recentAccountIds.add(line.accountId);
@@ -208,7 +208,7 @@ export function getActiveAccounts(
     }
   }
 
-  return ledger.accounts.filter(
+  return book.accounts.filter(
     (a) => !a.archived && (a.balance !== 0 || recentAccountIds.has(a.id)),
   );
 }
@@ -217,10 +217,10 @@ export function getActiveAccounts(
  * 按类型获取账户树
  */
 export function getAccountTree(
-  ledger: LedgerData,
+  book: BookData,
   type: AccountType,
 ): (AccountData & { children: AccountData[] })[] {
-  const accounts = ledger.accounts.filter((a) => a.type === type);
+  const accounts = book.accounts.filter((a) => a.type === type);
   const rootAccounts = accounts.filter((a) => a.parentId === null);
 
   function buildTree(

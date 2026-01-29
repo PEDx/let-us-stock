@@ -1,5 +1,5 @@
 /**
- * Accounting repository
+ * Accounting repository (book-centric)
  */
 
 import {
@@ -13,28 +13,49 @@ import {
   query,
   runTransaction,
   setDoc,
+  updateDoc,
   writeBatch,
   Timestamp,
+  where,
   type Firestore,
 } from "firebase/firestore";
 import { getApps } from "firebase/app";
 import type {
   AccountData,
+  BookData,
   JournalEntryData,
-  LedgerData,
+  ExchangeRate,
+  CurrencyCode,
 } from "~/lib/double-entry/types";
-import {
-  AccountType,
-  EntryLineType,
-  LedgerType,
-} from "~/lib/double-entry/types";
-import { createLedger } from "~/lib/double-entry/ledger";
-import {
-  createAccount,
-  isDebitIncreaseAccount,
-} from "~/lib/double-entry/account";
+import { AccountType, EntryLineType } from "~/lib/double-entry/types";
+import { createBook } from "~/lib/double-entry/book";
+import { createAccount, isDebitIncreaseAccount } from "~/lib/double-entry/account";
 import { fromMainUnit } from "~/lib/double-entry/money";
 import { createEntry } from "~/lib/double-entry/entry";
+
+export type BookRole = "owner" | "editor" | "viewer";
+
+export type BookSummary = {
+  id: string;
+  name: string;
+  role: BookRole;
+  archived?: boolean;
+  defaultCurrency?: CurrencyCode;
+  joinedAt: string;
+  updatedAt?: string;
+};
+
+export type BookInvite = {
+  id: string;
+  bookId: string;
+  bookName: string;
+  inviterId: string;
+  inviteeEmail: string;
+  role: BookRole;
+  status: "pending" | "accepted" | "revoked";
+  createdAt: string;
+  acceptedAt?: string;
+};
 
 let db: Firestore | null = null;
 
@@ -62,147 +83,6 @@ function normalizeDate(value: unknown): string | undefined {
   }
   if (typeof value === "string") return value;
   return undefined;
-}
-
-async function getBookIdForUser(userId: string): Promise<string> {
-  const db = getDB();
-  const metaRef = doc(db, `users/${userId}/meta`, "accounting");
-  const metaSnap = await getDoc(metaRef);
-  if (metaSnap.exists()) {
-    const data = metaSnap.data() as { bookId?: string };
-    if (data.bookId) return data.bookId;
-  }
-  return userId;
-}
-
-async function getMainLedgerId(bookId: string): Promise<string> {
-  const db = getDB();
-  const bookRef = doc(db, "books", bookId);
-  const bookSnap = await getDoc(bookRef);
-  if (bookSnap.exists()) {
-    const data = bookSnap.data() as { mainLedgerId?: string };
-    if (data.mainLedgerId) return data.mainLedgerId;
-  }
-  return "main";
-}
-
-async function resolveLedger(userId: string, ledgerId?: string) {
-  const bookId = await getBookIdForUser(userId);
-  const resolvedLedgerId = ledgerId ?? (await getMainLedgerId(bookId));
-  return { bookId, ledgerId: resolvedLedgerId };
-}
-
-export async function initializeAccounting(
-  userId: string,
-): Promise<{ bookId: string; ledgerId: string }> {
-  const db = getDB();
-  const bookId = await getBookIdForUser(userId);
-  const bookRef = doc(db, "books", bookId);
-  const bookSnap = await getDoc(bookRef);
-  if (bookSnap.exists()) {
-    const data = bookSnap.data() as { mainLedgerId?: string };
-    const existingLedgerId = data.mainLedgerId ?? "main";
-    const ledgerRef = doc(db, `books/${bookId}/ledgers`, existingLedgerId);
-    const ledgerSnap = await getDoc(ledgerRef);
-    if (ledgerSnap.exists()) {
-      return { bookId, ledgerId: existingLedgerId };
-    }
-    return createMissingLedger(bookId, existingLedgerId);
-  }
-
-  const ledgerId = "main";
-  await createBookWithLedger(bookId, ledgerId, userId);
-  return { bookId, ledgerId };
-}
-
-async function createBookWithLedger(
-  bookId: string,
-  ledgerId: string,
-  userId: string,
-) {
-  const db = getDB();
-  const ledger = createLedger({
-    name: "Main",
-    type: LedgerType.MAIN,
-    defaultCurrency: "CNY",
-  });
-  ledger.id = ledgerId;
-
-  const now = new Date().toISOString();
-  const batch = writeBatch(db);
-  const bookRef = doc(db, "books", bookId);
-  batch.set(bookRef, {
-    mainLedgerId: ledgerId,
-    commonTags: [],
-    exchangeRates: [],
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
-  batch.set(ledgerRef, {
-    name: ledger.name,
-    type: ledger.type,
-    description: ledger.description ?? null,
-    defaultCurrency: ledger.defaultCurrency,
-    icon: ledger.icon ?? null,
-    archived: ledger.archived ?? false,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  for (const account of ledger.accounts) {
-    const accountRef = doc(
-      db,
-      `books/${bookId}/ledgers/${ledgerId}/accounts`,
-      account.id,
-    );
-    batch.set(accountRef, { ...account });
-  }
-
-  const memberRef = doc(db, `books/${bookId}/members`, userId);
-  batch.set(memberRef, { role: "owner", joinedAt: now, status: "active" });
-
-  const metaRef = doc(db, `users/${userId}/meta`, "accounting");
-  batch.set(metaRef, { bookId, updatedAt: now });
-
-  await batch.commit();
-}
-
-async function createMissingLedger(bookId: string, ledgerId: string) {
-  const db = getDB();
-  const ledger = createLedger({
-    name: "Main",
-    type: LedgerType.MAIN,
-    defaultCurrency: "CNY",
-  });
-  ledger.id = ledgerId;
-
-  const now = new Date().toISOString();
-  const batch = writeBatch(db);
-  const ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
-  batch.set(ledgerRef, {
-    name: ledger.name,
-    type: ledger.type,
-    description: ledger.description ?? null,
-    defaultCurrency: ledger.defaultCurrency,
-    icon: ledger.icon ?? null,
-    archived: ledger.archived ?? false,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  for (const account of ledger.accounts) {
-    const accountRef = doc(
-      db,
-      `books/${bookId}/ledgers/${ledgerId}/accounts`,
-      account.id,
-    );
-    batch.set(accountRef, { ...account });
-  }
-
-  await batch.commit();
-  return { bookId, ledgerId };
 }
 
 function normalizeAccountDoc(
@@ -241,33 +121,126 @@ function normalizeEntryDoc(
     tags: Array.isArray(data.tags) ? (data.tags as string[]) : undefined,
     payee: data.payee as string | undefined,
     note: data.note as string | undefined,
+    createdBy: data.createdBy as string | undefined,
+    updatedBy: data.updatedBy as string | undefined,
     createdAt: normalizeTimestamp(data.createdAt) ?? now,
     updatedAt: normalizeTimestamp(data.updatedAt) ?? now,
   };
 }
 
-export async function fetchLedgerSnapshot(
-  userId: string,
-  ledgerId?: string,
-): Promise<LedgerData | null> {
+function normalizeBookSummary(
+  id: string,
+  data: Record<string, unknown>,
+): BookSummary {
+  const now = new Date().toISOString();
+  return {
+    id,
+    name: String(data.name ?? "Main"),
+    role: (data.role as BookRole) ?? "editor",
+    archived: data.archived as boolean | undefined,
+    defaultCurrency: data.defaultCurrency as CurrencyCode | undefined,
+    joinedAt: normalizeTimestamp(data.joinedAt) ?? now,
+    updatedAt: normalizeTimestamp(data.updatedAt),
+  };
+}
+
+export async function listUserBooks(userId: string): Promise<BookSummary[]> {
   const db = getDB();
-  const bookId = await getBookIdForUser(userId);
-  const resolvedLedgerId = ledgerId ?? (await getMainLedgerId(bookId));
+  const snap = await getDocs(collection(db, `users/${userId}/books`));
+  return snap.docs.map((docItem) =>
+    normalizeBookSummary(docItem.id, docItem.data()),
+  );
+}
 
-  const ledgerRef = doc(db, `books/${bookId}/ledgers`, resolvedLedgerId);
-  const ledgerSnap = await getDoc(ledgerRef);
+export async function ensureDefaultBook(
+  userId: string,
+): Promise<BookSummary> {
+  const books = await listUserBooks(userId);
+  if (books.length > 0) return books[0];
+  return createBookForUser(userId, { name: "Main", defaultCurrency: "CNY" });
+}
 
-  if (!ledgerSnap.exists()) {
+export async function createBookForUser(
+  userId: string,
+  params: { name: string; defaultCurrency?: CurrencyCode },
+): Promise<BookSummary> {
+  const db = getDB();
+  const bookRef = doc(collection(db, "books"));
+  const bookId = bookRef.id;
+  const book = createBook({
+    name: params.name,
+    defaultCurrency: params.defaultCurrency ?? "CNY",
+  });
+  book.id = bookId;
+
+  const now = new Date().toISOString();
+  const batch = writeBatch(db);
+
+  batch.set(bookRef, {
+    name: book.name,
+    description: book.description ?? null,
+    defaultCurrency: book.defaultCurrency,
+    exchangeRates: book.exchangeRates,
+    commonTags: book.commonTags,
+    icon: book.icon ?? null,
+    archived: book.archived ?? false,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  for (const account of book.accounts) {
+    const accountRef = doc(db, `books/${bookId}/accounts`, account.id);
+    batch.set(accountRef, { ...account });
+  }
+
+  const memberRef = doc(db, `books/${bookId}/members`, userId);
+  batch.set(memberRef, { role: "owner", status: "active", joinedAt: now });
+
+  const userBookRef = doc(db, `users/${userId}/books`, bookId);
+  batch.set(userBookRef, {
+    name: book.name,
+    role: "owner",
+    defaultCurrency: book.defaultCurrency,
+    joinedAt: now,
+    updatedAt: now,
+  });
+
+  await batch.commit();
+
+  return {
+    id: bookId,
+    name: book.name,
+    role: "owner",
+    defaultCurrency: book.defaultCurrency,
+    joinedAt: now,
+    updatedAt: now,
+  };
+}
+
+export async function fetchBookSnapshot(
+  userId: string,
+  bookId: string,
+): Promise<BookData | null> {
+  const db = getDB();
+  const memberRef = doc(db, `books/${bookId}/members`, userId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) {
     return null;
   }
 
-  const ledgerData = ledgerSnap.data() as Record<string, unknown>;
+  const bookRef = doc(db, "books", bookId);
+  const bookSnap = await getDoc(bookRef);
+  if (!bookSnap.exists()) {
+    return null;
+  }
+
+  const bookData = bookSnap.data() as Record<string, unknown>;
   const accountsSnap = await getDocs(
-    collection(db, `books/${bookId}/ledgers/${resolvedLedgerId}/accounts`),
+    collection(db, `books/${bookId}/accounts`),
   );
   const entriesSnap = await getDocs(
     query(
-      collection(db, `books/${bookId}/ledgers/${resolvedLedgerId}/entries`),
+      collection(db, `books/${bookId}/entries`),
       orderBy("date", "desc"),
       limit(200),
     ),
@@ -282,25 +255,27 @@ export async function fetchLedgerSnapshot(
 
   const now = new Date().toISOString();
   return {
-    id: ledgerSnap.id,
-    name: String(ledgerData.name ?? "Main"),
-    type: (ledgerData.type as LedgerData["type"]) ?? LedgerType.MAIN,
-    description: ledgerData.description as string | undefined,
+    id: bookSnap.id,
+    name: String(bookData.name ?? "Main"),
+    description: bookData.description as string | undefined,
     accounts,
     entries,
     defaultCurrency:
-      (ledgerData.defaultCurrency as LedgerData["defaultCurrency"]) ?? "CNY",
-    icon: ledgerData.icon as string | undefined,
-    archived: ledgerData.archived as boolean | undefined,
-    createdAt: normalizeTimestamp(ledgerData.createdAt) ?? now,
-    updatedAt: normalizeTimestamp(ledgerData.updatedAt) ?? now,
+      (bookData.defaultCurrency as BookData["defaultCurrency"]) ?? "CNY",
+    exchangeRates:
+      (bookData.exchangeRates as ExchangeRate[]) ?? ([] as ExchangeRate[]),
+    commonTags: (bookData.commonTags as string[]) ?? [],
+    icon: bookData.icon as string | undefined,
+    archived: bookData.archived as boolean | undefined,
+    createdAt: normalizeTimestamp(bookData.createdAt) ?? now,
+    updatedAt: normalizeTimestamp(bookData.updatedAt) ?? now,
   };
 }
 
-export async function createAccountForLedger(
+export async function createAccountForBook(
   userId: string,
   params: {
-    ledgerId?: string;
+    bookId: string;
     name: string;
     parentId: string;
     icon?: string;
@@ -308,19 +283,20 @@ export async function createAccountForLedger(
   },
 ): Promise<AccountData> {
   const db = getDB();
-  let { bookId, ledgerId } = await resolveLedger(userId, params.ledgerId);
-
-  let ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
-  const ledgerSnap = await getDoc(ledgerRef);
-  if (!ledgerSnap.exists()) {
-    await initializeAccounting(userId);
-    ({ bookId, ledgerId } = await resolveLedger(userId, params.ledgerId));
-    ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
+  const memberRef = doc(db, `books/${params.bookId}/members`, userId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) {
+    throw new Error("No access to book");
+  }
+  const memberData = memberSnap.data() as { role?: BookRole } | undefined;
+  const role = memberData?.role ?? "viewer";
+  if (role !== "owner" && role !== "editor") {
+    throw new Error("Permission denied");
   }
 
   const parentRef = doc(
     db,
-    `books/${bookId}/ledgers/${ledgerId}/accounts`,
+    `books/${params.bookId}/accounts`,
     params.parentId,
   );
   const parentSnap = await getDoc(parentRef);
@@ -342,20 +318,21 @@ export async function createAccountForLedger(
   const now = new Date().toISOString();
   const accountRef = doc(
     db,
-    `books/${bookId}/ledgers/${ledgerId}/accounts`,
+    `books/${params.bookId}/accounts`,
     account.id,
   );
   await setDoc(accountRef, { ...account, updatedAt: now, createdAt: now });
 
-  await setDoc(ledgerRef, { updatedAt: now }, { merge: true });
+  const bookRef = doc(db, "books", params.bookId);
+  await updateDoc(bookRef, { updatedAt: now });
 
   return account;
 }
 
-export async function createSimpleEntryForLedger(
+export async function createSimpleEntryForBook(
   userId: string,
   params: {
-    ledgerId?: string;
+    bookId: string;
     date: string;
     description: string;
     debitAccountId: string;
@@ -367,29 +344,23 @@ export async function createSimpleEntryForLedger(
   },
 ): Promise<JournalEntryData> {
   const db = getDB();
-  let { bookId, ledgerId } = await resolveLedger(userId, params.ledgerId);
-
-  let ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
-  const ledgerSnap = await getDoc(ledgerRef);
-  if (!ledgerSnap.exists()) {
-    await initializeAccounting(userId);
-    ({ bookId, ledgerId } = await resolveLedger(userId, params.ledgerId));
-    ledgerRef = doc(db, `books/${bookId}/ledgers`, ledgerId);
+  const memberRef = doc(db, `books/${params.bookId}/members`, userId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) {
+    throw new Error("No access to book");
   }
 
   const debitRef = doc(
     db,
-    `books/${bookId}/ledgers/${ledgerId}/accounts`,
+    `books/${params.bookId}/accounts`,
     params.debitAccountId,
   );
   const creditRef = doc(
     db,
-    `books/${bookId}/ledgers/${ledgerId}/accounts`,
+    `books/${params.bookId}/accounts`,
     params.creditAccountId,
   );
-  const entryRef = doc(
-    collection(db, `books/${bookId}/ledgers/${ledgerId}/entries`),
-  );
+  const entryRef = doc(collection(db, `books/${params.bookId}/entries`));
 
   const now = new Date().toISOString();
 
@@ -423,6 +394,8 @@ export async function createSimpleEntryForLedger(
       { accountId: debitAccount.id, amount, type: EntryLineType.DEBIT },
       { accountId: creditAccount.id, amount, type: EntryLineType.CREDIT },
     ];
+    entry.createdBy = userId;
+    entry.updatedBy = userId;
     entry.createdAt = now;
     entry.updatedAt = now;
 
@@ -436,6 +409,8 @@ export async function createSimpleEntryForLedger(
     const entryData: Record<string, unknown> = {
       ...entry,
       currency: debitAccount.currency,
+      createdBy: userId,
+      updatedBy: userId,
     };
     if (!entry.tags || entry.tags.length === 0) {
       delete entryData.tags;
@@ -456,8 +431,114 @@ export async function createSimpleEntryForLedger(
       balance: creditAccount.balance + creditDelta,
       updatedAt: now,
     });
-    tx.set(ledgerRef, { updatedAt: now }, { merge: true });
+    tx.set(doc(db, "books", params.bookId), { updatedAt: now }, { merge: true });
 
     return entry;
+  });
+}
+
+export async function createBookInvite(
+  userId: string,
+  params: { bookId: string; inviteeEmail: string; role?: BookRole },
+): Promise<BookInvite> {
+  const db = getDB();
+  const memberRef = doc(db, `books/${params.bookId}/members`, userId);
+  const memberSnap = await getDoc(memberRef);
+  if (!memberSnap.exists()) {
+    throw new Error("No access to book");
+  }
+  const inviteRef = doc(collection(db, `books/${params.bookId}/invites`));
+  const inboxRef = doc(db, "invites", inviteRef.id);
+  const bookRef = doc(db, "books", params.bookId);
+  const bookSnap = await getDoc(bookRef);
+  if (!bookSnap.exists()) {
+    throw new Error("Book not found");
+  }
+
+  const bookName = String(bookSnap.data().name ?? "Book");
+  const now = new Date().toISOString();
+  const inviteData = {
+    bookId: params.bookId,
+    bookName,
+    inviterId: userId,
+    inviteeEmail: params.inviteeEmail.toLowerCase(),
+    role: params.role ?? "editor",
+    status: "pending",
+    createdAt: now,
+  };
+
+  const batch = writeBatch(db);
+  batch.set(inviteRef, inviteData);
+  batch.set(inboxRef, inviteData);
+  await batch.commit();
+
+  return { id: inviteRef.id, ...inviteData };
+}
+
+export async function listInvitesForUser(
+  email: string,
+): Promise<BookInvite[]> {
+  const db = getDB();
+  const normalized = email.toLowerCase();
+  const snap = await getDocs(
+    query(collection(db, "invites"), where("inviteeEmail", "==", normalized)),
+  );
+  return snap.docs
+    .map((docItem) => {
+      const data = docItem.data() as Record<string, unknown>;
+      const now = new Date().toISOString();
+      return {
+        id: docItem.id,
+        bookId: String(data.bookId ?? ""),
+        bookName: String(data.bookName ?? "Book"),
+        inviterId: String(data.inviterId ?? ""),
+        inviteeEmail: String(data.inviteeEmail ?? ""),
+        role: (data.role as BookRole) ?? "editor",
+        status: (data.status as BookInvite["status"]) ?? "pending",
+        createdAt: normalizeTimestamp(data.createdAt) ?? now,
+      acceptedAt: normalizeTimestamp(data.acceptedAt),
+    };
+  })
+  .filter((invite) => invite.status === "pending");
+}
+
+export async function acceptBookInvite(
+  userId: string,
+  invite: BookInvite,
+): Promise<void> {
+  const db = getDB();
+  const inviteRef = doc(
+    db,
+    `books/${invite.bookId}/invites`,
+    invite.id,
+  );
+  const inboxRef = doc(db, "invites", invite.id);
+  const memberRef = doc(db, `books/${invite.bookId}/members`, userId);
+  const userBookRef = doc(db, `users/${userId}/books`, invite.bookId);
+
+  const now = new Date().toISOString();
+
+  await runTransaction(db, async (tx) => {
+    const inviteSnap = await tx.get(inviteRef);
+    if (!inviteSnap.exists()) {
+      throw new Error("Invite not found");
+    }
+    const data = inviteSnap.data() as Record<string, unknown>;
+    if (String(data.status ?? "") !== "pending") {
+      throw new Error("Invite is no longer available");
+    }
+
+    const bookName = String(data.bookName ?? "Book");
+    const role = (data.role as BookRole) ?? "editor";
+
+    tx.set(memberRef, { role, status: "active", joinedAt: now });
+    tx.set(userBookRef, {
+      name: bookName,
+      role,
+      joinedAt: now,
+      updatedAt: now,
+    });
+    tx.update(inviteRef, { status: "accepted", acceptedAt: now });
+    tx.update(inboxRef, { status: "accepted", acceptedAt: now });
   });
 }

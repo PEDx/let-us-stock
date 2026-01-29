@@ -6,11 +6,9 @@
 
 import type {
   BookData,
-  LedgerData,
   AccountData,
   JournalEntryData,
   ExchangeRate,
-  EntryQuery,
 } from "~/lib/double-entry/types";
 
 // ============================================================================
@@ -78,8 +76,8 @@ export interface IBookRepository {
   /** 获取账簿元数据（不包含明细） */
   getBookMeta(
     userId: string,
+    bookId: string,
   ): Promise<{
-    mainLedgerId: string;
     commonTags: string[];
     exchangeRates: ExchangeRate[];
     updatedAt: string | null;
@@ -88,58 +86,35 @@ export interface IBookRepository {
   /** 保存账簿元数据 */
   saveBookMeta(
     userId: string,
-    meta: {
-      mainLedgerId: string;
-      commonTags: string[];
-      exchangeRates: ExchangeRate[];
-    },
+    bookId: string,
+    meta: { commonTags: string[]; exchangeRates: ExchangeRate[] },
   ): Promise<void>;
-}
 
-/**
- * 账本 Repository
- */
-export interface ILedgerRepository {
-  /** 获取所有账本 */
-  getAllLedgers(userId: string): Promise<LedgerData[]>;
+  /** 获取单个账簿（不包含分录） */
+  getBook(userId: string, bookId: string): Promise<BookData | null>;
 
-  /** 获取单个账本（不包含分录） */
-  getLedger(userId: string, ledgerId: string): Promise<LedgerData | null>;
+  /** 保存账簿 */
+  saveBook(userId: string, book: BookData): Promise<void>;
 
-  /** 保存账本 */
-  saveLedger(userId: string, ledger: LedgerData): Promise<void>;
-
-  /** 删除账本 */
-  deleteLedger(userId: string, ledgerId: string): Promise<void>;
+  /** 删除账簿 */
+  deleteBook(userId: string, bookId: string): Promise<void>;
 }
 
 /**
  * 账户 Repository
  */
 export interface IAccountRepository {
-  /** 获取账本的所有账户 */
-  getAccounts(userId: string, ledgerId: string): Promise<AccountData[]>;
+  /** 获取账簿的所有账户 */
+  getAccounts(userId: string, bookId: string): Promise<AccountData[]>;
 
   /** 保存账户 */
-  saveAccount(
-    userId: string,
-    ledgerId: string,
-    account: AccountData,
-  ): Promise<void>;
+  saveAccount(userId: string, bookId: string, account: AccountData): Promise<void>;
 
   /** 批量保存账户 */
-  saveAccounts(
-    userId: string,
-    ledgerId: string,
-    accounts: AccountData[],
-  ): Promise<void>;
+  saveAccounts(userId: string, bookId: string, accounts: AccountData[]): Promise<void>;
 
   /** 删除账户 */
-  deleteAccount(
-    userId: string,
-    ledgerId: string,
-    accountId: string,
-  ): Promise<void>;
+  deleteAccount(userId: string, bookId: string, accountId: string): Promise<void>;
 }
 
 /**
@@ -149,45 +124,37 @@ export interface IEntryRepository {
   /** 查询分录（分页） */
   queryEntries(
     userId: string,
-    ledgerId: string,
+    bookId: string,
     options?: EntryQueryOptions,
   ): Promise<PaginatedResult<JournalEntryData>>;
 
   /** 获取单条分录 */
   getEntry(
     userId: string,
-    ledgerId: string,
+    bookId: string,
     entryId: string,
   ): Promise<JournalEntryData | null>;
 
   /** 保存分录 */
-  saveEntry(
-    userId: string,
-    ledgerId: string,
-    entry: JournalEntryData,
-  ): Promise<void>;
+  saveEntry(userId: string, bookId: string, entry: JournalEntryData): Promise<void>;
 
   /** 批量保存分录 */
-  saveEntries(
-    userId: string,
-    ledgerId: string,
-    entries: JournalEntryData[],
-  ): Promise<void>;
+  saveEntries(userId: string, bookId: string, entries: JournalEntryData[]): Promise<void>;
 
   /** 删除分录 */
-  deleteEntry(userId: string, ledgerId: string, entryId: string): Promise<void>;
+  deleteEntry(userId: string, bookId: string, entryId: string): Promise<void>;
 
   /** 获取分录统计 */
   getEntryStats(
     userId: string,
-    ledgerId: string,
+    bookId: string,
     options?: EntryQueryOptions,
   ): Promise<EntryStats>;
 
   /** 监听分录变化（实时） */
   watchEntries(
     userId: string,
-    ledgerId: string,
+    bookId: string,
     callback: (entries: JournalEntryData[]) => void,
   ): () => void;
 }
@@ -197,7 +164,6 @@ export interface IEntryRepository {
  */
 export interface IRepositoryFactory {
   getBookRepository(): IBookRepository;
-  getLedgerRepository(): ILedgerRepository;
   getAccountRepository(): IAccountRepository;
   getEntryRepository(): IEntryRepository;
 }

@@ -8,10 +8,13 @@
     "delete": "Delete",
     "edit": "Edit",
     "add": "Add",
+    "create": "Create",
     "confirm": "Confirm",
     "loading": "Loading...",
     "noData": "No data",
-    "required": "Required"
+    "required": "Required",
+    "send": "Send",
+    "error": "Something went wrong"
   },
   "nav": { "market": "Market", "assets": "Assets", "records": "Records" },
   "assets": {
@@ -104,6 +107,22 @@
       "gift": "Gift",
       "other": "Other"
     }
+  },
+  "books": {
+    "selectBook": "Select Book",
+    "newBook": "New Book",
+    "newBookDescription": "Create a new book to organize family entries.",
+    "emptyTitle": "No books yet",
+    "emptyDescription": "Create your first book or accept an invite to start recording.",
+    "bookName": "Book Name",
+    "bookNamePlaceholder": "e.g. Family, Trip 2026",
+    "invite": "Invite",
+    "inviteDescription": "Invite family members to collaborate on this book.",
+    "invitePermission": "Only owners or editors can invite.",
+    "inviteEmail": "Invitee Email",
+    "inviteEmailPlaceholder": "name@example.com",
+    "pendingInvites": "Pending Invites",
+    "accept": "Accept"
   },
   "error": {
     "oops": "Oops!",
